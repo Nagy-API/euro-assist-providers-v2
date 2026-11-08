@@ -1,0 +1,64 @@
+# Secrets / local environments
+.env
+.env.*
+!.env.example
+!.env.testing.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.jks
+*.keystore
+*credentials*.json
+*secret*.json
+id_rsa*
+id_ed25519*
+
+# Database & production exports / backups
+*.sql
+*.sql.gz
+*.dump
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+*.rar
+*.zip
+*.7z
+*.tar.gz
+*.tgz
+*.backup
+*backup*
+*export*.xlsx
+*export*.csv
+Providers*
+
+# Dependencies and built outputs
+/vendor/
+/node_modules/
+/public/build/
+/public/hot
+/.phpunit.cache
+/coverage/
+/.phpunit.result.cache
+/.phpactor.yml
+
+# Laravel generated content
+/bootstrap/cache/*.php
+/storage/app/
+/storage/framework/cache/
+/storage/framework/sessions/
+/storage/framework/views/
+/storage/logs/
+/storage/*.key
+/public/storage
+
+# IDE / OS / runtime
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
