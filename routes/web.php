@@ -29,4 +29,5 @@ Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')-
 Route::middleware(['auth', 'active'])->group(function () {
     require __DIR__.'/admin.php';      // dashboard, providers, types, featured, users, audit
     require __DIR__.'/transfers.php';  // import / export / job history / downloads
+    require __DIR__.'/migration.php';  // legacy migration review queue (Admin)
 });
