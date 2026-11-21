@@ -110,6 +110,36 @@ class ForbiddenPathTests(unittest.TestCase):
                 self.assertFalse(hygiene.forbidden(name))
 
 
+class HardenedRuleTests(unittest.TestCase):
+    """Regression tests for issue #39 B4 (false positives) and B5 (false negatives)."""
+
+    def test_legitimate_application_source_is_not_blocked(self):
+        for name in ('app/Exports/ProviderExport.php', 'app/Models/Uploads/Logo.php',
+                     'app/Http/Controllers/CredentialsController.php',
+                     'app/Http/Controllers/Admin/ExportController.php',
+                     'tests/Feature/Imports/backups/RestoreTest.php',
+                     'app/Services/Dumps/DumpFormatter.php',
+                     'resources/js/exports/table.js', 'tests/fixtures/synthetic.csv'):
+            with self.subTest(name=name):
+                self.assertFalse(hygiene.forbidden(name))
+
+    def test_arbitrary_name_spreadsheets_and_contacts_outside_fixtures_are_blocked(self):
+        for name in ('data.csv', 'resources/providers.xlsx', 'database/seeders/list.xls',
+                     'docs/contacts.vcf', 'notes/book.ods', 'a/b/report.tsv',
+                     'tests/other/real.csv', 'database/legacy.mdb', 'db/legacy.accdb'):
+            with self.subTest(name=name):
+                self.assertTrue(hygiene.forbidden(name))
+
+    def test_secret_bearing_json_and_environment_variants_are_blocked(self):
+        for name in ('auth.json', 'config/client-secret.json', 'secrets.json',
+                     'prod.env', 'env.production', 'production.env', 'keys/deploy.ppk',
+                     'keys/apple.p8', 'vault.kdbx'):
+            with self.subTest(name=name):
+                self.assertTrue(hygiene.forbidden(name))
+        self.assertFalse(hygiene.forbidden('composer.lock'))
+        self.assertFalse(hygiene.forbidden('package.json'))
+
+
 class GitIndexIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='repo-hygiene-test-')

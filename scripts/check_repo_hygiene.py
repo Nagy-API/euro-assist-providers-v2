@@ -18,12 +18,23 @@ REQUIRED = [
     'docs/13_CHANGELOG.md', 'docs/14_GITHUB_BOOTSTRAP.md', 'docs/15_QUALITY_GATES.md',
 ]
 FORBIDDEN_EXTS = ('.sql', '.dump', '.bak', '.rar', '.zip', '.7z', '.sqlite', '.sqlite3', '.db',
-                  '.pem', '.key', '.pfx', '.p12', '.jks', '.keystore', '.crt', '.log',
+                  '.pem', '.key', '.pfx', '.p12', '.p8', '.ppk', '.jks', '.keystore', '.crt',
+                  '.kdbx', '.gpg', '.mdb', '.accdb', '.log',
                   '.tar', '.gz', '.tgz', '.bz2', '.xz', '.zst', '.backup', '.pyc')
-FORBIDDEN_DIRS = {
-    'vendor', 'node_modules', '.venv', '__pycache__', 'backups', 'dumps',
-    'exports', 'uploads', 'private-data', 'private_data',
-}
+# Spreadsheet/contact data may only be committed as synthetic fixtures under tests/fixtures/.
+DATA_EXTS = ('.csv', '.tsv', '.xlsx', '.xls', '.xlsm', '.xlsb', '.ods', '.vcf')
+FIXTURE_PREFIX = 'tests/fixtures/'
+# Dependency/cache directories are never source, at any depth.
+FORBIDDEN_DIRS = {'vendor', 'node_modules', '.venv', '__pycache__'}
+# Data-location directories: anything non-source inside is blocked. Plain source files (for
+# example app/Exports/ProviderExport.php or app/Models/Uploads/Logo.php) stay allowed.
+DATA_DIRS = {'backups', 'dumps', 'exports', 'uploads', 'private-data', 'private_data'}
+SOURCE_EXTS = ('.php', '.py', '.js', '.ts', '.md', '.css')
+# Filename terms that only matter for non-source files (CredentialsController.php is fine).
+SENSITIVE_NAME_TERMS = ('providers.sql', 'providers.rar', 'credentials', 'production-backup',
+                        'production_export', 'production-export', 'db_backup', 'db-backup',
+                        'providers-export', 'providers_export')
+SENSITIVE_JSON = ('auth.json', 'secret', 'secrets')
 
 
 def tracked_paths():
@@ -42,12 +53,14 @@ def forbidden(name):
     base = path.name
     if low in ('.env.example', '.env.testing.example'):
         return False
-    if (base.startswith('.env')
+    is_source = low.endswith(SOURCE_EXTS)
+    if (base.startswith('.env') or base.endswith('.env') or base.startswith('env.')
             or base.startswith(('id_rsa', 'id_ed25519', 'id_ecdsa'))):
         return True
-    if any(part in FORBIDDEN_DIRS for part in path.parts[:-1]):
+    parents = path.parts[:-1]
+    if any(part in FORBIDDEN_DIRS for part in parents):
         return True
-    if 'logs' in path.parts[:-1] and base != '.gitignore':
+    if 'logs' in parents and base != '.gitignore':
         return True
     if low.endswith('.php') and (low.startswith('bootstrap/cache/')
                                 or '/bootstrap/cache/' in low):
@@ -60,10 +73,16 @@ def forbidden(name):
         return True
     if low.endswith(FORBIDDEN_EXTS):
         return True
-    if any(term in base for term in ('providers.sql', 'providers.rar', 'credentials', 'production-backup',
-                                     'production_export', 'production-export',
-                                     'db_backup', 'db-backup', 'providers-export',
-                                     'providers_export')):
+    if low.endswith(DATA_EXTS) and not low.startswith(FIXTURE_PREFIX):
+        return True
+    if (base.endswith('.json') and any(term in base for term in SENSITIVE_JSON)
+            and not low.startswith(FIXTURE_PREFIX)):
+        return True
+    if base != '.gitignore' and not is_source and any(part in DATA_DIRS for part in parents):
+        return True
+    if base != '.gitignore' and parents[:1] == ('public',) and 'uploads' in parents:
+        return True
+    if not is_source and any(term in base for term in SENSITIVE_NAME_TERMS):
         return True
     return False
 

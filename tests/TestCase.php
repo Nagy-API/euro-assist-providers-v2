@@ -2,28 +2,35 @@
 
 namespace Tests;
 
+use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use RuntimeException;
+use Tests\Support\TestDatabaseGuard;
 
 abstract class TestCase extends BaseTestCase
 {
-    protected function setUp(): void
+    /**
+     * Runs after the application is built but before setUpTraits(), so the guard executes
+     * before RefreshDatabase / DatabaseMigrations can touch any database.
+     */
+    protected function refreshApplication(): void
     {
-        parent::setUp();
+        parent::refreshApplication();
 
-        $driver = config('database.default');
-        $connection = config('database.connections.'.$driver);
-        $isolatedSqlite = $driver === 'sqlite' && ($connection['database'] ?? null) === ':memory:';
-        $isolatedMysql = $driver === 'mysql'
-            && ($connection['host'] ?? null) === '127.0.0.1'
-            && ($connection['database'] ?? null) === 'euro_assist_v2_test';
-
-        if (! app()->environment('testing') || app()->configurationIsCached()
-            || ! empty($connection['url']) || (! $isolatedSqlite && ! $isolatedMysql)) {
-            throw new RuntimeException('Tests require uncached configuration and an isolated test database.');
-        }
+        $this->guardTestDatabase($this->app);
 
         // Tests must not depend on, or reuse, any developer encryption key.
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
+    }
+
+    protected function guardTestDatabase(Application $app): void
+    {
+        $driver = (string) $app['config']->get('database.default');
+
+        TestDatabaseGuard::assertSafe(
+            $app->environment(),
+            $app->configurationIsCached(),
+            $driver,
+            (array) $app['config']->get('database.connections.'.$driver, []),
+        );
     }
 }

@@ -1,9 +1,14 @@
 name: Repository hygiene
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: hygiene-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   safe-files:
     runs-on: ubuntu-latest

@@ -28,4 +28,33 @@
 - Verified backup + restore + rollback plan; final data checksum/reconciliation; HTTPS/domain configuration; smoke tests; error monitoring; named owner of rollback decision.
 - No production dump committed to Git or publicly accessible on staging.
 
+## Production environment variables (planning; nothing here has been deployed)
+
+Set in the server's real environment or an untracked `.env` created on the server only. Never commit it.
+
+| Variable | Required value | Why |
+|---|---|---|
+| `APP_ENV` | `production` | Enables production behavior. |
+| `APP_DEBUG` | `false` | The application **refuses to boot** with `APP_ENV=production` and `APP_DEBUG=true` (`AppServiceProvider`, tested). |
+| `APP_URL` | `https://...` | HTTPS-only canonical URL. |
+| `APP_KEY` | generated once on the server (`php artisan key:generate --force` the first time only) | Back it up separately; rotating it invalidates sessions and encrypted data. |
+| `LOG_STACK` / `LOG_CHANNEL` | `daily` | Bounded log growth; no `single` file. |
+| `LOG_LEVEL` | `warning` or higher | Avoid verbose request data in logs. |
+| `SESSION_SECURE_COOKIE` | `true` | Cookies only over HTTPS. |
+| `SESSION_ENCRYPT` | `true` | Encrypt session payloads at rest. |
+| `SESSION_SAME_SITE` | `lax` (default) | CSRF defense in depth. |
+| `DB_*` | dedicated least-privilege account | Never the root or legacy account. |
+| `QUEUE_CONNECTION` | `database` | See worker strategy below. |
+| `PROVIDERS_API_PUBLIC_READ` | `false` until approved | Public read exposure is disabled by default (D7 pending). |
+
+Also: document root = `public/` only; `storage/` and `bootstrap/cache` writable by the PHP user only; `/storage` symlink is **not** created (all private files use the `local` disk, `serve` disabled); `robots.txt` is `Disallow: /` until launch is approved; `php artisan config:cache route:cache view:cache event:cache` after each deploy; trusted proxies/hosts configured for the real reverse-proxy chain before go-live.
+
+## Queue worker and scheduler strategy (unverified on Plesk)
+
+1. Preferred: a durable `php artisan queue:work database --max-time=3600 --tries=3` supervised by Plesk/Laravel Toolkit, if available.
+2. Fallback (not assumed reliable): a Plesk scheduled task every minute running `php artisan schedule:run`. The scheduler registers `queue:work database --stop-when-empty --max-time=55 --tries=3` with `withoutOverlapping()`, so a short-running worker drains the queue without a daemon. Import/export jobs are resumable from DB checkpoints, so an interrupted worker leaves a visible, resumable state, never a silent partial success.
+3. `php artisan imports:prune` and `exports:prune` (scheduled daily) delete expired private files.
+
+None of this has been executed on Plesk. P6.1 (#34) must verify it on an isolated staging subscription.
+
 Official reference: https://docs.plesk.com/ and https://laravel.com/docs/deployment
