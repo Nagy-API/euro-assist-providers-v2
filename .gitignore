@@ -1,8 +1,7 @@
 # Secrets / local environments
-.env
-.env.*
-!.env.example
-!.env.testing.example
+.env*
+!/.env.example
+!/.env.testing.example
 *.pem
 *.key
 *.p12
@@ -29,14 +28,22 @@ id_ed25519*
 *.tar.gz
 *.tgz
 *.backup
-*backup*
-*export*.xlsx
-*export*.csv
-Providers*
+# Known root-level private inputs; source and synthetic fixtures remain trackable.
+/Providers/
+/production-backup*.json
+/production_export*.csv
+/production_export*.xlsx
+/production-export*.csv
+/production-export*.xlsx
+/providers_export*.csv
+/providers_export*.xlsx
+/providers-export*.csv
+/providers-export*.xlsx
 
 # Dependencies and built outputs
-/vendor/
-/node_modules/
+vendor/
+node_modules/
+.venv/
 /public/build/
 /public/hot
 /.phpunit.cache
@@ -46,11 +53,14 @@ Providers*
 
 # Laravel generated content
 /bootstrap/cache/*.php
-/storage/app/
-/storage/framework/cache/
-/storage/framework/sessions/
-/storage/framework/views/
-/storage/logs/
+/storage/app/**
+/storage/framework/cache/**
+/storage/framework/sessions/**
+/storage/framework/testing/**
+/storage/framework/views/**
+/storage/logs/**
+!/storage/**/
+!/storage/**/.gitignore
 /storage/*.key
 /public/storage
 
@@ -62,3 +72,20 @@ Thumbs.db
 *.log
 *.tmp
 *.swp
+
+# Python governance tests and ephemeral reports
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+test-results/
+*.test-output
+
+# Private raw inputs and generated exports at any depth
+private-data/
+private_data/
+backups/
+dumps/
+exports/
+uploads/

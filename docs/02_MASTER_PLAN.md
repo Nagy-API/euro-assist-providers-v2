@@ -6,12 +6,12 @@ Statuses: `TODO` (not started), `IN PROGRESS`, `BLOCKED`, `DONE` (must have evid
 
 - [x] Record scope, constraints, technical findings and risk register in local docs.
 - [x] Build a clean, private-data-free Git seed with guidance for future chats.
-- [ ] Create private GitHub remote, push, verify privacy and first commit.
-- [ ] Create milestone/issue backlog and PR review workflow.
+- [x] Create private GitHub remote, push, verify privacy and first commit (verified 2026-11-21; see docs/14).
+- [x] Create milestone/issue backlog (7 milestones, issues #1-#37). PR review workflow is operational only; hosted CI has not executed (billing blocker).
 
 **Exit criteria:** Private GitHub repo accessible, every required doc present, no secrets or real data, repeatable contribution workflow.
 
-## P1 — Baseline audit, requirements and reproducible local environment (TODO)
+## P1 — Baseline audit, requirements and reproducible local environment (IN PROGRESS; unchecked items below may be stale, see docs/01_CURRENT_STATUS.md and issues #10-#16)
 
 - [ ] Inventory every screen, action, filter, upload, export, and API contract in old code.
 - [ ] Confirm which actions must be preserved and which can be intentionally redesigned.
@@ -27,7 +27,7 @@ Statuses: `TODO` (not started), `IN PROGRESS`, `BLOCKED`, `DONE` (must have evid
 
 - [ ] Finalize providers, translations, localized addresses, provider types, featured entries, users, roles, import/export operations, audit events, legacy mappings.
 - [ ] Implement migrations, factories and dummy seeders (never real dump).
-- [ ] Implement login/logout, authorization policies, admin/editor/viewer roles, CSRF and rate limiting.
+- [ ] Implement login/logout, authorization policies, admin/editor/viewer roles (final matrix: ADR-010 Amendment A, `docs/08_SECURITY.md`), CSRF and rate limiting.
 - [ ] Shared service layer with versioned read API; pagination, filtering, sorting.
 - [ ] Logging, request correlation IDs, exception reporting and safe error pages.
 
@@ -75,3 +75,44 @@ Statuses: `TODO` (not started), `IN PROGRESS`, `BLOCKED`, `DONE` (must have evid
 - [ ] **Only after express approval:** schedule maintenance/cutover, final DB sync from agreed snapshot, deploy, check smoke tests, monitor and retain rollback path.
 
 **Exit criteria:** documented passing staging tests, owner-approved cutover checklist and recovery proof. Production remains unchanged unless specifically authorized.
+
+## 2026-11-21 execution slice — repository bootstrap and local foundation
+
+**Goal:** preserve the seed history, verify private GitHub governance, complete a source-based legacy inventory, and establish a tested local Laravel foundation where dependencies permit.
+**Architecture:** retain the existing documentation structure and use feature branches and reviewed PRs. Keep private legacy inputs and portable tooling outside this repository. Business schema, bilingual matching and API exposure remain gated by the audit and owner decisions.
+**Spec:** `AGENTS.md`, this master plan, `docs/04_IMPORT_EXPORT_SPEC.md`, and `docs/15_QUALITY_GATES.md`.
+**Execution:** task-sized implementation with independent review and verification under `king-dev-workflow`; continuous execution is authorized by the owner.
+
+### Task A — Private repository and governance
+
+- [x] Extract the seed into a separate development directory; verify clean Git status, original commit and `git fsck --full`.
+- [x] Run seed path hygiene and an offline history content check; publish only the preserved seed to an empty verified private remote.
+- [ ] Configure labels, phase milestones, issues with acceptance criteria/dependencies, PR settings and supported security controls; verify results and document unavailable controls.
+- [ ] Harden `scripts/check_repo_hygiene.py` with portable path checks and regression tests in `tests/repository/`; add CI hygiene and redacted secret scanning without paid-action requirements.
+- [ ] Independently review, test, update project memory, commit, push and open a PR. Do not merge without satisfied review requirements and authorization.
+
+### Task B — Verified legacy inventory
+
+- [ ] Read local controllers, routes, middleware, views, model/migration code and schema statements without executing legacy code or importing raw records.
+- [ ] Update `docs/03_LEGACY_AUDIT.md`, `docs/05_DATA_MIGRATION.md` and `docs/06_API_CONTRACT.md` with source paths, parity matrix, schema/relationships, import/export mappings and verified defects.
+- [ ] Separate declared routes from implemented handlers, and static findings from runtime evidence. Commit no real records, secrets or media.
+- [ ] Review documentation against source; record unresolved business questions explicitly before implementation depends on them.
+
+### Task C — Reproducible Laravel foundation
+
+- [ ] Verify upstream Laravel/PHP/Livewire compatibility and local tool versions before installing dependencies.
+- [ ] Install isolated portable development tooling only if missing, using official sources and verified checksums. Keep binaries, caches and secrets outside Git.
+- [ ] Scaffold Laravel 13 without replacing governance files; add compatible Livewire/Alpine/Tailwind and database queue defaults. No provider schema or production connection yet.
+- [ ] Add smoke tests for boot, safe environment, health and initial page; run formatting, static analysis, dependency audit, asset build and isolated migration checks.
+- [ ] Start only on loopback; inspect the rendered page using supported browser tools. Check MySQL/MariaDB separately from SQLite test evidence.
+- [ ] Independently review and verify the full foundation; update setup/status/ADR/log/handoff, commit, push and open a PR.
+
+### Review focus and gates
+
+- Nested environment files and Windows path separators must not bypass repository hygiene tests.
+- Unavailable private-repository GitHub security/protection features must be recorded as blockers, never claimed enabled.
+- Composer scripts must not inherit a legacy `.env` or connect to a non-local database.
+- Declared legacy CRUD routes may lack controller implementations; parity is based on observed source behavior.
+- Arabic/English IDs and empty spreadsheet cells must not trigger invented matching or destructive update semantics.
+
+Later P2–P6 implementation remains subject to its dependency and acceptance gates above; completing this slice does not complete V2.

@@ -26,3 +26,41 @@
 Production DB dump, provider names/phones/addresses from the dump, server config secrets, `.env`, Plesk credentials, `APP_KEY`, JWT keys, SQL exports, uploaded images/media without clearance, logs, private customer exports or passwords/password hashes.
 
 Existing archive may contain secrets. If accidentally committed, removing files later is insufficient; purge Git history and rotate compromised credentials with owner's explicit approval.
+
+## Authorization matrix (owner-approved, ADR-010 incl. Amendment A)
+
+Final as of 2026-11-21. Enforced **server-side only** (policies/gates/middleware on every route, Livewire action, queued-job dispatch and download endpoint); UI hiding is cosmetic. Anything not listed is **denied**. No cell is undecided, except the single minor item noted below the table.
+
+| Permission key (proposed identifier) | Capability | Admin | Editor | Viewer |
+|---|---|---|---|---|
+| `providers.view` | View dashboard and permitted provider data | Yes | Yes | Yes |
+| `providers.create` | Create providers | Yes | Yes | No |
+| `providers.update` | Edit providers | Yes | Yes | No |
+| `providers.delete` / `providers.restore` | Delete / restore providers | Yes | **No** | No |
+| `providers.bulk.write` | Bulk create/update (validation, preview, confirmation and audit mandatory) | Yes | Yes | No |
+| `providers.bulk.delete` | Bulk delete/restore | Yes | **No** | No |
+| `featured.manage` | Manage featured/top providers | Yes | **No** | No |
+| `imports.run` | Import Excel (data-integrity safeguards, ADR-008) | Yes | Yes | No |
+| `exports.run` | Export Excel | Yes | Yes | No |
+| `jobs.view.own` | View own import/export job history and error reports | Yes | Yes (own only) | No |
+| `jobs.view.any` | View any user's job history and error reports | Yes | No | No |
+| `audit.view` | View global audit logs | Yes | **No** | No |
+| `users.manage` | Manage users and roles | Yes | No | No |
+| `settings.manage` | Manage settings / critical system configuration | Yes | No | No |
+
+Permission keys are proposed identifiers for implementation and tests, not additional business rules. The permission *effects* are the owner-approved part.
+
+**Minor open item (default: Admin only):** which role may run the explicit "clear a stored value" operation required by ADR-008. Not decided by the owner; do not grant it to Editor implicitly.
+
+**Bulk-write rule:** `providers.bulk.write` requires, in order: whole-file validation (ADR-008), a preview of inserts/updates/rejects, an explicit confirmation by the actor, and an audit event per applied job. Calling the apply step without a valid confirmed preview must fail.
+
+**Job and error-report access:** error reports may contain provider data. Store privately, serve only via authenticated authorization (job owner or Admin), expire per retention policy. Another Editor's job returns a consistent denial (403 or 404, chosen once and tested).
+
+**Test obligations for P2.3 (#19) and later phases:**
+1. A policy test per matrix cell and role (3 roles x every key).
+2. Negative HTTP and Livewire-action tests: Viewer cannot reach any write/import/export/job/audit/settings route; Editor cannot delete/restore (single or bulk), manage featured providers, view the global audit log, manage users/roles/settings, or open another user's job or error report.
+3. Unauthenticated requests to every administrative route are rejected.
+4. Bulk write without validation/preview/confirmation is rejected and writes nothing; applied bulk writes and imports each create an audit event.
+5. No default account or embedded credential exists.
+
+Status: **documented only; not implemented** (no authentication exists in the foundation).
