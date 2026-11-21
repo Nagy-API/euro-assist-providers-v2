@@ -2,18 +2,16 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * Reference data only. No user accounts are ever seeded: provision them with
+     * `php artisan users:provision`. Synthetic demo providers: `php artisan db:seed --class=SyntheticProvidersSeeder`.
      */
     public function run(): void
     {
-        // Foundation only: accounts and business fixtures await approved policies.
+        $this->call(ProviderTypeSeeder::class);
     }
 }
