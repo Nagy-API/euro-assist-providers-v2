@@ -19,7 +19,7 @@
 | Foundation | Laravel13.43.0, Livewire4.4.9/bundled Alpine, Tailwind4.3.5/Vite8.3.8; framework tables, empty seed | Whole-change review and independent verification |
 | Implementer checks | SQLite6 tests/26 assertions, MariaDB2/17, Pint, Larastan level6, clean dependency audits/build recorded | Fresh independent evidence before acceptance |
 | Browser | Upstream welcome inspected1280x800,768x1024,390x844 without horizontal overflow; health rendered; no captured warnings/errors | Browser Alpine interaction unverified; no business UI/reference parity |
-| Role matrix | Owner-approved Admin/Editor/Viewer matrix recorded as ADR-010 and in `docs/08_SECURITY.md`; Editor delete/bulk/featured/audit-log are TBD (default deny) | Implement and test policies in P2.3 (#19) |
+| Role matrix | Owner-approved Admin/Editor/Viewer matrix final (ADR-010 + Amendment A) in `docs/08_SECURITY.md`; only the "who may clear a stored value" item is open (default Admin-only) | Implement and test policies in P2.3 (#19) |
 | Domain/auth/providers | Not implemented beyond upstream framework tables; no default account/auth routes; no authorization code yet | Approved schema (P2.1) then P2.3 |
 | PHP 8.3 / local verification | Recovery session ran full suite on PHP 8.3.37 and 8.4.28, MariaDB suite, audits, build, hygiene, Gitleaks: all exit 0 (details in docs07) | Hosted Linux CI evidence after billing fix; independent reviewer/verifier not yet run |
 | Import/export | Contract only; approved blank preservation and whole-file validation, ADR-008 | P4 implementation/round-trip/recovery/benchmarks |
@@ -33,6 +33,6 @@ Phase epics [P0#1](https://github.com/Nagy-API/euro-assist-providers-v2/issues/1
 ## Immediate next actions
 
 1. Owner: fix the GitHub billing/spending-limit blocker, then re-run the workflows and record real results. Owner: review the PR; no merge without approval.
-2. Independent code/security/final review of the foundation PR (not yet done; the recovery session only self-reviewed).
+2. Independent review of PR #38 is DONE (PASS_WITH_MINOR_NOTES, no code blocker; follow-ups in #39). Hosted CI evidence is still the merge gate. Owner decisions D1/D3/D4/D5/D6 unblock P2.1 (#17).
 3. Complete P1 parity/business signoff: localized-field model, type vocabulary, roles and API consumers. Never infer identity from name/phone/numeric ID.
 4. Implement P2 after its gates. P1 and P2–P6 remain open; this is not a completed V2 system.

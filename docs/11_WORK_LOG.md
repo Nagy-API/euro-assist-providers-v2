@@ -56,3 +56,17 @@
 - **Decisions:** ADR-010 (owner-approved roles). Editor delete/bulk/featured/audit-log are undecided and default to deny.
 - **Current status:** bootstrap recovered and published; P0 not closed (hosted CI + owner review pending); P1 open; P2 not started.
 - **Next:** owner fixes billing and reviews the PR; then P2.1 (#17) after the remaining P1.4 (#13) owner decisions.
+
+
+## 2026-11-21 — ADR-010 finalization, independent PR #38 review, P1.4/P2.1 proposal
+
+- **Issues / PR:** #19 (final role matrix), #13/#17 (decision proposal), #39 (new: review follow-ups), PR #38 (review comment). Not merged.
+- **Branch / commit:** `feature/p0-governance-bootstrap`; this docs-only change is committed on top of `f1bffd0` (see PR #38 head).
+- **Roles:** owner finalized Editor permissions (create/edit, bulk create/update with validation+preview+confirmation+audit, import/export, own job history allowed; delete/restore, bulk delete/restore, featured management, global audit log denied). ADR-010 Amendment A, `docs/08_SECURITY.md` matrix with proposed permission keys, `docs/04_IMPORT_EXPORT_SPEC.md` and #19 updated. Only "who may clear a stored value" remains open (default Admin only). Documentation only; no authorization code exists yet.
+- **Independent review:** separate reviewer agent on the committed state of PR #38 (it did not receive the implementer's claims). Verdict PASS_WITH_MINOR_NOTES: no code-level blocking finding; one process gate (hosted CI never ran, billing). 12 non-blocking groups (B1-B12) tracked in #39; B1, B4, B5 and B7 were independently re-checked by the coordinating session. Reviewer local runs: PHPUnit on PHP 8.3.37 6 tests/26 assertions OK (also with a hostile inherited env), hygiene PASS, Python 18 OK, `composer validate --strict` valid, Gitleaks no leaks. It did not run the MariaDB suite or touch `.work`. Hosted Linux CI remains unverified.
+- **Proposal:** `docs/05_DATA_MIGRATION.md` "P1.4 / P2.1 decision proposal" with decisions D1-D8. New read-only aggregates against the isolated snapshot restore (counts and shapes only; frozen source SHA-256 `19a71fe3...1814`); e.g. email and hours blank in all rows, 3 featured names each match 81-409 provider rows, same-ID pairs have 0 equal names. Not independently re-run. Nothing implemented.
+- **Docs fixes:** handoff numbering, master-plan status, docs07 guard-limit wording (review B1/B11).
+- **Commands (LOCAL):** `check_repo_hygiene.py` PASS; `git diff --cached --check` exit 0; Gitleaks 8.30.1 on staged docs: no leaks. No PHP code changed, so the earlier PHP results are unchanged and were not re-run.
+- **Security/data:** only aggregate counts/vocabulary shapes read from the private local audit DB with its SELECT-capable importer account; nothing printed or committed beyond aggregates. Production untouched.
+- **Current status:** PR #38 waiting on owner billing fix and approval. P2.1 blocked on D1, D3, D4, D5, D6.
+- **Next:** owner answers decisions; then P2.1 approval, P2.2, P2.3. Hardening in #39 as capacity allows.

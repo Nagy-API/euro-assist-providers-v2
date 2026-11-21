@@ -25,14 +25,12 @@ Facts established by the recovery session: PHP 8.3.37 is available at `.tools/ph
 
 ## Exactly what to do next
 
-1. `git status --short`, `git branch --show-current`, `git log -10 --oneline`; inspect PRs/latest Actions. Never re-extract/reinitialize or overwrite existing work.
-2. Owner fixes Billing & plans; then `gh run rerun` the failed workflow and record real CI results. Await owner review of the foundation PR. No force-push or unreviewed merge.
-3. **Next implementation task:** [P2.1 #17](https://github.com/Nagy-API/euro-assist-providers-v2/issues/17) (approve canonical provider schema + legacy identity mapping), which needs the owner's remaining P1.4 decisions (#13: localized fields, type vocabulary, nullable values, featured relationship, API consumers). Then P2.2 (#18) synthetic migrations, then P2.3 (#19) auth + Admin/Editor/Viewer policies per ADR-010. Do not start P2.3 before P2.2.
-4. Open owner questions for #19: Editor delete/restore, bulk operations, featured management, audit-log visibility (default deny).
-3. Run `composer check`, `composer check-platform-reqs`, `composer audit --locked`, repository Python tests/hygiene, `npm audit --audit-level=low`, `npm run build`, and isolated MySQL suite per docs07. Historical results do not prove new edits.
-4. Continue [P1#2](https://github.com/Nagy-API/euro-assist-providers-v2/issues/2), obtain remaining parity/permission/localized-field/type/API decisions, then design P2 on synthetic data. Follow current ADRs for accepted identity/import rules.
-5. Prioritize versioned headers and tested round trip instead of copying positional legacy imports. No implicit merge/replacement or valid-row-only application.
-
+1. `git status --short`, `git branch --show-current`, `git log -10 --oneline`; inspect PR #38 and latest Actions. Never re-extract/reinitialize or overwrite existing work.
+2. **Owner:** fix GitHub Billing & plans (hosted CI cannot start any job), then `gh run rerun` the failed runs and record real results. Require green `PHP 8.3`, `PHP 8.4`, `assets` and `safe-files` before merging [PR #38](https://github.com/Nagy-API/euro-assist-providers-v2/pull/38). No merge without the owner's explicit approval; no force-push.
+3. **Owner decisions needed for P2.1 ([#17](https://github.com/Nagy-API/euro-assist-providers-v2/issues/17)):** D1 field ownership, D3 type vocabulary, D4 required/nullable, D5 featured model, D6 pairing/review policy (also D2, D7, D8 before P2.2). Evidence and recommended defaults: `docs/05_DATA_MIGRATION.md` section "P1.4 / P2.1 decision proposal". Do not implement schema before approval.
+4. Then P2.2 (#18) synthetic migrations, then P2.3 (#19) auth and Admin/Editor/Viewer policies per the final matrix (ADR-010 Amendment A, `docs/08_SECURITY.md`). Open minor item: who may run the explicit clear-a-value operation (default Admin only).
+5. Follow-up hardening from the independent PR #38 review (non-blocking, tracked in its own issue): late test-isolation guard, no MariaDB CI job, Dependabot only for Actions, hygiene checker false positives/negatives, production env guidance, `laravel/tinker` in `require`.
+6. Re-run local checks per docs07 after any edit; historical results do not prove new edits. Prioritize versioned headers and tested round trip instead of copying positional legacy imports. No implicit merge/replacement or valid-row-only application.
 ## Guardrails
 
 No production DB/credentials/deploy/DNS/Plesk changes/key rotation/cutover without separate express authorization. Never commit raw archives/dumps, .env, caches, real records/contact values, source secrets or uploaded media. Keep uncertainties explicit and update existing memory files with each meaningful commit/PR.

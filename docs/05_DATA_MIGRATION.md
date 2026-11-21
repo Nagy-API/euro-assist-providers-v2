@@ -171,3 +171,58 @@ WHERE e.phone IS NOT NULL AND TRIM(e.phone) <> '';
 ```
 
 Count the other tables with the same fixed-table `COUNT(*)` pattern. Preserve the source checksum and exact SQL predicate alongside any new aggregate result. Do not infer a value-level match from these totals. A successful V2 migration still requires deterministic staging, explicit source-ID mappings, reviewed exceptions, full row reconciliation and rollback tests; none of that has been implemented in this restore task.
+
+
+## 2026-11-21 — P1.4 / P2.1 decision proposal (AWAITING OWNER APPROVAL; nothing below is implemented)
+
+Tags: **[FACT]** verified legacy evidence; **[REC]** architectural recommendation (not a business rule); **[DECIDE]** owner decision required. Already-approved decisions (ADR-008 blank preservation and whole-file validation; ADR-009 one canonical provider per branch/service location, no auto-merge; ADR-010 roles) are not reopened. No schema in this section is approved or implemented; P2.2 (#18) must not start until the [DECIDE] items for P2.1 (#17) are answered.
+
+**Evidence basis:** static source audit (docs 03/06) plus read-only SELECT aggregates run on 2026-11-21 against the isolated restore of the frozen snapshot (source SHA-256 `19a71fe3…1814`, MariaDB `127.0.0.1:33316`, private audit DB). Only counts/shapes of vocabulary are recorded; no provider names, phones, addresses or other values. Aggregates below were produced by one session and have not been independently re-run. Legacy production was not touched.
+
+### 1. Arabic/English field ownership
+
+- **[FACT]** Two independent tables (`providers` EN 1,090 rows, `arabic_providers` AR 1,104 rows) with the same business columns; no FK, no pair ID, no relationships in models. The AR table has 49 IDs absent from EN and EN has 35 IDs absent from AR; 1,055 IDs exist in both. In same-ID pairs the name is never byte-equal (expected for two languages), the phone is byte-equal in only 240 pairs and the map URL in 0 pairs, so same-ID is not evidence of the same provider and contact values are not consistently shared across locales.
+- **[FACT]** Free text everywhere: discount is prose (e.g. a "N% to N% discount" shape in 694 EN and ~690 AR rows, plus "N% off local products and N% off imported" variants), hours/package/specialization are prose, city has 32 (EN) and 26 (AR) distinct raw values, district 304 (EN) and 419 (AR). `governorate` does not exist in the dump.
+- **[REC]** Canonical `providers` owns language-independent data: type (FK), phone(s), email, website, map URL (original text kept, parsed coordinates nullable), logo path (raw), status, timestamps. `provider_translations` (unique `provider_id`+`locale`) owns language-dependent text: name, address, city, district, specialization, hours, discount text, package text. Store discount, phone, hours and package as lossless strings; no numeric parsing, no new governorate/city lookup tables until approved.
+- **[DECIDE] D1:** Approve this split? In particular, should phone/email/website/map/logo be canonical (one value per branch) or per-locale? If a reviewed pair has different phones in EN and AR, which wins (REC: keep both raw source values in the legacy snapshot columns, canonical takes the value the reviewer selects)?
+- **[DECIDE] D2:** Keep city/district as free text per locale for launch (REC), or define a controlled list now?
+
+### 2. Provider types and category normalization
+
+- **[FACT]** `types` has 30 rows (`type_key`, `name_en`, `name_ar`). The AR table uses exactly 30 distinct raw values and every one equals a `types.name_ar` value (0 mismatches); 22 of the 30 types are used by exactly one AR row, the largest are laboratory (926), pharmacy (48), hospital (35), specialized center (19), clinic (17), physical therapy (15), radiology (13), optics (9). The EN table uses only 12 raw values: three labels carry a trailing space byte (956 rows), three are key-style lowercase (15 rows), one is an Arabic string, and the rest are display labels (e.g. plural "Laboratories", "Radiology Centers") that differ from `types.name_en` ("Laboratory", "Radiology Center"). All 3 featured rows use a `types.type_key` value. Controllers/views use hardcoded 30-key arrays, not the `types` table, and the dashboard distribution applies a separate alias map.
+- **[REC]** `provider_types` with the `types.type_key` machine keys and `provider_type_translations` (en/ar). Migrate through a reviewed, versioned mapping table (raw legacy value -> `type_key`); any raw value without a mapping goes to the review queue, never a guess. Single-valued type per provider. Keep dashboard aliasing separate from the type vocabulary.
+- **[DECIDE] D3:** Approve the 30 existing keys as the launch vocabulary (including the 22 single-use types) and the mapping of the 12 EN raw values to them (e.g. "Laboratories" -> `laboratory`)? Who may add or edit types (REC: Admin only)?
+
+### 3. Nullable and required fields
+
+- **[FACT]** Blank counts (NULL or empty after TRIM) EN/AR of 1,090/1,104: name 0/0, address 0/0, type 0/0, phone 0/23, city 1/1, district 3/1, discount 2/24, map URL 3/25, package 389/406, logo 1,080/1,077 blank, specialization 1,089/1,098 blank, website 1,089/1,102 blank, **email 1,090/1,104 and hours 1,090/1,104 blank (never populated in the snapshot)**. `created_at`/`updated_at` are NULL in 1,080/1,080 EN and 1,087/1,008 AR rows; max lengths are within the 255 columns (EN name 74, address 190; AR name 68, address 174). 1 EN row is a translation placeholder (`is_translated=0`).
+- **[REC]** Required: at least one translation per provider; per translation `name` and `address` (data has 0 blanks; ADR-008 requires create-mode validation); `type` required. Everything else nullable. Do not require legacy timestamps; add a migration batch/imported-at stamp instead. `is_translated` is not carried as business state; keep it only in the legacy snapshot columns.
+- **[DECIDE] D4:** Confirm required = {type, and name+address per translation}? May a provider exist with only one language (REC: yes)? Are `email` and `hours` retained as fields although currently unused (REC: yes, nullable, since the import template defines them)?
+
+### 4. Featured-provider relationships
+
+- **[FACT]** `top_providers` has 3 rows: standalone bilingual name, type_en/type_ar and logo; no provider ID, rank, status or date. Each featured name byte-matches many provider rows: 292 EN/291 AR, 409 EN/406 AR, 81 EN/81 AR. These are brand names that appear on hundreds of branch rows, not single providers. Featured entries are maintained independently and hard-deleted with the logo file; admin routes had no authentication in source.
+- **[REC]** Keep featured entries as their own bilingual records (name, type, logo) with no foreign key to a provider, as in legacy. Optionally add a separate, owner-approved link table to specific locations later. Add no rank, status or scheduling until the owner defines them (legacy has none).
+- **[DECIDE] D5:** Are featured entries brand-level display cards (REC) or must each point to specific provider locations? Do you want ordering/active-inactive for them now (new rule), or later? (Management is Admin-only per ADR-010.)
+
+### 5. Legacy ID mapping and uncertain matches
+
+- **[FACT]** 2,194 locale rows are not 2,194 providers. Candidate join pairs: 1,055 by ID, 259,947 by phone, 1,173 by map URL (many-to-many). Within one locale, 20 EN (41 rows) and 8 AR (16 rows) (name,address) groups repeat; 34 EN (name,phone) groups cover 926 rows, so a shared phone usually means a brand-wide call number, not identity. 194 EN and 189 AR phone values contain a separator (`,` `;` `/` or newline).
+- **[REC]** `legacy_id_map`: `source_table`, `source_id`, `locale`, nullable `provider_id`, `status` (`unpaired`, `suggested`, `approved`, `rejected`), `match_method`, `reviewer`, `reviewed_at`, `snapshot_sha256`, unique (`source_table`,`source_id`). First load creates one canonical provider per source locale row with status `unpaired`; the pairing queue only suggests pairs (signals: same ID, normalized name/transliteration, address, phone, map URL) and a human approves each. Approved merges are reversible (record both prior provider IDs). Identical numeric ID, name or phone alone never merges.
+- **[DECIDE] D6:** Approve "everything unpaired until reviewed"? Who reviews and what is the acceptable volume (up to ~1,055 ID-sharing suggestions)? Do you want a private sample review of ID-sharing pairs first to measure how reliable the ID signal is (REC) before deciding whether bulk-suggestion by ID is acceptable (still requiring approval)?
+
+### 6. Existing API consumers and compatibility
+
+- **[FACT]** Source only; no HTTP call or consumer registry. Public unauthenticated reads for providers/search/names/lat-lng/distribution/top-providers; write routes are declared without handlers; JWT login/logout has several static inconsistencies (docs 06/L-11); responses expose raw model attributes; search references the nonexistent `governorate` column; `per_page` has no maximum; two response shapes for the list endpoint.
+- **[REC]** New versioned `/api/v2` with an explicit field allowlist, bounded pagination and tests. A legacy-shaped read adapter only for consumers the owner confirms, behind contract tests. Do not reproduce unauthenticated writes, the governorate defect, unbounded results or the JWT mix. No parity claim without tests.
+- **[DECIDE] D7:** Who or what calls the V1 API today (website pages, mobile app, partners), and which endpoints must keep working unchanged? Should read endpoints stay public? Is the `governorate` filter a wanted feature? Is the dashboard "max(EN,AR) per type" distribution meant to continue, or should it count canonical providers?
+
+### 7. Migration integrity and rollback
+
+- **[FACT]** No FKs or transactions in legacy; migration files do not reproduce the dump; the frozen dump checksum and aggregate counts are recorded (above and earlier sections); logos exist for 10 EN/27 AR providers and 3 featured rows but copying media needs a handling decision.
+- **[REC]** Deterministic, idempotent loader: raw staging tables (source table/ID, row hash, snapshot SHA-256) -> reviewed transform -> canonical tables, every created row tagged with a `migration_batch_id`. Reconciliation must place every source row in exactly one state (mapped, new, needs review, rejected-with-reason) and totals must equal 1,090 + 1,104 + 3. Rollback = delete by batch ID plus reversible down-migrations; rehearse on synthetic data in CI and on the private local restore only; aggregate-only reports in Git. Production is never connected; cutover needs separate written approval.
+- **[DECIDE] D8:** Approve the reconciliation rule (no row dropped silently) and batch-delete rollback? Approve or defer copying legacy logo files into private local storage (REC: defer; use synthetic logos until legal/handling clearance)?
+
+### Decisions needed before P2.1 (#17) can be approved
+
+Required: **D1, D3, D4, D5, D6.** Needed before P2.2 data-loading and API tasks but not for the table design: D2, D7, D8. Each has a recommended default above; reply "approve REC" per item or give the alternative. Remaining unverified: actual API consumers, runtime behavior of the legacy app, true bilingual pairing quality.

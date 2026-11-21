@@ -45,6 +45,7 @@ No implicit "replace all" behavior. If full replacement is ever requested, it re
 - Run expensive export asynchronously. Stream rows/chunks, use a temp file in private storage, provide an authenticated expiring download.
 - Prevent spreadsheet formula injection for user-controlled strings beginning `=`, `+`, `-`, `@`, tabs or control characters where applicable.
 - Export respects role/permission scope, logs who generated it, and cleans up old files.
+- **Roles (ADR-010 Amendment A, owner-approved 2026-11-21):** Admin and Editor may import and export; Viewer may not. Editor bulk create/update requires whole-file validation, preview, explicit confirmation and an audit event; Editor cannot bulk delete/restore. An Editor sees only their own import/export job history and error reports (Admin sees all); other users' jobs are denied. Error reports and exports contain provider data: private storage, authenticated owner-or-Admin download, expiry/purge. Clearing a stored value (ADR-008) is Admin-only until the owner decides otherwise. Policy matrix and permission keys: `docs/08_SECURITY.md`.
 - **Round-trip invariant:** `Export -> Import(dry run)` on unchanged data must yield zero unintended changes or mismatched columns.
 
 ### Non-negotiable automated tests
@@ -64,6 +65,10 @@ No implicit "replace all" behavior. If full replacement is ever requested, it re
 | Formula-like string in export | Preserved as text and not executable formula |
 | Export selected/filtered | Exactly requested IDs and locale |
 | Export -> Import(dry run) | No unintended changes |
-| Viewer attempts import/export | Role policy enforced |
+| Viewer attempts import/export | Role policy enforced; denied, no job created |
+| Editor imports/exports | Allowed; bulk apply requires validated, previewed and confirmed job; audit event written |
+| Editor opens another user's job or error report | Denied consistently; Admin can open it |
+| Editor attempts bulk delete/restore or explicit clear-value operation | Denied |
+| Bulk apply without valid confirmed preview | Rejected, zero canonical writes |
 
 **Definition of Done:** tests and benchmarks have recorded actual data, machine specs and results in a PR, not just an assertion that processing is "optimized".

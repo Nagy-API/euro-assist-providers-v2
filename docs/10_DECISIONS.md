@@ -101,6 +101,28 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 
 **Enforcement rule:** Permissions are enforced server-side (policies/gates/middleware on every route, Livewire action, queue-dispatching action and download endpoint). Hiding UI controls is never sufficient. Anything not explicitly granted is denied.
 
-**Not yet decided (default deny until the owner decides):** whether Editor may delete or restore providers, apply bulk operations, manage featured/top providers, or view the audit log. Recorded as open questions on #19; do not grant them implicitly.
+**Previously undecided items** (Editor delete/restore, bulk operations, featured management, audit log) were resolved by the owner later the same day; see "Amendment A" below, which is now authoritative.
 
 **Consequences:** P2.3 must ship Admin/Editor/Viewer policy tests plus negative tests (each role against each protected action and each administrative route, including unauthenticated access). P4 import/export and P3 provider features inherit the matrix. Revisit only with an explicit owner-approved change recorded as a superseding ADR.
+
+
+### ADR-010 Amendment A — Final Editor permissions
+
+**Date:** 2026-11-21 | **Status:** Accepted explicitly by King (owner). Supersedes the "not yet decided" list in the original ADR-010 text; the three roles and the server-side/default-deny rules are unchanged.
+
+**Editor:**
+
+- Create and edit providers: ALLOW.
+- Delete and restore providers: DENY.
+- Bulk create/update: ALLOW, but only through validation, preview, explicit confirmation and audit logging (no path may skip any of the four).
+- Bulk delete/restore: DENY.
+- Manage featured/top providers: DENY.
+- Import/export Excel: ALLOW, subject to the existing data-integrity safeguards (ADR-008 whole-file validation and blank-cell preservation, checksum/idempotency, private storage).
+- View global audit logs: DENY.
+- View own import/export job history and error reports: ALLOW, with access controls (own jobs only; other users' jobs denied).
+
+**Admin** retains full authorized access, including all users' job history/reports and the global audit log. **Viewer** remains strictly read-only and has no import/export job history because it cannot run jobs.
+
+**Consequences / test obligations:** the matrix in `docs/08_SECURITY.md` is now complete (no TBD cells) and each cell maps to a named permission and a policy test. Required negative tests: Editor cannot delete, restore, bulk-delete, bulk-restore, manage featured providers, view the global audit log, manage users/roles/settings, or open another user's import/export job or error report; Viewer cannot reach any write, import, export, job, audit or settings action; a bulk write that is unvalidated, unpreviewed or unconfirmed is rejected; every bulk write and import application writes an audit event. Error reports contain provider data, so they are stored privately, served only through authenticated authorization (owner or Admin), and expire per the retention policy in `docs/04_IMPORT_EXPORT_SPEC.md`.
+
+**Remaining minor question (not invented here):** ADR-008 requires an explicit separate operation to clear an existing value. Which role may perform that clearing operation is not stated by the owner; until decided it is available to Admin only (default deny). Tracked on #19.

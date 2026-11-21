@@ -6,12 +6,12 @@ Statuses: `TODO` (not started), `IN PROGRESS`, `BLOCKED`, `DONE` (must have evid
 
 - [x] Record scope, constraints, technical findings and risk register in local docs.
 - [x] Build a clean, private-data-free Git seed with guidance for future chats.
-- [ ] Create private GitHub remote, push, verify privacy and first commit.
-- [ ] Create milestone/issue backlog and PR review workflow.
+- [x] Create private GitHub remote, push, verify privacy and first commit (verified 2026-11-21; see docs/14).
+- [x] Create milestone/issue backlog (7 milestones, issues #1-#37). PR review workflow is operational only; hosted CI has not executed (billing blocker).
 
 **Exit criteria:** Private GitHub repo accessible, every required doc present, no secrets or real data, repeatable contribution workflow.
 
-## P1 — Baseline audit, requirements and reproducible local environment (TODO)
+## P1 — Baseline audit, requirements and reproducible local environment (IN PROGRESS; unchecked items below may be stale, see docs/01_CURRENT_STATUS.md and issues #10-#16)
 
 - [ ] Inventory every screen, action, filter, upload, export, and API contract in old code.
 - [ ] Confirm which actions must be preserved and which can be intentionally redesigned.
@@ -27,7 +27,7 @@ Statuses: `TODO` (not started), `IN PROGRESS`, `BLOCKED`, `DONE` (must have evid
 
 - [ ] Finalize providers, translations, localized addresses, provider types, featured entries, users, roles, import/export operations, audit events, legacy mappings.
 - [ ] Implement migrations, factories and dummy seeders (never real dump).
-- [ ] Implement login/logout, authorization policies, admin/editor/viewer roles, CSRF and rate limiting.
+- [ ] Implement login/logout, authorization policies, admin/editor/viewer roles (final matrix: ADR-010 Amendment A, `docs/08_SECURITY.md`), CSRF and rate limiting.
 - [ ] Shared service layer with versioned read API; pagination, filtering, sorting.
 - [ ] Logging, request correlation IDs, exception reporting and safe error pages.
 
