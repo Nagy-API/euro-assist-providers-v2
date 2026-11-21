@@ -18,9 +18,10 @@ No implicit "replace all" behavior. If full replacement is ever requested, it re
 - Identify encodings, reject macros/executables/unexpected extensions and oversized files; validate MIME/content and zip bomb limits.
 - Trim/normalize values carefully: preserve phone numbers as **strings** (leading zeros, multiple numbers); preserve free-text discount/working hours until rules are agreed.
 - Locale-specific columns (`name`, `address`, `specialization`) must map to the correct `provider_translations` record.
-- Missing/blank fields have explicit semantics: absent column = no change; blank cell must have an agreed rule (do not silently erase).
+- **Owner-approved 2026-11-21:** absent column = no change; an empty cell in an update also preserves the existing value. Clearing an existing value requires a separate explicit operation, never an inferred blank-cell deletion. Create-mode required fields must still pass validation.
 - Duplicate/matched providers must have stable identifiers; no automatic same-name match without confidence review.
 - A user must see counts and differences for inserts, updates, duplicates, rejected rows and warnings before execution.
+- **Owner-approved 2026-11-21:** any row-level validation errors block application of the entire file until corrected and revalidated. Preview/error reports remain available. Applying only the valid rows is not an available default or implicit fallback.
 
 ### Processing architecture
 
@@ -31,6 +32,7 @@ No implicit "replace all" behavior. If full replacement is ever requested, it re
 - Store a file SHA-256 checksum and idempotency token. Duplicate submission should not apply the same side effect twice.
 - Database transaction per **controlled chunk**, not an unbounded multi-hour transaction. Never promise global atomicity without designing a compensating strategy.
 - Explicitly define partial commit policy and recovery: either rollback from checkpoints or deterministic resume with verified idempotency.
+- Whole-file validation must finish before confirmation/application. This validation gate does not promise a single global database transaction: an infrastructure interruption after application starts may leave committed chunks. Show that state explicitly and resume deterministically from checkpoints without duplicate effects. Never label an interrupted partially applied job complete.
 - Retry safe transient failures only. Row-level validation failures should not crash the worker.
 - Log job ID, row numbers, error category and counts; never write full raw provider PII to public logs.
 - Time limits, memory, file row caps and concurrency caps must be configurable; benchmarks determine defaults.
@@ -54,7 +56,8 @@ No implicit "replace all" behavior. If full replacement is ever requested, it re
 | Arabic+English/mixed data | Correct `locale` and RTL-safe values |
 | Re-import same file twice | No duplicate records or unexpected mutation |
 | Update with unknown legacy ID | Rejected, not silently created |
-| Partial invalid rows | Exact rejects/commits consistent with selected policy |
+| Partial invalid rows | Preview lists rejects; entire file blocked from application, zero canonical changes |
+| Empty update cells / absent columns | Existing values preserved; clearing requires a separate explicit operation |
 | Worker interrupted mid-batch | Safe resumability, correct total counts |
 | Two overlapping imports | Locking/conflict handling prevents lost updates |
 | Large synthetic file | Bounded peak memory, responsive UI |

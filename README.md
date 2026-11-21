@@ -1,8 +1,8 @@
 # Euro Assist Providers System V2
 
-> **Status: planning / documentation baseline — application source has NOT been implemented.**
-> **Owner:** King | **Repository:** `Nagy-API/euro-assist-providers-v2` (private intended)
-> **Last factual baseline:** 2026-11-08.
+> **Status: local Laravel foundation and legacy audit in progress; business features are not implemented.**
+> **Owner:** King | **Repository:** [Nagy-API/euro-assist-providers-v2](https://github.com/Nagy-API/euro-assist-providers-v2) — verified private on 2026-11-21.
+> **Current evidence and remaining gates:** [`docs/01_CURRENT_STATUS.md`](docs/01_CURRENT_STATUS.md).
 
 A clean, maintainable replacement for the existing Euro Assist medical-provider administration platform. The public production site will remain untouched while V2 is built locally, tested independently, and eventually deployed via a controlled cutover.
 
@@ -25,13 +25,15 @@ A clean, maintainable replacement for the existing Euro Assist medical-provider 
 - No actual company data, credentials, `.env`, SQL dumps, provider contacts, production exports, or server archives in Git, even in a private repository.
 - No feature is marked completed until code, tests/evidence, documentation and a commit exist.
 
-## Proposed stack (decision subject to compatibility smoke test)
+## Foundation stack
 
-Laravel 13 / PHP >= 8.3; Livewire + Alpine.js; Tailwind CSS; MySQL/MariaDB; database-backed queues; Plesk-compatible scheduled tasks / queue workers. This is a design target, **not a claim that it has been installed or deployed**.
+Laravel 13 / PHP >= 8.3; Livewire 4 with its bundled Alpine.js; Tailwind CSS 4 and Vite; MySQL/MariaDB; database-backed queues. Native local setup and verification commands are in [`docs/07_LOCAL_SETUP.md`](docs/07_LOCAL_SETUP.md). Plesk workers/scheduled tasks remain a staging dependency; no hosting compatibility or production readiness is claimed.
 
 ## Repository state
 
-This initial package contains a **documentation-first Git scaffold**. Laravel application source, test suite and deployment artifacts are pending Phase 1; they should be added incrementally on branches and merged through PRs. Never copy the legacy project wholesale into this repository.
+The original documentation-first seed history is preserved. The working foundation adds `app/`, `bootstrap/`, `config/`, framework-only `database/` migrations, `public/`, `resources/`, `routes/`, `storage/` markers, PHPUnit tests, repository regression tests and CI. The home page is the upstream Laravel welcome page, **not a completed provider dashboard**. No login/roles, provider CRUD, business schema, migration pipeline, API replacement or spreadsheet subsystem is delivered yet.
+
+The source-based audit lives in [`docs/03_LEGACY_AUDIT.md`](docs/03_LEGACY_AUDIT.md), the sanitized schema/restore evidence in [`docs/05_DATA_MIGRATION.md`](docs/05_DATA_MIGRATION.md), and API source contracts in [`docs/06_API_CONTRACT.md`](docs/06_API_CONTRACT.md). Private raw inputs, tooling and credentials stay outside this repository. Follow the [phased issue backlog](https://github.com/Nagy-API/euro-assist-providers-v2/issues) and [`docs/02_MASTER_PLAN.md`](docs/02_MASTER_PLAN.md).
 
 ## Quick start for a new conversation
 

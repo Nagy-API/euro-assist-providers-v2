@@ -51,3 +51,56 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 **Decision:** Legacy dump/source secrets/real provider records and customer media stay out of all Git commits, even if repository is private. Use only schema notes and synthetic fixtures.
 
 **Why:** Security and privacy; private repositories do not make copied credentials safe.
+
+## ADR-007 — Native isolated runtime and PHP compatibility floor
+
+**Date:** 2026-11-21 | **Status:** Accepted implementation of the existing target; application verification in progress.
+
+**Context:** Git, Python and Node were available; PHP and Composer were absent from PATH and common installation directories. Official Laravel 13 documentation and the upstream skeleton require PHP >=8.3.
+
+**Decision:** Use official portable PHP 8.4.28 and Composer 2.11.2 outside the repository, with per-command PATH/configuration and verified SHA-256 downloads. Keep Composer's target PHP platform at 8.3.0 so a development machine on 8.4 cannot silently resolve dependencies requiring 8.4. Use Livewire's bundled Alpine instead of loading it twice. Provision a separate portable MariaDB 11.4.14 on loopback with database-scoped local, test and audit accounts; install no Windows service and make no production connection.
+
+**Alternatives:** globally install a development stack; require Docker; use only SQLite. **Consequences:** no global environment changes or Docker dependency; SQLite tests and MariaDB evidence must be reported separately. The PHP 8.3 dependency floor is not proof that a real PHP 8.3 runtime or Plesk passed; CI/staging must establish that evidence.
+
+**Sources:** [Laravel 13 requirements](https://laravel.com/framework/docs/deployment), [official PHP Windows metadata](https://downloads.php.net/~windows/releases/releases.json), [Composer downloads](https://getcomposer.org/download/), [Livewire installation](https://livewire.laravel.com/docs/4.x/installation), [official MariaDB metadata](https://downloads.mariadb.org/rest-api/mariadb/11.4.14/). Revisit on failed compatibility tests or verified hosting constraints.
+
+## ADR-008 — Non-destructive blank updates and whole-file validation
+
+**Date:** 2026-11-21 | **Status:** Accepted explicitly by King in this session.
+
+**Context:** Spreadsheet updates can accidentally clear existing provider information, and valid-row-only imports create a business decision about incomplete data. The owner was presented both choices before implementation.
+
+**Decision:** An absent column or empty update cell preserves the current value. Clearing data requires a separate explicit operation. Any validation error blocks application of the entire file until corrected and revalidated; do not apply a valid subset. Required values in create mode still require validation.
+
+**Alternatives rejected:** empty cells implicitly clear data; apply valid rows while rejecting invalid rows. **Consequences:** preview/error reports must show all rejects without canonical writes. Once a fully validated file starts applying, bounded transactional chunks and deterministic checkpoints remain necessary for infrastructure interruptions. This is a whole-file validation gate, not a promise of global transaction atomicity. Interrupted partially applied jobs must remain visibly incomplete and resumable.
+
+**Tests required:** blank/absent update fields preserve data; explicit clearing is distinct; one invalid row prevents all canonical writes; no apply action bypasses validation; interruption/retry does not duplicate committed effects. See `docs/04_IMPORT_EXPORT_SPEC.md` and GitHub tasks P4.1–P4.5. Revisit only with an explicit owner-approved contract change.
+
+## ADR-009 — Provider identity represents a service location
+
+**Date:** 2026-11-21 | **Status:** Accepted explicitly by King; detailed schema still pending.
+
+**Context:** The isolated snapshot contains repeated names/contact values and no bilingual FK. Phone equality yields 259,947 candidate join pairs, not unique matches. A corporate brand can operate multiple branches.
+
+**Decision:** Each distinct branch/service location has its own canonical provider identity with Arabic/English translations. Preserve branch distinctions; uncertain legacy bilingual associations require manual review. Numeric ID equality, name equality and shared phone alone never authorize a merge.
+
+**Alternative rejected for the initial model:** a corporate parent as the primary entity with a separately managed branch hierarchy. **Consequences:** no forced corporate grouping, no automatic uncertain deduplication, and explicit source-table/source-ID mapping. Translation-field ownership, type vocabulary, nullable values, featured relationships and detailed migrations still need review; this decision does not approve an entire schema or mark ADR-005 fully implemented. Revisit only on evidence that a corporate hierarchy is required and a separately approved migration plan.
+
+
+## ADR-010 — Three-role authorization model (Admin, Editor, Viewer)
+
+**Date:** 2026-11-21 | **Status:** Accepted explicitly by King (owner); implementation pending in P2.3 ([#19](https://github.com/Nagy-API/euro-assist-providers-v2/issues/19)).
+
+**Context:** The frozen legacy application never enforced `users.role` (audit finding L-12: session presence only, empty policy map). V2 needs an explicit permission matrix enforced on the server.
+
+**Decision:** Exactly three roles. Matrix (details and default-deny rules in `docs/08_SECURITY.md`):
+
+- **Admin:** full administration: manage users and roles, manage settings, full provider management, import and export, and every other authorized administrative operation.
+- **Editor:** view provider data; create and edit providers; import and export Excel; manage provider records within approved permissions. Cannot manage users, roles or critical system settings.
+- **Viewer:** read-only: dashboard and permitted provider information. Cannot create, edit, delete, import, export or change settings.
+
+**Enforcement rule:** Permissions are enforced server-side (policies/gates/middleware on every route, Livewire action, queue-dispatching action and download endpoint). Hiding UI controls is never sufficient. Anything not explicitly granted is denied.
+
+**Not yet decided (default deny until the owner decides):** whether Editor may delete or restore providers, apply bulk operations, manage featured/top providers, or view the audit log. Recorded as open questions on #19; do not grant them implicitly.
+
+**Consequences:** P2.3 must ship Admin/Editor/Viewer policy tests plus negative tests (each role against each protected action and each administrative route, including unauthenticated access). P4 import/export and P3 provider features inherit the matrix. Revisit only with an explicit owner-approved change recorded as a superseding ADR.
