@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 /**
  * @property array<string, mixed>|null $signals
  * @property Carbon|null $reviewed_at
+ * @property list<array{action: string, by: int, at: string, reason: string}>|null $review_history
  */
 class LegacyPairSuggestion extends Model
 {
@@ -24,7 +25,7 @@ class LegacyPairSuggestion extends Model
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['signals' => 'array', 'reviewed_at' => 'datetime'];
+        return ['signals' => 'array', 'reviewed_at' => 'datetime', 'review_history' => 'array'];
     }
 
     /** @return BelongsTo<LegacyIdMap, $this> */

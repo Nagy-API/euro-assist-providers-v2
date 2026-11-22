@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\FeaturedProvider;
+use App\Models\LegacyIdMap;
+use App\Models\LegacyPairSuggestion;
+use App\Models\LegacyStagingRow;
 use App\Models\Provider;
 use App\Models\ProviderType;
 use Illuminate\Database\Eloquent\Collection;
@@ -125,5 +128,21 @@ class DashboardStats
             ->orderByDesc('updated_at')->orderByDesc('id')
             ->limit(min($limit, self::RECENT_LIMIT))
             ->get();
+    }
+
+    /**
+     * Legacy migration review backlog (counts only). Reads the local migration bookkeeping tables,
+     * never the legacy source.
+     *
+     * @return array{unpaired: int, suggestions: int, held: int, provisional: int}
+     */
+    public function legacyBacklog(): array
+    {
+        return [
+            'unpaired' => LegacyIdMap::query()->where('status', LegacyIdMap::STATUS_UNPAIRED)->whereNotNull('provider_id')->count(),
+            'suggestions' => LegacyPairSuggestion::query()->where('status', LegacyPairSuggestion::STATUS_SUGGESTED)->count(),
+            'held' => LegacyStagingRow::query()->whereIn('state', [LegacyStagingRow::STATE_NEEDS_REVIEW, LegacyStagingRow::STATE_REJECTED])->count(),
+            'provisional' => LegacyStagingRow::query()->where('state', LegacyStagingRow::STATE_MAPPED)->where('reason', 'provisional_type')->count(),
+        ];
     }
 }

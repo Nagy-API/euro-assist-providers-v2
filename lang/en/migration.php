@@ -33,4 +33,12 @@ return [
         'undone' => 'The approval was undone and the providers were separated again.',
         'refused' => 'The action could not be completed. The records may have changed; reload the page.',
     ],
+    'reason_label' => 'Reason for your decision (required, kept with the review history)',
+    'reason_required' => 'Enter a reason of 3 to 500 characters before deciding.',
+    'last_decision' => 'Last decision',
+    'held_title' => 'Source rows held for review',
+    'held_intro' => 'These legacy rows were NOT turned into providers. Their original values are kept unchanged in the migration staging data until an owner decides.',
+    'held_empty' => 'No source rows are held.',
+    'held_columns' => ['table' => 'Source table', 'id' => 'Source id', 'locale' => 'Locale', 'state' => 'State', 'reason' => 'Reason code'],
+    'provisional_notice' => ':count migrated rows use a PROVISIONAL type mapping (plural/synonym label, owner approval of D3 pending).',
 ];

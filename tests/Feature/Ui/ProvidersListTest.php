@@ -78,7 +78,7 @@ class ProvidersListTest extends UiTestCase
         $this->assertSame(['In Cairo'], $this->names($c->set('status', 'active')));
     }
 
-    public function test_city_filter_matches_the_display_locale_translation(): void
+    public function test_city_filter_is_an_exact_match_in_any_translation(): void
     {
         $this->provider(en: ['name' => 'Cairo Place', 'city' => 'Cairo'], ar: ['city' => 'القاهرة']);
 
@@ -86,7 +86,9 @@ class ProvidersListTest extends UiTestCase
         $c = Livewire::actingAs($this->viewer())->test(Index::class);
 
         $this->assertSame(['Cairo Place'], $this->names($c->set('city', 'القاهرة')));
-        $this->assertSame([], $this->names($c->set('city', 'Cairo')), 'English city text must not match in the Arabic locale');
+        // Exact match in any translation (single-language migrated records must stay findable).
+        $this->assertSame(['Cairo Place'], $this->names($c->set('city', 'Cairo')));
+        $this->assertSame([], $this->names($c->set('city', 'Cair')), 'exact match only, not a substring');
     }
 
     public function test_deleted_filter_is_admin_only(): void
@@ -466,5 +468,22 @@ class ProvidersListTest extends UiTestCase
             ->test(Index::class)
             ->assertSet('search', 'Alpha')->assertSet('type', (string) $type->id)->assertSet('status', 'inactive')
             ->assertSet('sort', 'name')->assertSet('dir', 'asc');
+    }
+
+    public function test_city_filter_finds_single_language_records_from_either_interface_language(): void
+    {
+        $type = $this->type();
+        $ar = Provider::factory()->create(['provider_type_id' => $type->id]);
+        $ar->translations()->create(['locale' => 'ar', 'name' => 'معمل تجريبي', 'address' => 'شارع', 'city' => 'القاهرة الكبري']);
+        $en = Provider::factory()->create(['provider_type_id' => $type->id]);
+        $en->translations()->create(['locale' => 'en', 'name' => 'Test Lab', 'address' => 'Road', 'city' => 'Great Cairo']);
+
+        app()->setLocale('en');
+        $c = Livewire::actingAs($this->viewer())->test(Index::class)->set('city', 'القاهرة الكبري');
+        $c->assertSee('معمل تجريبي')->assertDontSee('Test Lab');
+
+        app()->setLocale('ar');
+        $c = Livewire::actingAs($this->viewer())->test(Index::class)->set('city', 'Great Cairo');
+        $c->assertSee('Test Lab')->assertDontSee('معمل تجريبي');
     }
 }

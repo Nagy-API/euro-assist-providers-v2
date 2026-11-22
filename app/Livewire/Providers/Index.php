@@ -425,8 +425,10 @@ class Index extends Component
 
         $query->search($this->searchTerm())
             ->ofType($this->typeId())
-            ->whereTranslated('city', $this->city, $locale)
-            ->whereTranslated('district', $this->district, $locale);
+            // Exact match in ANY translation: migrated records are often single-language (unpaired),
+            // so an Arabic city must find Arabic-only providers from the English interface too.
+            ->whereTranslated('city', $this->city)
+            ->whereTranslated('district', $this->district);
 
         match ($this->statusValue()) {
             'active' => $query->where('providers.is_active', true),
@@ -482,10 +484,10 @@ class Index extends Component
      */
     private function suggestions(string $column): array
     {
+        // Values of both languages, current interface language first (single-language records exist).
         return ProviderTranslation::query()
-            ->where('locale', app()->getLocale())
             ->whereNotNull($column)->where($column, '<>', '')
-            ->distinct()->orderBy($column)->limit(300)->pluck($column)->all();
+            ->distinct()->orderBy($column)->limit(600)->pluck($column)->all();
     }
 
     public function render(): View

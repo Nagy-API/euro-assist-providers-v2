@@ -5,6 +5,7 @@ namespace App\Livewire\Migration;
 use App\Enums\Permission;
 use App\Livewire\Concerns\HasNotices;
 use App\Models\LegacyPairSuggestion;
+use App\Models\LegacyStagingRow;
 use App\Models\User;
 use App\Services\Legacy\LegacyException;
 use App\Services\Legacy\PairReviewService;
@@ -28,6 +29,9 @@ class ReviewIndex extends Component
 
     public const STATUSES = ['suggested', 'approved', 'rejected'];
 
+    /** @var array<int|string, mixed> suggestion id => reviewer's reason (required for every decision) */
+    public array $reasons = [];
+
     #[Url(except: 'suggested')]
     public string $status = 'suggested';
 
@@ -46,29 +50,44 @@ class ReviewIndex extends Component
 
     public function approve(int $id, PairReviewService $service): void
     {
-        $this->run($id, fn (User $user, LegacyPairSuggestion $s) => $service->approve($user, $s), 'approved');
+        $this->run($id, fn (User $user, LegacyPairSuggestion $s) => $service->approve($user, $s, $this->reasonFor($id)), 'approved');
     }
 
     public function reject(int $id, PairReviewService $service): void
     {
-        $this->run($id, fn (User $user, LegacyPairSuggestion $s) => $service->reject($user, $s), 'rejected');
+        $this->run($id, fn (User $user, LegacyPairSuggestion $s) => $service->reject($user, $s, $this->reasonFor($id)), 'rejected');
     }
 
     public function undo(int $id, PairReviewService $service): void
     {
-        $this->run($id, fn (User $user, LegacyPairSuggestion $s) => $service->undo($user, $s), 'undone');
+        $this->run($id, fn (User $user, LegacyPairSuggestion $s) => $service->undo($user, $s, $this->reasonFor($id)), 'undone');
+    }
+
+    private function reasonFor(int $id): string
+    {
+        $value = $this->reasons[$id] ?? '';
+
+        return is_string($value) ? $value : '';
     }
 
     /** @param callable(User, LegacyPairSuggestion): void $action */
     private function run(int $id, callable $action, string $outcome): void
     {
         $this->authorizeReview();
+        $this->resetErrorBag('reasons.'.$id);
+        $reason = trim($this->reasonFor($id));
+        if (mb_strlen($reason) < 3 || mb_strlen($reason) > 500) {
+            $this->addError('reasons.'.$id, __('migration.reason_required'));
+
+            return;
+        }
         /** @var User $user */
         $user = auth()->user();
         $suggestion = LegacyPairSuggestion::query()->findOrFail($id);
 
         try {
             $action($user, $suggestion);
+            unset($this->reasons[$id]);
             $this->notify(__('migration.notices.'.$outcome));
         } catch (LegacyException) {
             // Refusal reasons are fixed service messages; show a generic, translated notice.
@@ -111,6 +130,11 @@ class ReviewIndex extends Component
             'suggestions' => $suggestions,
             'locale' => $locale,
             'counts' => LegacyPairSuggestion::query()->selectRaw('status, count(*) as c')->groupBy('status')->pluck('c', 'status')->all(),
+            // Source rows not turned into canonical records: visible so nothing is silently left behind.
+            'held' => LegacyStagingRow::query()->whereIn('state', [LegacyStagingRow::STATE_NEEDS_REVIEW, LegacyStagingRow::STATE_REJECTED])
+                ->orderBy('source_table')->orderBy('source_id')->limit(500)
+                ->get(['source_table', 'source_id', 'source_locale', 'state', 'reason']),
+            'provisionalCount' => LegacyStagingRow::query()->where('state', LegacyStagingRow::STATE_MAPPED)->where('reason', 'provisional_type')->count(),
         ])->title(__('migration.title'));
     }
 }

@@ -64,7 +64,7 @@ class ReviewTest extends LegacyTestCase
         $arId = $right->provider_id;
         $arTranslationId = ProviderTranslation::query()->where('provider_id', $arId)->value('id');
 
-        $this->service()->approve($this->admin, $s);
+        $this->service()->approve($this->admin, $s, 'Reviewed in test');
 
         $en = Provider::query()->with('translations')->findOrFail($enId);
         $this->assertEqualsCanonicalizing(['ar', 'en'], $en->translations->pluck('locale')->all());
@@ -99,7 +99,7 @@ class ReviewTest extends LegacyTestCase
         $enId = $s->left->provider_id;
         $arId = $s->right->provider_id;
 
-        $this->service()->approve($this->admin, $s);
+        $this->service()->approve($this->admin, $s, 'Reviewed in test');
 
         $en = Provider::query()->findOrFail($enId);
         $this->assertSame(['01000000001', 'https://m.test/?q=30,31', 'https://en.example.test'], [$en->phone, $en->map_url, $en->website], 'canonical takes the English provider values');
@@ -123,10 +123,10 @@ class ReviewTest extends LegacyTestCase
         $s = $this->pair(['phone' => '01000000001'], ['phone' => '0100 000 0001', 'map_url' => 'https://other.test/?q=1,2', 'website' => 'https://ar.example.test']);
         $before = $this->state();
 
-        $this->service()->approve($this->admin, $s);
+        $this->service()->approve($this->admin, $s, 'Reviewed in test');
         $this->assertNotSame($before, $this->state());
 
-        $this->service()->undo($this->admin, $s->fresh());
+        $this->service()->undo($this->admin, $s->fresh(), 'Reviewed in test');
 
         $this->assertSame($before, $this->state(), 'providers, translations and id maps are exactly as before');
         $s->refresh();
@@ -137,7 +137,7 @@ class ReviewTest extends LegacyTestCase
         $this->assertSame(2, Provider::query()->count());
 
         // and the pair can be approved again afterwards
-        $this->service()->approve($this->admin, $s->fresh());
+        $this->service()->approve($this->admin, $s->fresh(), 'Reviewed in test');
         $this->assertSame(1, Provider::query()->count());
     }
 
@@ -146,7 +146,7 @@ class ReviewTest extends LegacyTestCase
         $s = $this->pair();
         $before = $this->state();
 
-        $this->service()->reject($this->admin, $s);
+        $this->service()->reject($this->admin, $s, 'Reviewed in test');
 
         $this->assertSame('rejected', $s->fresh()->status);
         $this->assertSame($this->admin->id, $s->fresh()->reviewed_by);
@@ -154,7 +154,7 @@ class ReviewTest extends LegacyTestCase
         $this->assertSame(['unpaired'], LegacyIdMap::query()->pluck('status')->unique()->all());
 
         $this->expectException(LegacyException::class); // cannot be approved after rejection
-        $this->service()->approve($this->admin, $s->fresh());
+        $this->service()->approve($this->admin, $s->fresh(), 'Reviewed in test');
     }
 
     public function test_a_suggestion_cannot_be_reviewed_twice_and_unapproved_pairs_cannot_be_undone(): void
@@ -162,16 +162,16 @@ class ReviewTest extends LegacyTestCase
         $s = $this->pair();
 
         try {
-            $this->service()->undo($this->admin, $s);
+            $this->service()->undo($this->admin, $s, 'Reviewed in test');
             $this->fail('undo of a pending suggestion must be refused');
         } catch (LegacyException) {
         }
 
-        $this->service()->approve($this->admin, $s);
+        $this->service()->approve($this->admin, $s, 'Reviewed in test');
         $snapshot = $this->state();
 
         try {
-            $this->service()->approve($this->admin, $s->fresh());
+            $this->service()->approve($this->admin, $s->fresh(), 'Reviewed in test');
             $this->fail('second approve must be refused');
         } catch (LegacyException) {
         }
@@ -186,7 +186,7 @@ class ReviewTest extends LegacyTestCase
 
         $this->expectException(LegacyException::class);
         try {
-            $this->service()->approve($this->admin, $s);
+            $this->service()->approve($this->admin, $s, 'Reviewed in test');
         } finally {
             $this->assertSame($snapshot, $this->state());
             $this->assertSame('suggested', $s->fresh()->status);
@@ -196,11 +196,11 @@ class ReviewTest extends LegacyTestCase
     public function test_undo_is_refused_when_the_merged_translation_was_removed_after_approval(): void
     {
         $s = $this->pair();
-        $this->service()->approve($this->admin, $s);
+        $this->service()->approve($this->admin, $s, 'Reviewed in test');
         ProviderTranslation::query()->where('locale', 'ar')->delete();
 
         $this->expectException(LegacyException::class);
-        $this->service()->undo($this->admin, $s->fresh());
+        $this->service()->undo($this->admin, $s->fresh(), 'Reviewed in test');
     }
 
     public function test_only_admins_may_review_viewers_and_editors_and_inactive_admins_are_denied(): void
@@ -211,7 +211,7 @@ class ReviewTest extends LegacyTestCase
         foreach ([User::factory()->viewer()->create(), User::factory()->editor()->create(), User::factory()->admin()->inactive()->create()] as $user) {
             foreach (['approve', 'reject', 'undo'] as $action) {
                 try {
-                    $this->service()->{$action}($user, $s);
+                    $this->service()->{$action}($user, $s, 'A valid reason');
                     $this->fail("{$action} must be denied for {$user->role?->value}");
                 } catch (AuthorizationException) {
                 }
@@ -266,15 +266,22 @@ class ReviewTest extends LegacyTestCase
             ->assertSee('Pair Clinic English')->assertSee('عيادة الزوج العربية')
             ->assertSee('Same phone number')->assertSee('Same legacy id');
 
-        $component->call('approve', $s->id)->assertHasNoErrors();
+        // A decision without a reason is refused and changes nothing.
+        $component->call('approve', $s->id)->assertHasErrors(['reasons.'.$s->id]);
+        $this->assertSame('suggested', $s->fresh()->status);
+
+        $component->set('reasons.'.$s->id, 'Same branch: phone and map link agree')->call('approve', $s->id)->assertHasNoErrors();
+        $this->assertSame('Same branch: phone and map link agree', $s->fresh()->review_history[0]['reason']);
+        $this->assertSame($this->admin->id, $s->fresh()->review_history[0]['by']);
         $this->assertSame('approved', $s->fresh()->status);
         $this->assertSame(['approved', 'suggested'], [$s->fresh()->status, $other->fresh()->status]);
 
-        $component->set('status', 'approved')->assertSee('Undo approval')->call('undo', $s->id);
+        $component->set('status', 'approved')->assertSee('Undo approval')->set('reasons.'.$s->id, 'Approved by mistake')->call('undo', $s->id);
         $this->assertSame('suggested', $s->fresh()->status);
 
-        $component->set('status', 'suggested')->call('reject', $other->id);
+        $component->set('status', 'suggested')->set('reasons.'.$other->id, 'Different branches')->call('reject', $other->id);
         $this->assertSame('rejected', $other->fresh()->status);
+        $this->assertSame(['approved', 'undone'], array_column($s->fresh()->review_history, 'action'));
 
         $actions = AuditEvent::query()->where('action', 'like', 'migration.pair.%')->orderBy('id')->pluck('action')->all();
         $this->assertSame(['migration.pair.approved', 'migration.pair.undone', 'migration.pair.rejected'], $actions);
@@ -307,9 +314,9 @@ class ReviewTest extends LegacyTestCase
     {
         $s = $this->pair(['phone' => '01234567890', 'name' => 'Very Identifiable Name'], ['phone' => '01098765432']);
 
-        $this->service()->approve($this->admin, $s);
-        $this->service()->undo($this->admin, $s->fresh());
-        $this->service()->reject($this->admin, $s->fresh());
+        $this->service()->approve($this->admin, $s, 'Reviewed in test');
+        $this->service()->undo($this->admin, $s->fresh(), 'Reviewed in test');
+        $this->service()->reject($this->admin, $s->fresh(), 'Reviewed in test');
 
         $events = AuditEvent::query()->where('action', 'like', 'migration.pair.%')->get();
         $this->assertCount(3, $events);

@@ -33,11 +33,12 @@ class PairReviewService
 
     public function __construct(private readonly AuditLogger $audit) {}
 
-    public function approve(User $actor, LegacyPairSuggestion $suggestion): void
+    public function approve(User $actor, LegacyPairSuggestion $suggestion, string $reason): void
     {
         $this->authorize($actor);
+        $reason = $this->reason($reason);
 
-        $summary = DB::transaction(function () use ($actor, $suggestion) {
+        $summary = DB::transaction(function () use ($actor, $suggestion, $reason) {
             $s = LegacyPairSuggestion::query()->lockForUpdate()->findOrFail($suggestion->getKey());
             if ($s->status !== LegacyPairSuggestion::STATUS_SUGGESTED) {
                 throw new LegacyException('This suggestion has already been reviewed.');
@@ -100,7 +101,7 @@ class PairReviewService
                     'discarded_ar_values' => $discarded,
                 ],
             ])->save();
-            $s->forceFill(['status' => LegacyPairSuggestion::STATUS_APPROVED, 'reviewed_by' => $actor->getKey(), 'reviewed_at' => $now])->save();
+            $s->forceFill(['status' => LegacyPairSuggestion::STATUS_APPROVED, 'reviewed_by' => $actor->getKey(), 'reviewed_at' => $now, 'review_history' => $this->history($s, 'approved', $actor, $reason)])->save();
 
             return [
                 'suggestion_id' => $s->id, 'left_map_id' => $left->id, 'right_map_id' => $right->id,
@@ -111,28 +112,30 @@ class PairReviewService
         $this->audit->record('migration.pair.approved', ['legacy_pair_suggestion', $summary['suggestion_id']], 'success', $summary, $actor);
     }
 
-    public function reject(User $actor, LegacyPairSuggestion $suggestion): void
+    public function reject(User $actor, LegacyPairSuggestion $suggestion, string $reason): void
     {
         $this->authorize($actor);
+        $reason = $this->reason($reason);
 
-        DB::transaction(function () use ($actor, $suggestion) {
+        DB::transaction(function () use ($actor, $suggestion, $reason) {
             $s = LegacyPairSuggestion::query()->lockForUpdate()->findOrFail($suggestion->getKey());
             if ($s->status !== LegacyPairSuggestion::STATUS_SUGGESTED) {
                 throw new LegacyException('This suggestion has already been reviewed.');
             }
             // The rows stay unpaired: rejecting a suggestion never touches providers or id maps.
-            $s->forceFill(['status' => LegacyPairSuggestion::STATUS_REJECTED, 'reviewed_by' => $actor->getKey(), 'reviewed_at' => now()])->save();
+            $s->forceFill(['status' => LegacyPairSuggestion::STATUS_REJECTED, 'reviewed_by' => $actor->getKey(), 'reviewed_at' => now(), 'review_history' => $this->history($s, 'rejected', $actor, $reason)])->save();
         });
 
         $this->audit->record('migration.pair.rejected', ['legacy_pair_suggestion', $suggestion->getKey()], 'success', ['suggestion_id' => $suggestion->getKey()], $actor);
     }
 
     /** Re-split an approved pair: restore the Arabic provider and move its translation back. */
-    public function undo(User $actor, LegacyPairSuggestion $suggestion): void
+    public function undo(User $actor, LegacyPairSuggestion $suggestion, string $reason): void
     {
         $this->authorize($actor);
+        $reason = $this->reason($reason);
 
-        $summary = DB::transaction(function () use ($actor, $suggestion) {
+        $summary = DB::transaction(function () use ($actor, $suggestion, $reason) {
             $s = LegacyPairSuggestion::query()->lockForUpdate()->findOrFail($suggestion->getKey());
             if ($s->status !== LegacyPairSuggestion::STATUS_APPROVED) {
                 throw new LegacyException('Only an approved pair can be undone.');
@@ -170,12 +173,32 @@ class PairReviewService
                 'provider_id' => $ar->id, 'status' => LegacyIdMap::STATUS_UNPAIRED, 'match_method' => null,
                 'reviewed_by' => null, 'reviewed_at' => null, 'review_evidence' => $note,
             ])->save();
-            $s->forceFill(['status' => LegacyPairSuggestion::STATUS_SUGGESTED, 'reviewed_by' => null, 'reviewed_at' => null])->save();
+            $s->forceFill(['status' => LegacyPairSuggestion::STATUS_SUGGESTED, 'reviewed_by' => null, 'reviewed_at' => null, 'review_history' => $this->history($s, 'undone', $actor, $reason)])->save();
 
             return ['suggestion_id' => $s->id, 'left_map_id' => $left->id, 'right_map_id' => $right->id];
         });
 
         $this->audit->record('migration.pair.undone', ['legacy_pair_suggestion', $summary['suggestion_id']], 'success', $summary, $actor);
+    }
+
+    /** A review decision needs a human reason (3-500 characters). */
+    private function reason(string $reason): string
+    {
+        $reason = trim($reason);
+        if (mb_strlen($reason) < 3 || mb_strlen($reason) > 500) {
+            throw new LegacyException('A review reason of 3 to 500 characters is required.');
+        }
+
+        return $reason;
+    }
+
+    /** @return list<array{action: string, by: int, at: string, reason: string}> */
+    private function history(LegacyPairSuggestion $s, string $action, User $actor, string $reason): array
+    {
+        $history = $s->review_history ?? [];
+        $history[] = ['action' => $action, 'by' => (int) $actor->getKey(), 'at' => now()->toIso8601String(), 'reason' => $reason];
+
+        return $history;
     }
 
     private function authorize(User $actor): void

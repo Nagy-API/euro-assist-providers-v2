@@ -71,6 +71,23 @@
                         </div>
                     @endif
 
+                    @php $last = collect((array) $suggestion->review_history)->last(); @endphp
+                    @if ($last)
+                        <p class="mt-3 text-xs text-slate-600">{{ __('migration.last_decision') }}: {{ $last['action'] ?? '' }} · {{ $last['at'] ?? '' }} · <bdi>{{ $last['reason'] ?? '' }}</bdi></p>
+                    @endif
+
+                    @if (in_array($suggestion->status, ['suggested', 'approved'], true))
+                        <div class="mt-3">
+                            <label for="reason-{{ $suggestion->id }}" class="block text-sm font-medium text-slate-800">{{ __('migration.reason_label') }}</label>
+                            <input id="reason-{{ $suggestion->id }}" type="text" maxlength="500" wire:model="reasons.{{ $suggestion->id }}"
+                                   aria-describedby="reason-error-{{ $suggestion->id }}"
+                                   class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                            @error('reasons.'.$suggestion->id)
+                                <p id="reason-error-{{ $suggestion->id }}" class="mt-1 text-sm text-red-700" role="alert">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
+
                     <div class="mt-3 flex flex-wrap gap-2">
                         @if ($suggestion->status === 'suggested')
                             <x-ui.button size="sm" wire:click="approve({{ $suggestion->id }})" wire:confirm="{{ __('migration.confirm_approve') }}">{{ __('migration.actions.approve') }}</x-ui.button>
@@ -85,6 +102,40 @@
 
         <div class="mt-4">{{ $suggestions->links() }}</div>
     @endif
+
+    <section class="mt-8 rounded-lg border border-slate-200 bg-white p-4" aria-labelledby="held-title">
+        <h2 id="held-title" class="text-base font-semibold text-slate-900">{{ __('migration.held_title') }} <span class="rounded-full bg-slate-100 px-2 text-xs">{{ $held->count() }}</span></h2>
+        <p class="mt-1 text-sm text-slate-600">{{ __('migration.held_intro') }}</p>
+        @if ($provisionalCount > 0)
+            <x-ui.alert tone="warning" class="mt-3">{{ __('migration.provisional_notice', ['count' => $provisionalCount]) }}</x-ui.alert>
+        @endif
+        @if ($held->isEmpty())
+            <p class="mt-3 text-sm text-slate-600">{{ __('migration.held_empty') }}</p>
+        @else
+            <div class="mt-3 overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-50 text-start text-slate-700">
+                        <tr>
+                            @foreach (['table', 'id', 'locale', 'state', 'reason'] as $col)
+                                <th scope="col" class="px-3 py-2 text-start font-semibold">{{ __('migration.held_columns.'.$col) }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach ($held as $row)
+                            <tr wire:key="held-{{ $row->source_table }}-{{ $row->source_id }}">
+                                <td class="px-3 py-2" dir="ltr">{{ $row->source_table }}</td>
+                                <td class="px-3 py-2" dir="ltr">{{ $row->source_id }}</td>
+                                <td class="px-3 py-2">{{ $row->source_locale ?? '—' }}</td>
+                                <td class="px-3 py-2">{{ $row->state }}</td>
+                                <td class="px-3 py-2" dir="ltr">{{ $row->reason }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </section>
 
     <x-ui.toast :notice="$notice" />
 </div>

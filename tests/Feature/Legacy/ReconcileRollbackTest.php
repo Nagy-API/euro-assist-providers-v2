@@ -149,7 +149,7 @@ class ReconcileRollbackTest extends LegacyTestCase
         $admin = $this->admin();
         $batch = $this->runPipeline($admin);
         $this->artisan('legacy:suggest-pairs')->assertSuccessful();
-        app(PairReviewService::class)->approve($admin, LegacyPairSuggestion::query()->firstOrFail());
+        app(PairReviewService::class)->approve($admin, LegacyPairSuggestion::query()->firstOrFail(), 'Reviewed in test');
         $this->assertSame(1, Provider::query()->onlyTrashed()->count());
 
         $this->artisan('legacy:rollback', ['batch' => (string) $batch->id])->assertSuccessful();
@@ -195,9 +195,9 @@ class ReconcileRollbackTest extends LegacyTestCase
         $batch = $this->runPipeline($admin);
         $this->artisan('legacy:suggest-pairs')->assertSuccessful();
         $service = app(PairReviewService::class);
-        $service->approve($admin, LegacyPairSuggestion::query()->firstOrFail());
-        $service->undo($admin, LegacyPairSuggestion::query()->firstOrFail());
-        $service->approve($admin, LegacyPairSuggestion::query()->firstOrFail());
+        $service->approve($admin, LegacyPairSuggestion::query()->firstOrFail(), 'Reviewed in test');
+        $service->undo($admin, LegacyPairSuggestion::query()->firstOrFail(), 'Reviewed in test');
+        $service->approve($admin, LegacyPairSuggestion::query()->firstOrFail(), 'Reviewed in test');
 
         $this->artisan('legacy:rollback', ['batch' => $batch->uuid, '--dry-run' => true])->assertSuccessful();
     }

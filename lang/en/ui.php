@@ -84,6 +84,15 @@ return [
     ],
 
     'dashboard' => [
+        'legacy' => [
+            'title' => 'Legacy migration review backlog',
+            'intro' => 'Migrated legacy rows stay separate (unpaired) until an administrator reviews each suggested English/Arabic pair. Nothing was merged automatically.',
+            'unpaired' => 'Unpaired migrated providers',
+            'suggestions' => 'Pair suggestions to review',
+            'held' => 'Source rows held for review',
+            'provisional' => 'Rows on a provisional type mapping',
+            'open_review' => 'Open the migration review',
+        ],
         'title' => 'Dashboard',
         'subtitle' => 'A summary of the canonical provider records.',
         'read_only' => 'You have read-only access. Figures are for information only.',

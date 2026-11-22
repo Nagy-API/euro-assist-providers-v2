@@ -120,6 +120,22 @@
         </section>
     </div>
 
+    @if ($legacy !== null)
+        <section aria-labelledby="legacy-heading" class="mb-8 rounded-lg border border-amber-300 bg-amber-50 p-4">
+            <h2 id="legacy-heading" class="text-base font-semibold text-amber-950">{{ __('ui.dashboard.legacy.title') }}</h2>
+            <p class="mt-1 text-sm text-amber-950">{{ __('ui.dashboard.legacy.intro') }}</p>
+            <dl class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                @foreach (['unpaired', 'suggestions', 'held', 'provisional'] as $key)
+                    <div class="rounded-md bg-white p-3">
+                        <dt class="text-sm text-slate-700">{{ __('ui.dashboard.legacy.'.$key) }}</dt>
+                        <dd class="mt-1 text-xl font-semibold text-slate-900"><span class="ltr-text">{{ number_format($legacy[$key]) }}</span></dd>
+                    </div>
+                @endforeach
+            </dl>
+            <a href="{{ route('migration.review.index') }}" class="mt-3 inline-block text-sm font-medium text-teal-800 underline">{{ __('ui.dashboard.legacy.open_review') }}</a>
+        </section>
+    @endif
+
     <section aria-labelledby="recent-heading">
         <h2 id="recent-heading" class="mb-3 text-base font-semibold text-slate-900">
             {{ __('ui.dashboard.recent') }}

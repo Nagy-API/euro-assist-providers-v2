@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Services\DashboardStats;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -29,6 +30,8 @@ class Dashboard extends Component
             'recent' => $stats->recentlyUpdated(),
             'canEdit' => Gate::allows('providers.update'),
             'locale' => app()->getLocale(),
+            // Legacy review backlog: Admin (migration.review) only, and only where the review route exists.
+            'legacy' => Gate::allows('migration.review') && Route::has('migration.review.index') ? $stats->legacyBacklog() : null,
         ])->title(__('ui.nav.dashboard'));
     }
 }

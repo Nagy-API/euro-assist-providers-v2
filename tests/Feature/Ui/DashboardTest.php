@@ -113,4 +113,16 @@ class DashboardTest extends UiTestCase
 
         $this->assertSame($small, $large, 'Dashboard query count must not grow with the data.');
     }
+
+    public function test_legacy_review_backlog_is_shown_to_admins_only(): void
+    {
+        $title = __('ui.dashboard.legacy.title');
+
+        Livewire::actingAs($this->admin())->test(Dashboard::class)->assertSee($title);
+        foreach (['editor', 'viewer'] as $role) {
+            Livewire::actingAs($this->{$role}())->test(Dashboard::class)->assertDontSee($title);
+        }
+
+        $this->assertSame(['unpaired' => 0, 'suggestions' => 0, 'held' => 0, 'provisional' => 0], app(DashboardStats::class)->legacyBacklog());
+    }
 }
