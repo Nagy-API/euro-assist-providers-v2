@@ -43,6 +43,8 @@ class ImportValidator
             if (! is_file($path)) {
                 throw new ImportRejected('file_missing');
             }
+            // Defense in depth: re-run the measured zip guard right before parsing (retries included).
+            app(ImportFileInspector::class)->inspect($path);
 
             [$typeMap, $typeKeyById] = $this->loadTypes();
             $columns = null;

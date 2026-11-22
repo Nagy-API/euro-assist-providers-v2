@@ -5,8 +5,15 @@ namespace App\Services\Transfers;
 use ZipArchive;
 
 /**
- * Pre-parse safety checks on an uploaded .xlsx. Nothing is extracted or parsed: only the archive's
- * central directory (ZipArchive::statIndex) and the small [Content_Types].xml part are read.
+ * Pre-parse safety checks on an uploaded .xlsx (security review S1).
+ *
+ * 1. Central directory: entry count, safe names, forbidden parts, declared sizes and ratios.
+ * 2. Measured decompression: every entry is actually inflated as a stream (never stored) and the
+ *    REAL byte counts are enforced per entry and in total, so an archive that lies about its sizes
+ *    cannot expand past the limits. Actual size larger than declared is rejected as corrupt.
+ * 3. XML parts may not contain a DTD or entity declarations (entity-expansion "billion laughs").
+ *
+ * Nothing is written anywhere; the parser (XlsxRowStream) adds row/column/cell-length limits.
  */
 class ImportFileInspector
 {
@@ -102,6 +109,8 @@ class ImportFileInspector
             throw new ImportRejected('zip_bomb');
         }
 
+        $this->measureEntries($zip, $limits);
+
         $types = $zip->locateName('[Content_Types].xml');
         if ($types === false || $zip->locateName('xl/workbook.xml') === false) {
             throw new ImportRejected('not_xlsx');
@@ -115,6 +124,73 @@ class ImportFileInspector
         }
         if (stripos($contentTypes, 'spreadsheetml') === false) {
             throw new ImportRejected('not_xlsx');
+        }
+    }
+
+    /**
+     * Inflate each entry as a stream and count the bytes really produced.
+     *
+     * @param  array<string, mixed>  $limits
+     *
+     * @throws ImportRejected
+     */
+    private function measureEntries(ZipArchive $zip, array $limits): void
+    {
+        $maxEntry = max(1, (int) ($limits['max_entry_bytes'] ?? 50 * 1048576));
+        $maxTotal = max(1, (int) $limits['max_uncompressed_bytes']);
+        $total = 0;
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $stat = $zip->statIndex($i);
+            if ($stat === false) {
+                throw new ImportRejected('corrupt_file');
+            }
+            $name = (string) $stat['name'];
+            if (str_ends_with($name, '/')) {
+                continue; // directory entry
+            }
+            $declared = (int) $stat['size'];
+            $isXml = (bool) preg_match('/\.(xml|rels|vml)$/i', $name);
+
+            $stream = $zip->getStreamIndex($i);
+            if ($stream === false) {
+                throw new ImportRejected('corrupt_file');
+            }
+
+            $read = 0;
+            $tail = '';
+            try {
+                while (! feof($stream)) {
+                    $chunk = fread($stream, 65536);
+                    if ($chunk === false) {
+                        throw new ImportRejected('corrupt_file');
+                    }
+                    if ($chunk === '') {
+                        break;
+                    }
+                    $read += strlen($chunk);
+                    $total += strlen($chunk);
+                    if ($read > $maxEntry || $total > $maxTotal) {
+                        throw new ImportRejected('zip_bomb');
+                    }
+                    if ($read > $declared) {
+                        throw new ImportRejected('corrupt_file'); // archive lies about its sizes
+                    }
+                    if ($isXml) {
+                        $window = $tail.$chunk;
+                        if (stripos($window, '<!DOCTYPE') !== false || stripos($window, '<!ENTITY') !== false) {
+                            throw new ImportRejected('forbidden_content', ['reason' => 'xml_dtd']);
+                        }
+                        $tail = substr($window, -16);
+                    }
+                }
+            } finally {
+                fclose($stream);
+            }
+
+            if ($read !== $declared) {
+                throw new ImportRejected('corrupt_file');
+            }
         }
     }
 }

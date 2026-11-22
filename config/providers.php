@@ -26,6 +26,11 @@ return [
         'chunk_size' => (int) env('IMPORTS_CHUNK_SIZE', 200),
         // Zip-bomb guard: maximum ratio of uncompressed to compressed size of an .xlsx.
         'max_uncompressed_bytes' => (int) env('IMPORTS_MAX_UNCOMPRESSED_BYTES', 100 * 1024 * 1024),
+        // S1: measured while actually inflating each entry (not the declared size).
+        'max_entry_bytes' => (int) env('IMPORTS_MAX_ENTRY_BYTES', 60 * 1024 * 1024),
+        // S1: parser limits (template has < 30 columns; Excel's own cell limit is 32,767 chars).
+        'max_columns' => (int) env('IMPORTS_MAX_COLUMNS', 100),
+        'max_cell_chars' => (int) env('IMPORTS_MAX_CELL_CHARS', 32767),
         'retention_hours' => (int) env('IMPORTS_RETENTION_HOURS', 72),
         'error_report_limit' => 5000,
         // Rows parsed/staged per validation batch (one set of batched lookups + one bulk insert).

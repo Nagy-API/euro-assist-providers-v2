@@ -180,6 +180,8 @@ class PairReviewService
 
     private function authorize(User $actor): void
     {
+        // Pair review changes canonical data: LOCAL-ONLY and only against an allow-listed destination.
+        LegacyGuard::assertNotProduction();
         if (! Gate::forUser($actor)->allows(Permission::MigrationReview->value)) {
             $this->audit->record('authorization.denied', null, 'denied', ['permission' => Permission::MigrationReview->value], $actor);
             throw new AuthorizationException('This action is unauthorized.');

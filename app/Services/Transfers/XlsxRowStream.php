@@ -26,6 +26,8 @@ class XlsxRowStream
      */
     public function rows(string $path, int $maxSheetRows): Generator
     {
+        $maxColumns = max(1, (int) config('providers.imports.max_columns', 100));
+        $maxCellChars = max(1, (int) config('providers.imports.max_cell_chars', 32767));
         $reader = new Reader(new Options(SHOULD_PRESERVE_EMPTY_ROWS: true));
         $sheetNumber = 0;
 
@@ -42,7 +44,17 @@ class XlsxRowStream
                     if ($rowIndex > $maxSheetRows) {
                         throw new ImportRejected('too_many_rows', ['max' => $maxSheetRows]);
                     }
-                    yield $rowIndex => array_values($row->cells);
+                    $cells = array_values($row->cells);
+                    if (count($cells) > $maxColumns) {
+                        throw new ImportRejected('too_many_columns', ['max' => $maxColumns]);
+                    }
+                    foreach ($cells as $cell) {
+                        $value = $cell->getValue();
+                        if (is_string($value) && mb_strlen($value) > $maxCellChars) {
+                            throw new ImportRejected('cell_too_long', ['max' => $maxCellChars]);
+                        }
+                    }
+                    yield $rowIndex => $cells;
                 }
             }
         } catch (ImportRejected $e) {

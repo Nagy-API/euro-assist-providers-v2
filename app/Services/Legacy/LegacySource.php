@@ -15,9 +15,24 @@ class LegacySource
 {
     public const TABLES = ['providers', 'arabic_providers', 'top_providers', 'types'];
 
+    /** Fingerprint of the connection settings already verified in this process. */
+    private ?string $verified = null;
+
+    /**
+     * Every read goes through here, so no code path can read the source without the local-only,
+     * destination, loopback, expected-database and live SELECT-only grant checks (LegacyGuard).
+     */
     public function connection(): ConnectionInterface
     {
-        return DB::connection((string) config('legacy.connection'));
+        $name = (string) config('legacy.connection');
+        $fingerprint = hash('sha256', serialize([app()->environment(), config('database.default'), config('database.connections.'.$name), config('database.connections.'.config('database.default'))]));
+        if ($this->verified !== $fingerprint) {
+            LegacyGuard::assertNotProduction();
+            LegacyGuard::assertSourceConnectionSafe();
+            $this->verified = $fingerprint;
+        }
+
+        return DB::connection($name);
     }
 
     public function count(string $table): int

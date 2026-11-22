@@ -78,6 +78,7 @@ class ReviewIndex extends Component
 
     private function authorizeReview(): void
     {
+        abort_unless(in_array(app()->environment(), (array) config('legacy.allowed_environments', []), true) && ! app()->environment('production'), 404);
         Gate::authorize(Permission::MigrationReview->value);
     }
 

@@ -9,6 +9,17 @@
 
 return [
 
+    // LOCAL-ONLY (ADR-014): environments where the pipeline and pair review may run at all.
+    // Production migration/review is NOT authorized; do not add staging/production here.
+    'allowed_environments' => ['local', 'testing'],
+
+    // Destination (application) databases the pipeline may write to: loopback host only, exact
+    // names. Anything else (including a production database) is refused.
+    'allowed_destination_databases' => explode(',', (string) env('LEGACY_ALLOWED_DESTINATIONS', 'euro_assist_v2_local,euro_assist_v2_rehearsal,euro_assist_v2_test')),
+
+    // The frozen audit database the source connection must point at (no default: fail closed).
+    'expected_source_database' => env('LEGACY_EXPECTED_DATABASE', ''),
+
     // Connection used to read the frozen audit database (SELECT only).
     'connection' => 'legacy_audit',
 

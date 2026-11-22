@@ -7,6 +7,7 @@ use App\Models\LegacyStagingRow;
 use App\Services\Legacy\LegacyException;
 use App\Services\Legacy\LegacyGuard;
 use App\Services\Legacy\LegacyStager;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class StagingTest extends LegacyTestCase
 {
@@ -114,14 +115,21 @@ class StagingTest extends LegacyTestCase
         $this->artisan('legacy:stage', ['--snapshot-sha256' => strtoupper(self::SHA)])->assertSuccessful();
     }
 
-    public function test_every_legacy_command_refuses_to_run_in_production(): void
+    /** @return list<array{0: string}> */
+    public static function nonLocalEnvironments(): array
+    {
+        return [['production'], ['staging']];
+    }
+
+    #[DataProvider('nonLocalEnvironments')]
+    public function test_every_legacy_command_refuses_to_run_outside_local(string $env): void
     {
         $this->seedSource();
         $batch = $this->runPipeline();
         $counts = $this->targetCounts();
 
-        $this->app->detectEnvironment(fn () => 'production');
-        $this->assertTrue(app()->environment('production'));
+        $this->app->detectEnvironment(fn () => $env);
+        $this->assertTrue(app()->environment($env));
 
         foreach ([
             ['legacy:stage', ['--snapshot-sha256' => self::SHA]],
@@ -132,7 +140,7 @@ class StagingTest extends LegacyTestCase
             ['legacy:rollback', ['batch' => $batch->uuid]],
             ['legacy:report', []],
         ] as [$command, $args]) {
-            $this->artisan($command, $args)->expectsOutputToContain('refuses to run when APP_ENV=production')->assertFailed();
+            $this->artisan($command, $args)->expectsOutputToContain('LOCAL-ONLY')->assertFailed();
         }
 
         $this->assertSame($counts, $this->targetCounts(), 'nothing changed');
@@ -148,8 +156,9 @@ class StagingTest extends LegacyTestCase
         // suite works on both the SQLite and the MariaDB configuration.
         $original = ['default' => config('database.default'), 'probe' => config('database.connections.guard_probe')];
         config([
-            'database.connections.guard_probe' => ['driver' => 'mysql', 'host' => 'h', 'port' => '1', 'database' => 'same_db'],
-            'database.connections.legacy_audit' => ['driver' => 'mysql', 'host' => 'h', 'port' => '1', 'database' => 'same_db'],
+            'database.connections.guard_probe' => ['driver' => 'mysql', 'host' => 'localhost', 'port' => '1', 'database' => 'same_db'],
+            'database.connections.legacy_audit' => ['driver' => 'mysql', 'host' => '127.0.0.1', 'port' => '1', 'database' => 'same_db'],
+            'legacy.expected_source_database' => 'same_db',
             'database.default' => 'guard_probe',
         ]);
         try {
