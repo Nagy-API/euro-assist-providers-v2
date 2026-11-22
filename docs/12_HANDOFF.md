@@ -9,7 +9,11 @@
 - The frozen legacy snapshot has been migrated LOCALLY into `euro_assist_v2_local` (2,185 providers + 3 featured, all unpaired; 9 rows held for review; 334 pair suggestions pending). See `docs/05_DATA_MIGRATION.md` (2026-11-22 section).
 - Private evidence: `.work/migration-20261122/` (pre-migration dev DB dump, source fingerprints before/after, integrity/fidelity SQL, benchmarks, final checks, `run-legacy.ps1`).
 
-## Local startup (verified 2026-11-22)
+## Owner UAT (verified 2026-11-22)
+
+`start-uat.ps1` (foreground; Enter stops) / `start-uat.ps1 -NoWait` + `stop-uat.ps1`; `reset-uat.ps1` restores `euro_assist_v2_uat` from the SHA-256-verified baseline in `.work/uat/baseline` (refuses other targets, a running app, or a wrong confirmation phrase; verifies `euro_assist_v2_local` and the legacy DB unchanged). `php artisan uat:check` is the fail-closed target check the scripts use. The UAT DB account `v2_uat` (ALL on that DB only) lives in the private `connections.json`. UAT password files: `storage/app/private/provisioned/uat/` (never print or commit). Port 8000 on this machine is used by an unrelated program, so the launcher reports and uses 8001.
+
+## Local startup for development (verified 2026-11-22)
 
 ```powershell
 $ws = Split-Path (Get-Location) -Parent
