@@ -536,8 +536,10 @@ components:
           type: [string, 'null']
         website:
           type: [string, 'null']
+          description: Untrusted stored text. Never carries a scheme other than http(s) (otherwise null), but may be scheme-less (e.g. www.example.com) and may contain an apostrophe. Consumers must HTML/attribute-escape it and prefix https:// before using it as a link.
         map_url:
           type: [string, 'null']
+          description: Untrusted stored text, same rules as website (http(s) or scheme-less only; escape before rendering).
         latitude:
           type: [number, 'null']
         longitude:

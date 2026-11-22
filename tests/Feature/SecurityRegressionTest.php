@@ -47,7 +47,7 @@ class SecurityRegressionTest extends TestCase
     public function test_production_pins_generated_links_to_the_configured_https_url(): void
     {
         $this->app['env'] = 'production';
-        config(['app.debug' => false, 'app.url' => 'https://providers.example.test']);
+        config(['app.debug' => false, 'app.url' => 'https://providers.example.test', 'session.secure' => true]);
 
         (new AppServiceProvider($this->app))->boot();
 
@@ -336,5 +336,52 @@ class SecurityRegressionTest extends TestCase
         $this->assertSame('203.0.113.9', request()->ip());
 
         TrustProxies::flushState();
+    }
+
+    // Review R3 / L2: production refuses insecure cookies and a wildcard proxy list ------------
+    public function test_production_refuses_insecure_session_cookies_and_wildcard_proxies(): void
+    {
+        $this->app['env'] = 'production';
+        foreach ([
+            [['session.secure' => null], 'SESSION_SECURE_COOKIE'],
+            [['session.secure' => true, 'app.trusted_proxies' => '*'], 'TRUSTED_PROXIES'],
+        ] as [$config, $needle]) {
+            config(['app.debug' => false, 'app.url' => 'https://providers.example.test', 'app.trusted_proxies' => ''] + $config);
+            try {
+                (new AppServiceProvider($this->app))->boot();
+                $this->fail("production must refuse: {$needle}");
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString($needle, $e->getMessage());
+            }
+        }
+        URL::forceRootUrl(null);
+        URL::forceScheme(null);
+    }
+
+    // Review R3 / L3: one account is throttled across many IP addresses ------------------------
+    public function test_login_attempts_for_one_account_are_limited_across_ips(): void
+    {
+        $user = User::factory()->create();
+        for ($i = 0; $i < 30; $i++) {
+            $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.'.($i + 1)])
+                ->post('/login', ['email' => $user->email, 'password' => 'wrong-password-'.$i])
+                ->assertStatus(302);
+        }
+        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.200'])
+            ->post('/login', ['email' => $user->email, 'password' => 'another-guess'])
+            ->assertStatus(429);
+    }
+
+    // Review R3 / L4: CSP forbids plugins -----------------------------------------------------
+    public function test_csp_disallows_object_embeds(): void
+    {
+        $this->assertStringContainsString("object-src 'none'", (string) $this->get('/login')->headers->get('Content-Security-Policy'));
+    }
+
+    // Review R3 / info: the synthetic benchmark never runs outside local/testing ----------------
+    public function test_benchmark_refuses_staging(): void
+    {
+        $this->app->detectEnvironment(fn () => 'staging');
+        $this->artisan('transfers:benchmark', ['rows' => 1])->expectsOutputToContain('LOCAL-ONLY')->assertFailed();
     }
 }

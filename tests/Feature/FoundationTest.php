@@ -56,7 +56,7 @@ class FoundationTest extends TestCase
     public function test_production_boot_is_allowed_with_debug_disabled_and_https_url(): void
     {
         $this->app['env'] = 'production';
-        config(['app.debug' => false, 'app.url' => 'https://providers.example.test']);
+        config(['app.debug' => false, 'app.url' => 'https://providers.example.test', 'session.secure' => true]);
 
         (new AppServiceProvider($this->app))->boot();
 

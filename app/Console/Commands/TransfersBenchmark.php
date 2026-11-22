@@ -49,8 +49,8 @@ class TransfersBenchmark extends Command
 
     public function handle(ImportFileInspector $inspector, ImportJobService $jobs, ImportValidator $validator, ExportService $exports): int
     {
-        if ($this->laravel->environment('production')) {
-            $this->error('Refusing to run the benchmark in production.');
+        if (! $this->laravel->environment(['local', 'testing'])) {
+            $this->error('The benchmark is LOCAL-ONLY; refusing to run in APP_ENV='.$this->laravel->environment().'.');
 
             return self::FAILURE;
         }

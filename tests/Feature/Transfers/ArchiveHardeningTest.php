@@ -151,4 +151,24 @@ class ArchiveHardeningTest extends TransfersTestCase
         // Streaming in 64 KiB chunks: peak growth is a tiny fraction of the 40 MiB inflated.
         $this->assertLessThan(4 * 1048576, $growth, 'measured inflate must not buffer whole entries');
     }
+
+    public function test_dtd_is_rejected_in_any_entry_name_and_non_utf8_xml_is_refused(): void
+    {
+        $lol = '<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "b">]><x>&a;</x>';
+        $path = $this->validWorkbook();
+        $this->addEntry($path, 'xl/worksheets/sheet1.bin', $lol); // rels could point a sheet at any name
+        $this->assertInspectorRejects($path, ['forbidden_content']);
+
+        foreach (["\xFF\xFE".mb_convert_encoding('<?xml version="1.0"?><x/>', 'UTF-16LE', 'UTF-8'),
+            '<?xml version="1.0" encoding="UTF-16"?><x/>',
+            '<?xml version="1.0" encoding="ISO-8859-1"?><x/>'] as $content) {
+            $path = $this->validWorkbook();
+            $this->addEntry($path, 'docProps/custom.xml', $content);
+            $this->assertInspectorRejects($path, ['forbidden_content']);
+        }
+
+        $path = $this->validWorkbook();
+        $this->addEntry($path, 'docProps/custom.xml', '<?xml version="1.0" encoding="UTF-8"?><x/>');
+        app(ImportFileInspector::class)->inspect($path); // explicit UTF-8 stays accepted
+    }
 }

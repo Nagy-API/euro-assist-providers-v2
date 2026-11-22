@@ -151,7 +151,7 @@
     @if ($job->error_count > 0)
         <section aria-labelledby="errors-title" class="space-y-3">
             <h2 id="errors-title" class="text-lg font-semibold text-slate-900">{{ __('transfers.imports.error_list') }}</h2>
-            <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div class="relative overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table class="min-w-full text-start text-sm">
                     <thead class="bg-slate-50 text-slate-700">
                         <tr>
@@ -180,7 +180,7 @@
     @if ($diffRows->total() > 0)
         <section aria-labelledby="diffs-title" class="space-y-3">
             <h2 id="diffs-title" class="text-lg font-semibold text-slate-900">{{ __('transfers.imports.changes') }}</h2>
-            <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div class="relative overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table class="min-w-full text-start text-sm">
                     <thead class="bg-slate-50 text-slate-700">
                         <tr>

@@ -112,7 +112,7 @@
         @if ($held->isEmpty())
             <p class="mt-3 text-sm text-slate-600">{{ __('migration.held_empty') }}</p>
         @else
-            <div class="mt-3 overflow-x-auto">
+            <div class="mt-3 relative overflow-x-auto">
                 <table class="min-w-full text-sm">
                     <thead class="bg-slate-50 text-start text-slate-700">
                         <tr>

@@ -21,8 +21,8 @@ class Dashboard extends Component
     {
         Gate::authorize('providers.view');
 
-        // Soft-deleted records are visible to roles that can edit providers (Admin and Editor).
-        $counters = $stats->counters(includeDeleted: Gate::allows('providers.update'));
+        // Soft-deleted records are visible only to roles that may restore them (Admin), like the list filter.
+        $counters = $stats->counters(includeDeleted: Gate::allows('providers.restore'));
 
         return view('livewire.dashboard', [
             'counters' => $counters,

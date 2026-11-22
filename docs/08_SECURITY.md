@@ -72,3 +72,18 @@ Permission keys are proposed identifiers for implementation and tests, not addit
 | `migration.review` | Review/approve/undo legacy bilingual pair suggestions | Yes | No | No |
 
 Status: **implemented and tested** (`tests/Feature/PermissionMatrixTest.php` holds a hand-written copy of the matrix and fails if any cell differs; direct-call/negative tests exist in the service, UI and API suites). Independent security review R1 (2026-11-21) found no matrix defect; its Important findings (Host-header reset-link poisoning, `javascript:` URLs/path traversal in stored fields, revision not enforced) were fixed and covered by `tests/Feature/SecurityRegressionTest.php`. Known remaining minor items: forgot-password mail is sent synchronously (response-time enumeration signal), no script CSP (Livewire/Alpine inline evaluation), `$guarded=['id']` on internal job/legacy models (never filled from requests).
+## Legacy migration safeguards (ADR-014, verified 2026-11-22)
+
+- LOCAL-ONLY environments; review route absent elsewhere; benchmark command also local/testing only.
+- Source: SELECT-only `legacy_reader` account (live `SHOW GRANTS` check), loopback, expected database, never the destination. The write-capable `legacy_import` account is refused.
+- Destination: allow-listed loopback databases only. Source fingerprint (counts + `CHECKSUM TABLE`) unchanged after the full rehearsal.
+
+## Independent security reviews
+
+| Review | Scope | Verdict | Resolution |
+|---|---|---|---|
+| R1 (2026-11-21) | foundation | CHANGES_REQUIRED | fixed (SecurityRegressionTest) |
+| R2 (2026-11-22, `f5e5a81`) | recovered integration | CHANGES_REQUIRED (M1, L1–L4, S1–S3) | M1/L1–L4 fixed (ADR-013); S1–S3 fixed (ADR-014) |
+| R3 (2026-11-22, `0330c7c`) | whole application after migration work | **PASS_WITH_NOTES** — no Critical/High/Medium | all 6 Low + 3 informational items fixed or documented (see below) |
+
+R3 follow-ups fixed with tests: DTD scan on every archive entry and non-UTF-8 XML refused; production refuses `SESSION_SECURE_COOKIE` ≠ true and `TRUSTED_PROXIES=*`; per-account login limit (30/hour) across IPs; CSP `object-src 'none'`; `ImportShow::$uuid` locked; deleted-record counts Admin-only; benchmark local-only. Documented, not changed: CSP has no `script-src` (Livewire/Alpine trade-off); API `website`/`map_url` are untrusted text for consumers (OpenAPI); a loopback SSH tunnel to a remote DB would pass the loopback check (operator control, mitigated by expected-DB/port/grant checks).

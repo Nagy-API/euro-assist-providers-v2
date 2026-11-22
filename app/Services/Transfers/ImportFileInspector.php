@@ -150,7 +150,9 @@ class ImportFileInspector
                 continue; // directory entry
             }
             $declared = (int) $stat['size'];
-            $isXml = (bool) preg_match('/\.(xml|rels|vml)$/i', $name);
+            // Every entry is scanned whatever its name: the workbook rels may point a worksheet at any
+            // part name (e.g. sheet1.bin), and the parser follows it.
+            $first = true;
 
             $stream = $zip->getStreamIndex($i);
             if ($stream === false) {
@@ -176,13 +178,23 @@ class ImportFileInspector
                     if ($read > $declared) {
                         throw new ImportRejected('corrupt_file'); // archive lies about its sizes
                     }
-                    if ($isXml) {
-                        $window = $tail.$chunk;
-                        if (stripos($window, '<!DOCTYPE') !== false || stripos($window, '<!ENTITY') !== false) {
-                            throw new ImportRejected('forbidden_content', ['reason' => 'xml_dtd']);
+                    if ($first) {
+                        $first = false;
+                        // UTF-16/32 text would hide markup from the byte scan below: only UTF-8 parts are accepted.
+                        foreach (["\xFF\xFE", "\xFE\xFF", "\x00\x00\xFE\xFF", "\x3C\x00", "\x00\x3C"] as $bom) {
+                            if (str_starts_with($chunk, $bom)) {
+                                throw new ImportRejected('forbidden_content', ['reason' => 'xml_encoding']);
+                            }
                         }
-                        $tail = substr($window, -16);
+                        if (preg_match('/^(?:\xEF\xBB\xBF)?<\?xml[^>]*encoding=["\'](?!utf-8["\'])/i', $chunk) === 1) {
+                            throw new ImportRejected('forbidden_content', ['reason' => 'xml_encoding']);
+                        }
                     }
+                    $window = $tail.$chunk;
+                    if (stripos($window, '<!DOCTYPE') !== false || stripos($window, '<!ENTITY') !== false) {
+                        throw new ImportRejected('forbidden_content', ['reason' => 'xml_dtd']);
+                    }
+                    $tail = substr($window, -16);
                 }
             } finally {
                 fclose($stream);

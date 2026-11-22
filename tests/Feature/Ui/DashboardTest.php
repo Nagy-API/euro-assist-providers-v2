@@ -39,15 +39,15 @@ class DashboardTest extends UiTestCase
         $this->assertSame(['total' => 2, 'active' => 1], $c['featured']);
     }
 
-    public function test_deleted_count_is_hidden_without_edit_rights_and_visible_to_editor_and_admin(): void
+    public function test_deleted_count_is_visible_only_to_roles_that_may_restore(): void
     {
         $this->provider()->delete();
 
         $this->assertNull(app(DashboardStats::class)->counters(includeDeleted: false)['deleted']);
 
-        foreach (['editor', 'admin'] as $role) {
-            Livewire::actingAs($this->{$role}())->test(Dashboard::class)->assertSee(__('ui.dashboard.deleted'));
-        }
+        Livewire::actingAs($this->admin())->test(Dashboard::class)->assertSee(__('ui.dashboard.deleted'));
+        // Editors cannot delete/restore (ADR-010), so they do not see deleted records or counts either.
+        Livewire::actingAs($this->editor())->test(Dashboard::class)->assertDontSee(__('ui.dashboard.deleted'));
         Livewire::actingAs($this->viewer())->test(Dashboard::class)
             ->assertDontSee(__('ui.dashboard.deleted'))
             ->assertSee(__('ui.dashboard.read_only'));

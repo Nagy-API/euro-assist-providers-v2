@@ -1,37 +1,43 @@
 # Current project status — update after EVERY task
 
-**Date:** 2026-11-22. **Phase:** P2–P5 implemented locally as a stacked draft (PR #40); nothing merged; owner decisions D1–D8 still provisional.
+**Date:** 2026-11-22. **Stage:** local release candidate for the owner's review. Nothing merged, nothing deployed.
 **Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — PRIVATE.
-**Branch:** `feature/p1-foundation-hardening` (PR #40, stacked on PR #38 / `feature/p0-governance-bootstrap`). See the PR head for the latest SHA; the recovery checkpoint is `f5e5a81`.
-**Hosted CI:** NOT EXECUTED — account billing blocker (`docs/14_GITHUB_BOOTSTRAP.md`). All evidence below is LOCAL.
-**Production:** untouched (no login, deploy, DB or DNS action). **Plesk:** not verified.
+**Branch:** `feature/p1-foundation-hardening` = PR #40 (Draft, stacked on PR #38). Latest SHA: see the PR head (the commit containing this file).
+**Hosted CI:** NEVER EXECUTED — GitHub account billing blocker. All evidence below is LOCAL.
+**Production / Plesk:** untouched; Plesk capabilities unverified.
 
-## Verified locally (2026-11-22, Windows, portable tools)
+## Workstream classification (evidence-based)
 
-| Check | Result |
-|---|---|
-| PHPUnit SQLite, PHP 8.3.37 and PHP 8.4.28 | 479 tests / 2788 assertions OK |
-| PHPUnit full suite on isolated MariaDB 11.4.14 (`euro_assist_v2_test`) | 479 tests / 2788 assertions OK |
-| Pint / Larastan level 6 / `composer validate --strict` | clean |
-| `composer audit --locked` / `npm audit` / `npm run build` | 0 advisories / 0 vulnerabilities / OK |
-| Repo hygiene, Python repo tests (23), Gitleaks on staged change, `git diff --check` | clean |
-| Browser smoke (local dev DB, synthetic data) | see below |
-
-Browser-tested on `php artisan serve` with the local dev DB `euro_assist_v2_local` (synthetic seeder, provisioned test accounts): login failure message and success; dashboard; provider list + live Livewire search; create provider (javascript: URL rejected, valid save); provider detail; Arabic RTL switch (dir=rtl, no horizontal overflow); export request -> database queue worker -> private .xlsx download (HTTP 200); Viewer and Editor route/nav access matching the ADR-010 matrix. Import upload was NOT browser-tested (file chooser); it is covered by feature tests.
-
-## Workstreams
-
-| Workstream | State | Open |
+| Workstream | Classification | Evidence / what is missing |
 |---|---|---|
-| Auth/roles (ADR-010) | Login, reset, throttling, inactive users, last-admin, per-action re-authorization, Livewire persistent active check | owner: "clear a value" permission (Admin-only default) |
-| Providers UI | Dashboard, list/search/sort/filters, create/edit (expected_revision concurrency), soft delete/restore, bulk ops with single-use tokens, types, featured (logo upload re-encoded), users, audit log, system status; AR/EN + RTL | UI reference parity review (P1.6) |
-| Import/export (ADR-008) | Template, chunked xlsx parsing, whole-file validation, staging/preview, confirm, resumable apply with atomic lock, error reports, private exports with formula safety, retention prune commands, benchmark command | Owner UAT with real-shaped files; zip-bomb guard hardening (suspicion S1) |
-| API `/api/v2` | Read-only, Sanctum tokens with expiry (`api:token`), allow-listed resources, contract snapshot tests, OpenAPI `docs/openapi/v2.yaml` | Consumer contracts P5.3 unverified |
-| Legacy migration | stage / map-types / suggest-pairs / apply / reconcile / report / rollback commands, pair review UI; never writes to source | Rehearsal against the frozen restore not yet run in this session |
-| Security review R2 | CHANGES_REQUIRED findings M1, L1–L4 fixed with regression tests (ADR-013) | Suspicions S1–S3 open; re-review pending |
+| Auth & roles (Admin/Editor/Viewer) | IMPLEMENTED — ACCEPTANCE PENDING | tests + browser route/nav checks for all 3 roles on migrated data; owner UAT pending |
+| Provider management UI (list/search/filter/CRUD/concurrency/soft delete) | IMPLEMENTED — ACCEPTANCE PENDING | browser-tested on 2,185 migrated records incl. lost-update refusal; owner UAT pending |
+| Arabic/English, RTL/LTR, responsive | IMPLEMENTED — ACCEPTANCE PENDING | 14 pages at 375 px in RTL with 0 overflow after fixes; no formal UI parity review vs. V1 (P1.6) |
+| Featured providers, types | IMPLEMENTED — ACCEPTANCE PENDING | 3 featured + 30 types migrated; tests; owner UAT |
+| Import/Export | IMPLEMENTED — ACCEPTANCE PENDING | real browser uploads (invalid blocked, valid applied), full 2,188-row export→dry-run round trip 100% unchanged, 5k–25k benchmarks, recovery/lock/IDOR tests |
+| `/api/v2` | IMPLEMENTED — ACCEPTANCE PENDING | all endpoints exercised on migrated data, token revoke → 401, no internal fields; real consumers unknown (P5.3) |
+| Legacy migration (local) | VERIFIED COMPLETE (local rehearsal) | 2,197/2,197 rows accounted, 0 byte diffs on 13 fields, idempotent, rollback rehearsed, source unchanged |
+| Bilingual pairing | PARTIALLY COMPLETE | 334 suggestions + reasoned review workflow working; 0 pairs reviewed by the owner |
+| Security review | IMPLEMENTED — ACCEPTANCE PENDING | R3 PASS_WITH_NOTES (no Critical/High/Medium); all Lows fixed; final re-review by an independent reviewer recommended before merge |
+| Plesk staging readiness | NOT STARTED (checklist ready) | host facts unknown; `docs/09_PLESK_DEPLOYMENT.md` checklist |
+| GitHub CI | BLOCKED | account billing |
+| Owner decisions D1–D8 | BLOCKED (owner) | provisional defaults documented in `docs/05_DATA_MIGRATION.md` |
 
-## Immediate next actions
+## Latest local verification (2026-11-22, final code of this session)
 
-1. Owner: fix GitHub billing so hosted CI runs; review PR #38 then PR #40. No merge without approval.
-2. Owner: decisions D1–D8 (`docs/05_DATA_MIGRATION.md`), the clear-value permission, migration review in production (S3).
-3. Engineering: S1 zip-bomb byte cap in `XlsxRowStream`; legacy rehearsal against the restored snapshot (P5.2); browser import flow; independent re-review of R2 fixes.
+- PHPUnit: PHP 8.3.37 and PHP 8.4.28 (SQLite) and MariaDB 11.4.14 full suite — see the work log for the exact count of the final commit.
+- Pint, Larastan level 6, `composer validate --strict`, `composer audit` (0), `npm audit` (0), `npm run build`, repo hygiene, 23 Python repo tests, Gitleaks (history + staged): clean.
+
+## Local databases (all on isolated MariaDB 127.0.0.1:33316)
+
+| Database | Purpose |
+|---|---|
+| `euro_assist_legacy_audit_20261121` | frozen legacy restore — READ ONLY via `legacy_reader` |
+| `euro_assist_v2_local` | V2 dev DB containing the migrated legacy data + 3 synthetic UAT providers |
+| `euro_assist_v2_rehearsal` | disposable rollback/benchmark target |
+| `euro_assist_v2_test` | automated tests only |
+
+## Next actions
+
+1. King: run `docs/16_UAT_CHECKLIST.md` locally; answer D1–D8 and the 4 provisional type labels + "Eye Center"; fix GitHub billing; review PR #38 then #40.
+2. Engineering after owner input: process the 334 pair suggestions with the owner, final independent review, then isolated Plesk staging (P6) only with written approval.

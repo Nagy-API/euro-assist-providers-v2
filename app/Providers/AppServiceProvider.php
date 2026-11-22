@@ -66,6 +66,12 @@ class AppServiceProvider extends ServiceProvider
         if (! str_starts_with((string) config('app.url'), 'https://')) {
             throw new RuntimeException('APP_URL must be an https:// URL when APP_ENV=production.');
         }
+        if (config('session.secure') !== true) {
+            throw new RuntimeException('SESSION_SECURE_COOKIE must be true when APP_ENV=production.');
+        }
+        if (trim((string) config('app.trusted_proxies')) === '*') {
+            throw new RuntimeException('TRUSTED_PROXIES must list the reverse-proxy addresses (not "*") when APP_ENV=production.');
+        }
 
         // Generated links (password reset/invitation mails) must never be built from the
         // client-controlled Host header: pin them to the configured canonical URL.
@@ -99,6 +105,8 @@ class AppServiceProvider extends ServiceProvider
             return [
                 Limit::perMinute(5)->by($email.'|'.$request->ip()),
                 Limit::perMinute(20)->by($request->ip()),
+                // Distributed guessing against one account from many addresses.
+                Limit::perHour(30)->by('account:'.$email),
             ];
         });
 

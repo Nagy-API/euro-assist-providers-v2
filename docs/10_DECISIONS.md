@@ -172,3 +172,20 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 - Trusted hosts are a per-request closure over `config('app.url')` (exact host, no subdomains, all non-local environments); trusted proxies come from `config('app.trusted_proxies')` (`TRUSTED_PROXIES`) applied in `AppServiceProvider::boot`. Sanctum is stateless-only (`config/sanctum.php`: no stateful domains, no routes).
 
 **Open (not decided here):** S1 xlsx decompression byte cap, S2 legacy account grants/host comparison, S3 migration review availability in production.
+
+## ADR-014 — Legacy migration is LOCAL-ONLY with fail-closed source/destination guards; provisional type mappings
+
+**Date:** 2026-11-22 | **Status:** Accepted (engineering; reversible). Production migration is **not** authorized by this ADR.
+
+**Context:** Security review findings S1–S3 and the first full local rehearsal of the frozen snapshot. The existing `legacy_import` account could write to the audit database; the review screen and commands only refused `production`; 980 rows were blocked by plural/synonym type labels awaiting D3; 149 rows were blocked by an over-strict URL rule.
+
+**Decision:**
+- All migration staging, mapping, suggestion, apply, reconcile, report, rollback and pair review run only in `legacy.allowed_environments` (`local`, `testing`). The review route is not registered elsewhere. No command falls back to other credentials: the source comes only from `LEGACY_DB_*`, and `legacy.expected_source_database` has no default.
+- Source: loopback host (resolved), expected database name, no URL, never equal to the destination (resolved host/port/db), and a live `SHOW GRANTS` check that refuses any privilege beyond SELECT/SHOW VIEW/USAGE or GRANT OPTION. Every read goes through `LegacySource::connection()`. A dedicated `legacy_reader` account (SELECT only) is used.
+- Destination: loopback MySQL/MariaDB database on `legacy.allowed_destination_databases` (default: `euro_assist_v2_local`, `euro_assist_v2_rehearsal`, `euro_assist_v2_test`); SQLite only under `testing`.
+- Type mappings gain a `provisional` status for deterministic plural/synonym labels, used only with `legacy:apply --accept-provisional-types` and tagged `provisional_type` on each row. Genuinely ambiguous labels (e.g. "Eye Center") are stored without a type and can never be resolved by a flag.
+- URL rule: the apostrophe (RFC 3986 sub-delimiter, present in real DMS map links) is allowed; map links may be scheme-less like websites. Schemes other than http(s), whitespace, double quotes, angle brackets, backtick and backslash remain refused; the API documents these fields as untrusted text.
+- Pair decisions require a 3–500 character reason, kept in `legacy_pair_suggestions.review_history` (not in audit metadata).
+- xlsx imports: limits are enforced on bytes actually inflated (per entry and total), declared/actual size mismatch is corrupt, every entry is scanned for DTD/ENTITY, and non-UTF-8 XML is refused.
+
+**Consequences:** A future production migration needs a new, explicitly approved ADR, environment allow-list change and operator runbook. If the owner rejects a provisional label, roll the batch back and re-apply without the flag.

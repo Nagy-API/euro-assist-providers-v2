@@ -226,3 +226,56 @@ Tags: **[FACT]** verified legacy evidence; **[REC]** architectural recommendatio
 ### Decisions needed before P2.1 (#17) can be approved
 
 Required: **D1, D3, D4, D5, D6.** Needed before P2.2 data-loading and API tasks but not for the table design: D2, D7, D8. Each has a recommended default above; reply "approve REC" per item or give the alternative. Remaining unverified: actual API consumers, runtime behavior of the legacy app, true bilingual pairing quality.
+
+## 2026-11-22 — Full local migration rehearsal of the frozen snapshot (LOCAL ONLY)
+
+Aggregates only; no record values. Production was never connected. Report: `docs/legacy-reports/reconciliation-19a71fe3-v1-rehearsal.md`.
+
+### Safeguards verified before any read (ADR-014)
+
+- Frozen file SHA-256 recomputed: `19a71fe301c1038b52473b76bec64d2a95ca606dd701c4a2054c72f5bb791814` (matches the recorded value) before and after.
+- Source read through a NEW account `legacy_reader@127.0.0.1` with `GRANT SELECT` on `euro_assist_legacy_audit_20261121` only. The pre-existing `legacy_import` account (SELECT, INSERT, CREATE, REFERENCES, INDEX, ALTER) is **refused** by the live grant check (`legacy:preflight` exit 1, verified).
+- `legacy:preflight` (read-only) verified: environment `local`; source resolves to `127.0.0.1`, live port 33316, live database `euro_assist_legacy_audit_20261121`; destination `euro_assist_v2_local` (allow-listed). Pointing the destination at the audit database is refused (verified). A wrong checksum is refused (verified).
+- Source fingerprint (row counts + `CHECKSUM TABLE … EXTENDED` of all 9 tables) recorded before and after all runs: **identical**.
+
+### Commands run (destination `euro_assist_v2_local`, freshly migrated; backup of the previous dev DB kept outside Git)
+
+`legacy:preflight` → `legacy:stage --dry-run` → `legacy:stage` → `legacy:map-types --from-legacy` → `legacy:apply --dry-run` → `legacy:apply --actor=<local admin> --accept-provisional-types` → (after URL-rule fix) re-apply → `legacy:suggest-pairs` → `legacy:reconcile --expect-baseline --report`.
+
+### Results
+
+| Source table | Source rows | Staged | Mapped | Needs review | Rejected |
+|---|---:|---:|---:|---:|---:|
+| providers (EN) | 1,090 | 1,090 | 1,082 | 8 | 0 |
+| arabic_providers (AR) | 1,104 | 1,104 | 1,103 | 1 | 0 |
+| top_providers (featured) | 3 | 3 | 3 | 0 | 0 |
+| **total** | **2,197** | **2,197** | **2,188** | **9** | **0** |
+
+- Created: 2,185 canonical providers (one per source locale row, each with exactly one translation in its source locale) and 3 brand-level featured entries; 2,188 identity maps, all `unpaired`. 30/30 V2 types available; the 30-row legacy `types` table produced no new mapping (all its labels already present).
+- Held for review (visible on the Admin review screen and the dashboard): 7 rows with the ambiguous label "Eye Center" (`type_needs_review`), 2 rows whose map link contains inner whitespace (`validation_failed:map_url`). Their original values are preserved unchanged in staging.
+- 972 mapped rows use a **provisional** type mapping (deterministic plural/synonym labels: "Laboratories", "Radiology Centers", "Specialized Centers", "Physiotherapy Center"), tagged `provisional_type`. Owner approval of D3 is still required; if rejected, roll the batch back and re-apply without `--accept-provisional-types`.
+- Pair suggestions: 334 created for human review (signals: map URL 333, phone 299, coordinates 263, same id 1); **0 approved automatically**. All 2,185 migrated providers remain separate until an Admin approves a pair with a written reason.
+- Integrity checks (all 0): duplicate source mappings, providers shared by two maps, providers without map, providers with ≠1 translation, locale mismatches, orphan type/translation FKs, mapped rows without map, held rows with a map, automatic approvals, soft-deleted providers.
+- **Field fidelity:** byte-exact comparison (`BINARY`) of 13 fields (name, address, city, district, specialization, hours, discount, package, phone, email, website, map_url, logo_path) for all 2,185 providers and both featured names: **0 differences** after the documented normalization (leading/trailing whitespace trimmed, blank → NULL). Phones keep leading zeros and spacing; Arabic text intact.
+- **Provenance:** every column of every source row (including `created_at`, `updated_at`, `is_translated`, raw `type`, `logo_path`) is stored byte-identical in `legacy_staging_rows.payload` (verified per column, 0 differences).
+- **Idempotency:** re-running map-types/apply/suggest-pairs/reconcile changed nothing (same counts, no new revisions or timestamps). Re-staging an applied snapshot is refused until the batch is rolled back.
+- **Rollback rehearsal** on the separate disposable database `euro_assist_v2_rehearsal`: full pipeline → `legacy:rollback` removed exactly 2,185 providers, 2,185 translations, 2,188 maps, 334 suggestions, 3 featured; batch `rolled_back`; staging provenance kept; re-staging and re-applying afterwards reproduced the same totals.
+
+### Known limitations (not lossy, but not modelled in the canonical tables)
+
+- Legacy `created_at`/`updated_at` and `is_translated` live only in staging provenance; canonical timestamps are the V2 creation time.
+- Logos are not copied (D8); the raw logo reference is kept on the provider (`logo_path`) and in staging.
+- No English/Arabic pair is merged until reviewed; the dashboard therefore shows 0 "Arabic and English" providers today.
+
+### Provisional decisions D1–D8 after the rehearsal (no owner approval is claimed)
+
+| Decision | Technical default in use | Affects migrated data? | Reversible? | Lossy risk | Owner action needed |
+|---|---|---|---|---|---|
+| D1 field ownership | language-independent fields on provider, text per translation | yes (all rows) | yes (new migrations) | none found (0 diffs) | approve or change split |
+| D2 city/district | free localized text | yes | yes | none | approve |
+| D3 type vocabulary | 30 keys; plural/synonym labels PROVISIONAL; "Eye Center" unmapped | yes (972 provisional, 7 held) | yes (rollback + re-apply) | none (raw type kept) | approve the 4 provisional labels; decide "Eye Center" |
+| D4 required fields | type + name + address per translation | yes (2 held rows are URL-format, not required-field) | yes | none | approve |
+| D5 featured model | brand-level, no provider FK | yes (3 rows) | yes | none | approve |
+| D6 pairing | unpaired + suggestions + reasoned Admin review | yes (334 pending) | yes (undo) | none | review the 334 suggestions |
+| D7 API exposure | `/api/v2`, authenticated, public read OFF | no data change | yes (config) | n/a | name the real consumers |
+| D8 media/rollback | logos not copied; rollback by batch | logos only | yes | none (references kept) | decide media migration |

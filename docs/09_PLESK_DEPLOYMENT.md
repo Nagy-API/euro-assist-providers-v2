@@ -60,3 +60,24 @@ Also: document root = `public/` only; `storage/` and `bootstrap/cache` writable 
 None of this has been executed on Plesk. P6.1 (#34) must verify it on an isolated staging subscription.
 
 Official reference: https://docs.plesk.com/ and https://laravel.com/docs/deployment
+
+## Release-readiness checklist (prepared 2026-11-22; NOTHING deployed, Plesk NOT verified)
+
+The application now **refuses to boot in production** unless: `APP_DEBUG=false`, `APP_URL` is `https://…`, `SESSION_SECURE_COOKIE=true`, and `TRUSTED_PROXIES` is an explicit list (not `*`).
+
+Facts King must obtain from the Plesk host before staging (unknown today):
+
+1. OS, PHP 8.3+ CLI and FPM versions; extensions: pdo_mysql, mbstring, intl, zip, fileinfo, xml, xmlreader, openssl, ctype, tokenizer, bcmath not required.
+2. MariaDB/MySQL version (tested locally: MariaDB 11.4.14) and whether a separate staging database + user can be created.
+3. Composer availability (or build `vendor/` elsewhere), Node only for building assets (or ship `public/build`).
+4. Document root can be set to `public/`; PHP user can write `storage/` and `bootstrap/cache` only.
+5. Scheduled tasks: can `php artisan schedule:run` run every minute? Is a long-running `queue:work` allowed (Laravel Toolkit / supervisor)?
+6. Reverse proxy address(es) for `TRUSTED_PROXIES`; HTTPS certificate on the staging host name.
+7. PHP `memory_limit` ≥ 256M and `upload_max_filesize`/`post_max_size` ≥ 12M (import limit 10 MB).
+8. Backup facility for the database and `storage/app/private` (imports/exports/logos), and its restore procedure.
+
+Deployment order for an **isolated staging** subscription (only after written approval): upload code → `composer install --no-dev --optimize-autoloader` → set `.env` from server secrets (`php artisan key:generate` once) → `php artisan migrate --force` on the EMPTY staging DB → `db:seed --force` (types only) → `users:provision` (interactive password) → `config:cache route:cache view:cache event:cache` → scheduler task → smoke test (`/up`, login, list, create/edit, import dry-run, export download, `/api/v2` with a token) → queue drain check. Rollback: restore DB backup + previous release directory.
+
+Operational limits from local benchmarks (Windows laptop, PHP 8.3.37, MariaDB 11.4; staging must re-measure): validation ~330–480 rows/s, apply ~280–300 rows/s, export ~3,300 rows/s, peak memory ≤ 78 MB at 25,000 rows. Keep `IMPORTS_MAX_ROWS=20000` (≈55 s validation + ≈71 s apply) and the 10 MB file limit until staging confirms worker time limits; 25,000 rows worked locally (≈68 s + ≈84 s).
+
+Production data migration: NOT authorized. It would require an approved ADR, a fresh frozen snapshot + checksum, a SELECT-only source account, a maintenance window, the rehearsal steps of `docs/05_DATA_MIGRATION.md`, and a tested rollback.

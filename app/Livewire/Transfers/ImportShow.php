@@ -9,6 +9,7 @@ use App\Services\Transfers\ImportJobService;
 use App\Services\Transfers\JobAccess;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -22,6 +23,7 @@ class ImportShow extends Component
 {
     use WithPagination;
 
+    #[Locked]
     public string $uuid = '';
 
     public function mount(ImportJob $importJob): void

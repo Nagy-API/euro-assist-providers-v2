@@ -103,7 +103,7 @@
         @if ($jobs->isEmpty())
             <p class="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-700">{{ __('transfers.exports.empty') }}</p>
         @else
-            <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div class="relative overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table class="min-w-full text-start text-sm">
                     <thead class="bg-slate-50 text-slate-700">
                         <tr>
