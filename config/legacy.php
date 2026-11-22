@@ -15,7 +15,7 @@ return [
 
     // Destination (application) databases the pipeline may write to: loopback host only, exact
     // names. Anything else (including a production database) is refused.
-    'allowed_destination_databases' => explode(',', (string) env('LEGACY_ALLOWED_DESTINATIONS', 'euro_assist_v2_local,euro_assist_v2_rehearsal,euro_assist_v2_test,euro_assist_v2_uat')),
+    'allowed_destination_databases' => explode(',', (string) env('LEGACY_ALLOWED_DESTINATIONS', 'euro_assist_v2_local,euro_assist_v2_rehearsal,euro_assist_v2_test,euro_assist_v2_uat,euro_assist_v2_release')),
 
     // The frozen audit database the source connection must point at (no default: fail closed).
     'expected_source_database' => env('LEGACY_EXPECTED_DATABASE', ''),
