@@ -83,7 +83,8 @@ class SecurityRegressionTest extends TestCase
             ['map_url' => 'javascript:alert(1)'],
             ['map_url' => 'data:text/html,<b>x</b>'],
             ['map_url' => 'file:///etc/passwd'],
-            ['map_url' => 'example.com/maps'],
+            ['map_url' => 'https://maps.example.test/a b'],
+            ['map_url' => 'https://maps.example.test/"x'],
             ['logo_path' => '../../../.env'],
             ['logo_path' => '/etc/passwd'],
             ['logo_path' => 'a/../../b.png'],
@@ -113,6 +114,15 @@ class SecurityRegressionTest extends TestCase
             'website' => 'example.test:8080/path', 'logo_path' => 'https://cdn.example.test/logo.png',
         ]));
         $this->assertSame('example.test:8080/path', $second->website);
+
+        // Real legacy map links: an apostrophe (DMS coordinates) and a scheme-less short link are
+        // preserved exactly; neither can carry a scheme.
+        $third = $this->service()->create(User::factory()->editor()->create(), $this->payload([
+            'map_url' => "https://maps.example.test/place/30%C2%B002'40.0N",
+        ]));
+        $this->assertSame("https://maps.example.test/place/30%C2%B002'40.0N", $third->map_url);
+        $fourth = $this->service()->create(User::factory()->editor()->create(), $this->payload(['map_url' => 'maps.example.test/abc']));
+        $this->assertSame('maps.example.test/abc', $fourth->map_url);
     }
 
     // I-3 -------------------------------------------------------------------------------

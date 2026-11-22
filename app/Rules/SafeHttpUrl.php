@@ -22,7 +22,10 @@ final class SafeHttpUrl implements ValidationRule
         if (! is_string($value)) {
             return false;
         }
-        if (preg_match('/[\x00-\x20\x7F<>"\'`\\\\]/u', $value) === 1) {
+        // Whitespace, control characters, double quotes, angle brackets, backtick and backslash are
+        // refused. The apostrophe is allowed: it is an RFC 3986 sub-delimiter that real map links
+        // contain (degree/minute/second coordinates) and every output is escaped.
+        if (preg_match('/[\x00-\x20\x7F<>"`\\\\]/u', $value) === 1) {
             return false;
         }
         if (preg_match('#^https?://[^/\s]+#i', $value) === 1) {

@@ -25,9 +25,24 @@ class TypeMappingService
     public const REVIEW_RECOMMENDATIONS = [
         'Laboratories' => 'laboratory',
         'Radiology Centers' => 'radiology_center',
+        'Specialized Centers' => 'specialized_center',
+        'Physiotherapy Center' => 'physical_therapy',
     ];
 
+    /** Legacy (pre-ADR-014) note of the first two recommendations; upgraded to PROVISIONAL. */
     public const REVIEW_NOTE = 'Plural display label; recommended mapping awaits owner approval of decision D3.';
+
+    public const PROVISIONAL_NOTE = 'PROVISIONAL: deterministic plural/synonym of a vocabulary label. Used only by legacy:apply --accept-provisional-types (local rehearsal); owner approval of D3 pending.';
+
+    /**
+     * Labels that are genuinely ambiguous: recorded as needs_review WITHOUT a type so they can never
+     * be resolved by a flag. Only an owner decision can map them.
+     *
+     * @var array<string, string> raw label => note
+     */
+    public const AMBIGUOUS = [
+        'Eye Center' => 'Ambiguous: could be Optics, Specialized Center or Clinic. Owner decision required (D3).',
+    ];
 
     /**
      * Seed the static vocabulary into mapping version $version. Idempotent.
@@ -53,7 +68,14 @@ class TypeMappingService
 
         foreach (self::REVIEW_RECOMMENDATIONS as $raw => $key) {
             $typeId = $types[$key] ?? null;
-            $this->put($version, $raw, $typeId, TypeMapper::NEEDS_REVIEW, self::REVIEW_NOTE) ? $stats['needs_review']++ : $stats['skipped']++;
+            // Upgrade our own earlier needs_review seed (never a reviewer's decision) to PROVISIONAL.
+            LegacyTypeMapping::query()->where('mapping_version', $version)->where('raw_value', $raw)
+                ->where('status', TypeMapper::NEEDS_REVIEW)->where('note', self::REVIEW_NOTE)
+                ->update(['status' => TypeMapper::PROVISIONAL, 'note' => self::PROVISIONAL_NOTE, 'provider_type_id' => $typeId]);
+            $this->put($version, $raw, $typeId, TypeMapper::PROVISIONAL, self::PROVISIONAL_NOTE) ? $stats['needs_review']++ : $stats['skipped']++;
+        }
+        foreach (self::AMBIGUOUS as $raw => $note) {
+            $this->put($version, $raw, null, TypeMapper::NEEDS_REVIEW, $note) ? $stats['needs_review']++ : $stats['skipped']++;
         }
 
         return $stats;

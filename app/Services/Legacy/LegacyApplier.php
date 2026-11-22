@@ -40,7 +40,7 @@ class LegacyApplier
     /**
      * @return array{states: array<string, array<string, int>>, reasons: array<string, int>, dry_run: bool}
      */
-    public function apply(LegacyMigrationBatch $batch, ?User $actor, bool $dryRun): array
+    public function apply(LegacyMigrationBatch $batch, ?User $actor, bool $dryRun, bool $acceptProvisionalTypes = false): array
     {
         LegacyGuard::assertRunnable($batch->snapshot_sha256);
 
@@ -51,7 +51,7 @@ class LegacyApplier
             throw new LegacyException('Applying a batch requires --actor=<e-mail of an active Admin account>.');
         }
 
-        $mapper = new TypeMapper($batch->mapping_version);
+        $mapper = new TypeMapper($batch->mapping_version, $acceptProvisionalTypes);
         $states = [];
         $reasons = [];
 
@@ -143,7 +143,7 @@ class LegacyApplier
         }
 
         $type = $mapper->resolve($n['type_raw']);
-        if ($type['status'] !== TypeMapper::APPROVED) {
+        if (! in_array($type['status'], [TypeMapper::APPROVED, TypeMapper::PROVISIONAL], true)) {
             return [LegacyStagingRow::STATE_NEEDS_REVIEW, 'type_'.$type['status'], null];
         }
         if ($text['address'] === null) {
@@ -172,7 +172,8 @@ class LegacyApplier
             return [LegacyStagingRow::STATE_NEEDS_REVIEW, mb_substr('validation_failed:'.implode(',', $fields), 0, 190), null];
         }
 
-        return [LegacyStagingRow::STATE_MAPPED, null, $input];
+        // A mapped row that relied on a provisional type mapping stays traceable (reason code).
+        return [LegacyStagingRow::STATE_MAPPED, $type['status'] === TypeMapper::PROVISIONAL ? 'provisional_type' : null, $input];
     }
 
     /**
@@ -187,21 +188,23 @@ class LegacyApplier
         }
 
         $resolved = [];
+        $provisional = false;
         foreach ([$n['type_en_raw'], $n['type_ar_raw']] as $raw) {
             if ($raw === null) {
                 continue;
             }
             $type = $mapper->resolve($raw);
-            if ($type['status'] !== TypeMapper::APPROVED) {
+            if (! in_array($type['status'], [TypeMapper::APPROVED, TypeMapper::PROVISIONAL], true)) {
                 return [LegacyStagingRow::STATE_NEEDS_REVIEW, 'type_'.$type['status'], null];
             }
             $resolved[] = $type['type'];
+            $provisional = $provisional || $type['status'] === TypeMapper::PROVISIONAL;
         }
         if (count(array_unique($resolved)) > 1) {
             return [LegacyStagingRow::STATE_NEEDS_REVIEW, 'type_conflict', null];
         }
 
-        return [LegacyStagingRow::STATE_MAPPED, null, [
+        return [LegacyStagingRow::STATE_MAPPED, $provisional ? 'provisional_type' : null, [
             'name_en' => $n['name_en'],
             'name_ar' => $n['name_ar'],
             'provider_type_id' => $resolved[0] ?? null,

@@ -112,9 +112,28 @@ class ApplyTest extends LegacyTestCase
         $this->assertSame(['needs_review', 'type_needs_review'], [$row->state, $row->reason]);
 
         $mapping = LegacyTypeMapping::query()->where('raw_value', 'Laboratories')->firstOrFail();
-        $this->assertSame('needs_review', $mapping->status);
+        $this->assertSame('provisional', $mapping->status, 'a recommendation, not an approval');
         $this->assertNotNull($mapping->note, 'the recommendation is recorded with a note');
         $this->assertSame(ProviderType::query()->where('key', 'laboratory')->value('id'), $mapping->provider_type_id);
+    }
+
+    public function test_provisional_mappings_are_used_only_when_explicitly_accepted_and_stay_traceable(): void
+    {
+        $this->en(['id' => 1, 'type' => 'Laboratories']);
+        $this->en(['id' => 2, 'type' => 'Eye Center']);
+        $this->runPipeline();
+        $this->assertSame(0, Provider::query()->count(), 'default: never used');
+
+        $this->artisan('legacy:apply', ['--actor' => User::query()->firstOrFail()->email, '--accept-provisional-types' => true])->assertSuccessful();
+
+        $this->assertSame(1, Provider::query()->count());
+        $lab = LegacyStagingRow::query()->where('source_id', 1)->firstOrFail();
+        $this->assertSame(['mapped', 'provisional_type'], [$lab->state, $lab->reason]);
+        $this->assertSame('laboratory', Provider::query()->firstOrFail()->type->key);
+
+        $eye = LegacyStagingRow::query()->where('source_id', 2)->firstOrFail();
+        $this->assertSame(['needs_review', 'type_needs_review'], [$eye->state, $eye->reason], 'an ambiguous label is never resolved by a flag');
+        $this->assertNull(LegacyTypeMapping::query()->where('raw_value', 'Eye Center')->value('provider_type_id'));
     }
 
     public function test_a_row_in_review_is_re_evaluated_after_the_owner_approves_the_mapping(): void

@@ -56,7 +56,7 @@ class ProviderResource extends JsonResource
             // Defense in depth: values that are not http(s) links (e.g. preserved legacy data) are
             // never handed to API consumers, which may render them as hrefs.
             'website' => SafeHttpUrl::passes($provider->website, allowBare: true) ? $provider->website : null,
-            'map_url' => SafeHttpUrl::passes($provider->map_url, allowBare: false) ? $provider->map_url : null,
+            'map_url' => SafeHttpUrl::passes($provider->map_url, allowBare: true) ? $provider->map_url : null,
             'latitude' => $provider->latitude === null ? null : (float) $provider->latitude,
             'longitude' => $provider->longitude === null ? null : (float) $provider->longitude,
             'is_active' => (bool) $provider->is_active,

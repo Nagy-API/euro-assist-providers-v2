@@ -12,7 +12,7 @@ final class SafeUrl
     public static function http(?string $value): ?string
     {
         $value = trim((string) $value);
-        if ($value === '' || mb_strlen($value) > 2048 || preg_match('/[\x00-\x20<>"\'`\\\\]/u', $value) === 1) {
+        if ($value === '' || mb_strlen($value) > 2048 || preg_match('/[\x00-\x20\x7F<>"`\\\\]/u', $value) === 1) { // apostrophe allowed (RFC 3986; output is escaped)
             return null;
         }
 

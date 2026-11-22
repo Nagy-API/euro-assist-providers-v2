@@ -80,7 +80,9 @@ class LegacyReportWriter
         }
         $out[] = sprintf('| **total** | %d | %d | | | | |', array_sum($r['source']), array_sum($r['staged']));
         $out[] = '';
-        $out[] = '## Reason codes for rows that are not mapped';
+        $out[] = '## Reason codes';
+        $out[] = '';
+        $out[] = '`provisional_type` marks MAPPED rows whose type came from a provisional mapping (owner approval of D3 pending). Every other code marks a row held in `needs_review` or `rejected`.';
         $out[] = '';
         $out = array_merge($out, $this->table(['Reason code', 'Rows'], $r['reasons']));
         $out[] = '';

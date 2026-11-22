@@ -18,6 +18,13 @@ class TypeMapper
 
     public const NEEDS_REVIEW = 'needs_review';
 
+    /**
+     * Deterministic plural/synonym label whose mapping still awaits owner approval (D3). Resolved
+     * only when the caller explicitly accepts provisional mappings (local rehearsal); otherwise it
+     * behaves exactly like needs_review.
+     */
+    public const PROVISIONAL = 'provisional';
+
     public const UNMAPPED = 'unmapped';
 
     public const BLANK = 'blank';
@@ -25,7 +32,7 @@ class TypeMapper
     /** @var array<string, array{type: ?int, status: string}> */
     private array $map = [];
 
-    public function __construct(public readonly string $version)
+    public function __construct(public readonly string $version, public readonly bool $acceptProvisional = false)
     {
         foreach (LegacyTypeMapping::query()->where('mapping_version', $version)->orderBy('id')->get() as $row) {
             $key = self::key($row->raw_value);
@@ -52,6 +59,9 @@ class TypeMapper
         }
 
         if ($entry['status'] === self::APPROVED && $entry['type'] !== null) {
+            return $entry;
+        }
+        if ($entry['status'] === self::PROVISIONAL && $entry['type'] !== null && $this->acceptProvisional) {
             return $entry;
         }
 

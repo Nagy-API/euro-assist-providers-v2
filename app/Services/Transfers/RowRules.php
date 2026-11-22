@@ -27,7 +27,7 @@ class RowRules
             'phone' => ['nullable', 'string', 'max:500'],
             'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
             'website' => ['nullable', 'string', 'max:500', new SafeHttpUrl(allowBare: true)],
-            'map_url' => ['nullable', 'string', 'max:2048', new SafeHttpUrl(allowBare: false)],
+            'map_url' => ['nullable', 'string', 'max:2048', new SafeHttpUrl(allowBare: true)],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ];
