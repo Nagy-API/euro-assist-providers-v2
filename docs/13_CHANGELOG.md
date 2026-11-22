@@ -4,6 +4,9 @@ This log describes **delivered application behavior**, not planned features. Kee
 
 ## Unreleased
 
+- 2026-11-22 (PR #40, local only): admin UI (dashboard, providers CRUD/search/bulk, types, featured providers, users, audit log, system status) in English/Arabic with RTL; Excel import with whole-file validation, preview and confirmation; private Excel exports; read-only token API `/api/v2`; legacy migration commands and pair review.
+- Security: import and form share one http(s)-only URL rule; API never returns non-http(s) links; per-IP API limit before authentication; password reset and deactivation revoke sessions and API tokens; host/proxy trust survives `config:cache`; private files are never served over HTTP.
+
 - Added a local Laravel 13 foundation with the upstream welcome page and `/up` health endpoint; Livewire assets included. Provider/admin features and final UI remain pending.
 - Added framework session/cache/queue migrations with an empty seeder and isolated smoke/infrastructure tests. No default user is created.
 

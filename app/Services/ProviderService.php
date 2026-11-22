@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use App\Models\Provider;
 use App\Models\ProviderTranslation;
 use App\Models\User;
+use App\Rules\SafeHttpUrl;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -56,8 +57,8 @@ class ProviderService
             'provider_type_id' => [$creating ? 'required' : 'nullable', 'integer', Rule::exists('provider_types', 'id')],
             'phone' => ['nullable', 'string', 'max:500'],
             'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
-            'website' => ['nullable', 'string', 'max:500', $this->safeUrlRule(allowBare: true)],
-            'map_url' => ['nullable', 'string', 'max:2048', $this->safeUrlRule(allowBare: false)],
+            'website' => ['nullable', 'string', 'max:500', new SafeHttpUrl(allowBare: true)],
+            'map_url' => ['nullable', 'string', 'max:2048', new SafeHttpUrl(allowBare: false)],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'logo_path' => ['nullable', 'string', 'max:500', $this->safeLogoPathRule()],
@@ -139,24 +140,6 @@ class ProviderService
         }
 
         return $out;
-    }
-
-    /**
-     * Only http(s) links may be stored: `javascript:`/`data:`/`file:` values would become stored
-     * XSS when rendered as hrefs. A bare host (website only) is allowed and kept as typed.
-     */
-    private function safeUrlRule(bool $allowBare): \Closure
-    {
-        return function (string $attribute, mixed $value, \Closure $fail) use ($allowBare): void {
-            $v = (string) $value;
-            $ok = ! preg_match('/[\x00-\x20\x7F<>"\'\\\\]/u', $v) && (
-                preg_match('#^https?://[^/\s]+#i', $v) === 1
-                || ($allowBare && ! preg_match('#^[a-z][a-z0-9+.\-]*:(?!\d+(/|$))#i', $v) && preg_match('/^[^\s\/:]+\.[^\s\/:]+/u', $v) === 1)
-            );
-            if (! $ok) {
-                $fail("The $attribute must be an http or https address.");
-            }
-        };
     }
 
     /** logo_path is a raw reference: an http(s) URL or a plain relative path, never traversal. */

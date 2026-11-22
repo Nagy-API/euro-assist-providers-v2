@@ -7,10 +7,8 @@ use App\Services\AuditLogger;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\View\View;
 
@@ -51,11 +49,9 @@ class PasswordResetController extends Controller
                 'password_confirmation' => $request->input('password_confirmation'), 'token' => $data['token']],
             function ($user, string $password) {
                 abort_unless($user->is_active, 403);
-                $user->forceFill(['password' => Hash::make($password), 'remember_token' => Str::random(60)])->save();
-                // A password reset must end every other open session of the account.
-                if (config('session.driver') === 'database') {
-                    DB::table(config('session.table', 'sessions'))->where('user_id', $user->getKey())->delete();
-                }
+                $user->forceFill(['password' => Hash::make($password)])->save();
+                // A password reset must end every other open session and every API token.
+                $user->revokeAllAccess();
                 event(new PasswordReset($user));
                 $this->audit->record('auth.password_reset', $user, 'success', [], $user);
             }

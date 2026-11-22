@@ -33,7 +33,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Never served over HTTP: imports, exports, logos and provisioning files are private.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

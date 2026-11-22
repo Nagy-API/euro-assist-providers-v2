@@ -39,7 +39,9 @@ return [
         // Global apply lock (Cache::lock on the configured store; null = default cache store, which must
         // support atomic locks: database/redis/memcached/array). Two imports never write concurrently.
         'lock_store' => env('IMPORTS_LOCK_STORE'),
-        'lock_seconds' => (int) env('IMPORTS_LOCK_SECONDS', 1800),
+        // Must outlive ApplyImportJob::$timeout (3600 s) so a redelivered job can never take the
+        // lock while the first run still writes (security review L3).
+        'lock_seconds' => (int) env('IMPORTS_LOCK_SECONDS', 3900),
         'lock_release_delay' => (int) env('IMPORTS_LOCK_RELEASE_DELAY', 20),
         // A job stuck in "applying" without progress for this many minutes may be retried by its owner.
         'stale_apply_minutes' => (int) env('IMPORTS_STALE_APPLY_MINUTES', 15),
@@ -69,6 +71,8 @@ return [
     'api' => [
         'public_read' => (bool) env('PROVIDERS_API_PUBLIC_READ', false),
         'rate_limit_per_minute' => (int) env('PROVIDERS_API_RATE_LIMIT', 60),
+        // Per-IP ceiling checked BEFORE authentication (bounds invalid-token guessing).
+        'ip_rate_limit_per_minute' => (int) env('PROVIDERS_API_IP_RATE_LIMIT', 300),
         'max_per_page' => 100,
         'default_per_page' => 25,
         'coordinates_max' => 5000,

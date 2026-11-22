@@ -1,38 +1,37 @@
 # Current project status — update after EVERY task
 
-**Date:** 2026-11-21. **Phase:** P1 in progress; P0 final review/hosted verification pending.
-**Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — verified PRIVATE.
-**Branch:** `feature/p0-governance-bootstrap`.
-**Latest verified remote commit:** `9d7437cb87e7a2d996dd3c506c3aadef756695f3` on main (preserved seed). The recovered Codex work was committed on `feature/p0-governance-bootstrap` and pushed in the recovery session of 2026-11-21; see the open PR for the exact head SHA. Nothing is merged to `main`.
-**Hosted CI:** NOT EXECUTED. Billing blocker: "recent account payments have failed or your spending limit needs to be increased" (see `docs/14_GITHUB_BOOTSTRAP.md`). Local checks only.
-**Canonical local checkout:** `N:\Coding\programming\VS code\Providers\euro-assist-providers-v2` (the only Git repository; outer `.work/` and `.tools/` are private non-Git scratch and portable tools).
-**Production:** no changes, login, deployment or DB connection. Read-only dashboard navigation redirected to login.
-**Plesk:** assumed for planning, not verified.
+**Date:** 2026-11-22. **Phase:** P2–P5 implemented locally as a stacked draft (PR #40); nothing merged; owner decisions D1–D8 still provisional.
+**Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — PRIVATE.
+**Branch:** `feature/p1-foundation-hardening` (PR #40, stacked on PR #38 / `feature/p0-governance-bootstrap`). See the PR head for the latest SHA; the recovery checkpoint is `f5e5a81`.
+**Hosted CI:** NOT EXECUTED — account billing blocker (`docs/14_GITHUB_BOOTSTRAP.md`). All evidence below is LOCAL.
+**Production:** untouched (no login, deploy, DB or DNS action). **Plesk:** not verified.
 
-| Workstream | Current evidence / boundary | Next gate |
+## Verified locally (2026-11-22, Windows, portable tools)
+
+| Check | Result |
+|---|---|
+| PHPUnit SQLite, PHP 8.3.37 and PHP 8.4.28 | 479 tests / 2788 assertions OK |
+| PHPUnit full suite on isolated MariaDB 11.4.14 (`euro_assist_v2_test`) | 479 tests / 2788 assertions OK |
+| Pint / Larastan level 6 / `composer validate --strict` | clean |
+| `composer audit --locked` / `npm audit` / `npm run build` | 0 advisories / 0 vulnerabilities / OK |
+| Repo hygiene, Python repo tests (23), Gitleaks on staged change, `git diff --check` | clean |
+| Browser smoke (local dev DB, synthetic data) | see below |
+
+Browser-tested on `php artisan serve` with the local dev DB `euro_assist_v2_local` (synthetic seeder, provisioned test accounts): login failure message and success; dashboard; provider list + live Livewire search; create provider (javascript: URL rejected, valid save); provider detail; Arabic RTL switch (dir=rtl, no horizontal overflow); export request -> database queue worker -> private .xlsx download (HTTP 200); Viewer and Editor route/nav access matching the ADR-010 matrix. Import upload was NOT browser-tested (file chooser); it is covered by feature tests.
+
+## Workstreams
+
+| Workstream | State | Open |
 |---|---|---|
-| Governance | Private seed preserved; fsck/hygiene clean; 7 milestones and 37 phase/task issues; dependency alerts/automatic fixes enabled | Commit reviewed controls, PR and hosted CI |
-| GitHub protection | Branch protection HTTP403 requires higher plan; secret scanning HTTP422 unavailable; effective push-protection state unverified | Keep private; operational PR/CI/manual review, no enforced protection claim |
-| Legacy audit | Source inventory, ten-table schema, spreadsheet mappings, implemented API contracts in docs03/05/06 | Independent review; owner parity/remaining business signoff |
-| Frozen data | Restricted local MariaDB restore: 1,090 English, 1,104 Arabic, 3 featured; checksum/quality aggregates in docs05 | No canonical matching or migration performed |
-| Native runtime | PHP8.4.28, Composer2.11.2, MariaDB11.4.14; Node24.14.1/npm11.11.0 | PHP8.3 hosted evidence; eventual Plesk staging |
-| Foundation | Laravel13.43.0, Livewire4.4.9/bundled Alpine, Tailwind4.3.5/Vite8.3.8; framework tables, empty seed | Whole-change review and independent verification |
-| Implementer checks | SQLite6 tests/26 assertions, MariaDB2/17, Pint, Larastan level6, clean dependency audits/build recorded | Fresh independent evidence before acceptance |
-| Browser | Upstream welcome inspected1280x800,768x1024,390x844 without horizontal overflow; health rendered; no captured warnings/errors | Browser Alpine interaction unverified; no business UI/reference parity |
-| Role matrix | Owner-approved Admin/Editor/Viewer matrix final (ADR-010 + Amendment A) in `docs/08_SECURITY.md`; only the "who may clear a stored value" item is open (default Admin-only) | Implement and test policies in P2.3 (#19) |
-| Domain/auth/providers | Not implemented beyond upstream framework tables; no default account/auth routes; no authorization code yet | Approved schema (P2.1) then P2.3 |
-| PHP 8.3 / local verification | Recovery session ran full suite on PHP 8.3.37 and 8.4.28, MariaDB suite, audits, build, hygiene, Gitleaks: all exit 0 (details in docs07) | Hosted Linux CI evidence after billing fix; independent reviewer/verifier not yet run |
-| Import/export | Contract only; approved blank preservation and whole-file validation, ADR-008 | P4 implementation/round-trip/recovery/benchmarks |
-| API/migration | Source inventory/aggregate audit only | Consumers, mapping/reconciliation and versioned tests |
-| Deployment | No staging/production operations | Separate staging evidence and explicit cutover approval |
-
-## Issue map
-
-Phase epics [P0#1](https://github.com/Nagy-API/euro-assist-providers-v2/issues/1), [P1#2](https://github.com/Nagy-API/euro-assist-providers-v2/issues/2), [P2#3](https://github.com/Nagy-API/euro-assist-providers-v2/issues/3), [P3#4](https://github.com/Nagy-API/euro-assist-providers-v2/issues/4), [P4#5](https://github.com/Nagy-API/euro-assist-providers-v2/issues/5), [P5#6](https://github.com/Nagy-API/euro-assist-providers-v2/issues/6), [P6#7](https://github.com/Nagy-API/euro-assist-providers-v2/issues/7) link task issues, acceptance criteria and dependencies. Do not close phases based on scaffolding alone.
+| Auth/roles (ADR-010) | Login, reset, throttling, inactive users, last-admin, per-action re-authorization, Livewire persistent active check | owner: "clear a value" permission (Admin-only default) |
+| Providers UI | Dashboard, list/search/sort/filters, create/edit (expected_revision concurrency), soft delete/restore, bulk ops with single-use tokens, types, featured (logo upload re-encoded), users, audit log, system status; AR/EN + RTL | UI reference parity review (P1.6) |
+| Import/export (ADR-008) | Template, chunked xlsx parsing, whole-file validation, staging/preview, confirm, resumable apply with atomic lock, error reports, private exports with formula safety, retention prune commands, benchmark command | Owner UAT with real-shaped files; zip-bomb guard hardening (suspicion S1) |
+| API `/api/v2` | Read-only, Sanctum tokens with expiry (`api:token`), allow-listed resources, contract snapshot tests, OpenAPI `docs/openapi/v2.yaml` | Consumer contracts P5.3 unverified |
+| Legacy migration | stage / map-types / suggest-pairs / apply / reconcile / report / rollback commands, pair review UI; never writes to source | Rehearsal against the frozen restore not yet run in this session |
+| Security review R2 | CHANGES_REQUIRED findings M1, L1–L4 fixed with regression tests (ADR-013) | Suspicions S1–S3 open; re-review pending |
 
 ## Immediate next actions
 
-1. Owner: fix the GitHub billing/spending-limit blocker, then re-run the workflows and record real results. Owner: review the PR; no merge without approval.
-2. Independent review of PR #38 is DONE (PASS_WITH_MINOR_NOTES, no code blocker; follow-ups in #39). Hosted CI evidence is still the merge gate. Owner decisions D1/D3/D4/D5/D6 unblock P2.1 (#17).
-3. Complete P1 parity/business signoff: localized-field model, type vocabulary, roles and API consumers. Never infer identity from name/phone/numeric ID.
-4. Implement P2 after its gates. P1 and P2–P6 remain open; this is not a completed V2 system.
+1. Owner: fix GitHub billing so hosted CI runs; review PR #38 then PR #40. No merge without approval.
+2. Owner: decisions D1–D8 (`docs/05_DATA_MIGRATION.md`), the clear-value permission, migration review in production (S3).
+3. Engineering: S1 zip-bomb byte cap in `XlsxRowStream`; legacy rehearsal against the restored snapshot (P5.2); browser import flow; independent re-review of R2 fixes.

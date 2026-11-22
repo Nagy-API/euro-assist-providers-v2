@@ -157,3 +157,18 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 **Decision:** `tests/TestCase::refreshApplication()` builds the app, then calls `Tests\Support\TestDatabaseGuard`, which fails closed unless: environment is `testing`, config is not cached, no database URL, and the target is either SQLite `:memory:` or MySQL/MariaDB at host `127.0.0.1`, an allow-listed port (33316, 3306), database exactly `euro_assist_v2_test`, an allow-listed account (`v2_test`, `ci_test`), no unix socket. The guard is a pure function with 16 negative unit cases. `phpunit.mysql.xml` now runs the whole suite on MariaDB; CI has a MariaDB service job.
 
 **Alternatives:** database-name substring check (rejected: bypassable). **Revisit:** if more test targets are needed, extend the allow-lists in `TestDatabaseGuard`, never loosen them to patterns.
+
+## ADR-013 — Security review R2 remediation: shared URL rule, pre-auth API limit, full credential revocation
+
+**Date:** 2026-11-22 | **Status:** Accepted (engineering; reversible).
+
+**Context:** Independent read-only security review R2 of the recovered integration (`f5e5a81`) returned CHANGES_REQUIRED: M1 import accepted `javascript:` website/map URLs (form did not); L1 invalid API tokens were never rate limited; L2 password reset/deactivation left API tokens (and non-database sessions) alive; L3 import lock (1800 s) shorter than the apply job timeout (3600 s); L4 private `local` disk had `serve => true`. The recovery also found host/proxy trust read with `env()` in `bootstrap/app.php`, which silently disables both guards after `config:cache`.
+
+**Decision:**
+- `App\Rules\SafeHttpUrl` is the single URL rule for the web form and the spreadsheet import (`validation_url` error code); `RowRulesParityTest` proves both accept/reject the same corpus. `/api/v2` additionally returns `null` for any stored non-http(s) `website`/`map_url` (preserved legacy data) — defense in depth.
+- `ApiIpRateLimit` (per-IP ceiling, default 300/min, `PROVIDERS_API_IP_RATE_LIMIT`) runs before token authentication; it is registered in the middleware priority list before `AuthenticatesRequests`, because Laravel otherwise reorders it after authentication.
+- `User::revokeAllAccess()` rotates the remember token, deletes database sessions and all personal access tokens; used on password reset and deactivation. `AuthenticateSession` is in the web group for other session drivers.
+- Import lock default 3900 s (> job timeout). Private disk `serve => false`.
+- Trusted hosts are a per-request closure over `config('app.url')` (exact host, no subdomains, all non-local environments); trusted proxies come from `config('app.trusted_proxies')` (`TRUSTED_PROXIES`) applied in `AppServiceProvider::boot`. Sanctum is stateless-only (`config/sanctum.php`: no stateful domains, no routes).
+
+**Open (not decided here):** S1 xlsx decompression byte cap, S2 legacy account grants/host comparison, S3 migration review availability in production.

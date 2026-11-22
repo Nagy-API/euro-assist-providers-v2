@@ -246,6 +246,7 @@ return [
             'conflicting_values' => 'صفوف نفس المقدم غير متفقة على :field.',
             'validation_max' => ':field طويل جداً (الحد الأقصى :value).',
             'validation_email' => ':field ليس بريداً إلكترونياً صالحاً.',
+            'validation_url' => ':field يجب أن يكون رابط http أو https.',
             'validation_regex' => ':field بصيغة غير صالحة.',
             'validation_numeric' => ':field يجب أن يكون رقماً.',
             'validation_between' => ':field خارج النطاق (:value).',

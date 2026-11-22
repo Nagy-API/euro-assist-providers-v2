@@ -47,7 +47,8 @@
             <section class="rounded-lg border border-slate-200 bg-white" aria-labelledby="tr-{{ $loc }}" lang="{{ $loc }}" dir="{{ in_array($loc, config('providers.rtl_locales'), true) ? 'rtl' : 'ltr' }}">
                 <h2 id="tr-{{ $loc }}" class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">{{ __('ui.locale.'.$loc) }}</h2>
                 @if ($t === null)
-                    <p class="px-4 py-6 text-sm text-slate-600">{{ __('ui.translation.no_translation') }}</p>
+                    {{-- UI text, not provider content: use the interface language and direction. --}}
+                    <p class="px-4 py-6 text-sm text-slate-600" lang="{{ app()->getLocale() }}" dir="{{ in_array(app()->getLocale(), config('providers.rtl_locales'), true) ? 'rtl' : 'ltr' }}">{{ __('ui.translation.no_translation') }}</p>
                 @else
                     <dl class="divide-y divide-slate-100 text-sm">
                         @foreach (ProviderTranslation::TEXT_FIELDS as $field)

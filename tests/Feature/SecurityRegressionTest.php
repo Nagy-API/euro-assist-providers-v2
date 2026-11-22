@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\Role;
+use App\Http\Controllers\Api\Support\ApiPrincipal;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Models\Provider;
 use App\Models\ProviderType;
@@ -16,6 +17,7 @@ use Illuminate\Http\Middleware\TrustHosts;
 use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -184,6 +186,46 @@ class SecurityRegressionTest extends TestCase
         ])->assertRedirect('/login');
 
         $this->assertDatabaseMissing('sessions', ['id' => 'other-device']);
+    }
+
+    // Review R2 / L2: credentials changes close every way in, API tokens included ------------
+    public function test_password_reset_and_deactivation_revoke_api_tokens(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->viewer()->create();
+        $principal = fn () => ApiPrincipal::query()->findOrFail($user->id);
+
+        $principal()->createToken('t1', ['providers:read']);
+        $this->post('/reset-password', [
+            'token' => Password::createToken($user), 'email' => $user->email,
+            'password' => 'Another-Strong-1234', 'password_confirmation' => 'Another-Strong-1234',
+        ])->assertRedirect('/login');
+        $this->assertSame(0, $principal()->tokens()->count(), 'password reset must revoke API tokens');
+
+        $plain = $principal()->createToken('t2', ['providers:read'])->plainTextToken;
+        app(UserService::class)->setActive($admin, $user, false);
+        app(UserService::class)->setActive($admin, $user, true);
+        $this->assertSame(0, $principal()->tokens()->count(), 'deactivation must revoke API tokens');
+        $this->withHeader('Authorization', 'Bearer '.$plain)->getJson('/api/v2/providers')->assertStatus(401);
+    }
+
+    // Review R2 / L1: failed bearer tokens are throttled per IP before authentication ----------
+    public function test_invalid_api_tokens_are_rate_limited_per_ip(): void
+    {
+        config(['providers.api.ip_rate_limit_per_minute' => 3]);
+
+        for ($i = 0; $i < 3; $i++) {
+            $this->withHeader('Authorization', 'Bearer 1|guess'.$i)->getJson('/api/v2/providers')->assertStatus(401);
+        }
+        $this->withHeader('Authorization', 'Bearer 1|guess-again')->getJson('/api/v2/providers')->assertStatus(429);
+    }
+
+    // Review R2 / L4: private files are never served over HTTP ----------------------------------
+    public function test_private_disk_is_not_served(): void
+    {
+        $this->assertFalse((bool) config('filesystems.disks.local.serve'));
+        $this->assertFalse(Route::has('storage.local'));
+        $this->assertGreaterThan(3600, (int) config('providers.imports.lock_seconds'), 'import lock must outlive the job timeout (L3)');
     }
 
     // M-3 -------------------------------------------------------------------------------

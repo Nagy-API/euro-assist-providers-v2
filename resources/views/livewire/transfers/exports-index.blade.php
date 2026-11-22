@@ -28,7 +28,7 @@
 
             <div class="space-y-1">
                 <label for="export-locale" class="block text-sm font-semibold text-slate-900">{{ __('transfers.exports.locale') }}</label>
-                <select id="export-locale" name="locale" required aria-describedby="export-locale-hint" class="block w-full max-w-xs rounded-md border-slate-300 text-sm focus:border-teal-600 focus:ring-teal-600">
+                <select id="export-locale" name="locale" required aria-describedby="export-locale-hint" class="block w-full max-w-xs rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
                     @foreach (config('providers.locales') as $loc)
                         <option value="{{ $loc }}" @selected(old('locale', app()->getLocale()) === $loc)>{{ strtoupper($loc) }}</option>
                     @endforeach
@@ -43,11 +43,11 @@
                 <legend class="mb-2 text-sm font-semibold text-slate-900">{{ __('transfers.exports.filters') }}</legend>
                 <div class="space-y-1">
                     <label for="f-search" class="block text-sm text-slate-900">{{ __('transfers.exports.search') }}</label>
-                    <input id="f-search" type="text" name="filters[search]" value="{{ old('filters.search') }}" maxlength="255" class="block w-full rounded-md border-slate-300 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <input id="f-search" type="text" name="filters[search]" value="{{ old('filters.search') }}" maxlength="255" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
                 </div>
                 <div class="space-y-1">
                     <label for="f-type" class="block text-sm text-slate-900">{{ __('transfers.exports.type') }}</label>
-                    <select id="f-type" name="filters[type]" class="block w-full rounded-md border-slate-300 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <select id="f-type" name="filters[type]" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
                         <option value="">{{ __('transfers.exports.any') }}</option>
                         @foreach ($types as $type)
                             <option value="{{ $type['id'] }}" @selected((string) old('filters.type') === (string) $type['id'])>{{ $type['label'] }}</option>
@@ -56,15 +56,15 @@
                 </div>
                 <div class="space-y-1">
                     <label for="f-city" class="block text-sm text-slate-900">{{ __('transfers.exports.city') }}</label>
-                    <input id="f-city" type="text" name="filters[city]" value="{{ old('filters.city') }}" maxlength="255" class="block w-full rounded-md border-slate-300 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <input id="f-city" type="text" name="filters[city]" value="{{ old('filters.city') }}" maxlength="255" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
                 </div>
                 <div class="space-y-1">
                     <label for="f-district" class="block text-sm text-slate-900">{{ __('transfers.exports.district') }}</label>
-                    <input id="f-district" type="text" name="filters[district]" value="{{ old('filters.district') }}" maxlength="255" class="block w-full rounded-md border-slate-300 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <input id="f-district" type="text" name="filters[district]" value="{{ old('filters.district') }}" maxlength="255" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
                 </div>
                 <div class="space-y-1">
                     <label for="f-status" class="block text-sm text-slate-900">{{ __('transfers.exports.status') }}</label>
-                    <select id="f-status" name="filters[status]" class="block w-full rounded-md border-slate-300 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <select id="f-status" name="filters[status]" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
                         <option value="">{{ __('transfers.exports.any') }}</option>
                         <option value="active" @selected(old('filters.status') === 'active')>{{ __('transfers.exports.status_active') }}</option>
                         <option value="inactive" @selected(old('filters.status') === 'inactive')>{{ __('transfers.exports.status_inactive') }}</option>
@@ -73,7 +73,7 @@
                 @if ($isAdmin)
                     <div class="space-y-1">
                         <label for="f-trashed" class="block text-sm text-slate-900">{{ __('transfers.exports.trashed') }}</label>
-                        <select id="f-trashed" name="filters[trashed]" class="block w-full rounded-md border-slate-300 text-sm focus:border-teal-600 focus:ring-teal-600">
+                        <select id="f-trashed" name="filters[trashed]" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
                             <option value="">{{ __('transfers.exports.any') }}</option>
                             <option value="with" @selected(old('filters.trashed') === 'with')>{{ __('transfers.exports.trashed_with') }}</option>
                             <option value="only" @selected(old('filters.trashed') === 'only')>{{ __('transfers.exports.trashed_only') }}</option>

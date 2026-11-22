@@ -96,11 +96,9 @@ class UserService
             $target->save();
 
             if (! $active) {
-                // Revoke existing sessions immediately (database session driver).
-                if (config('session.driver') === 'database') {
-                    DB::table(config('session.table', 'sessions'))->where('user_id', $target->getKey())->delete();
-                }
-                $target->forceFill(['remember_token' => Str::random(60)])->save();
+                // Revoke sessions, remember-me cookies and API tokens immediately: reactivating the
+                // account later must not silently revive old credentials.
+                $target->revokeAllAccess();
             }
 
             $this->audit->record($active ? 'user.activated' : 'user.deactivated', $target, 'success', [], $actor);

@@ -246,6 +246,7 @@ return [
             'conflicting_values' => 'Rows of the same provider disagree on :field.',
             'validation_max' => ':field is too long (maximum :value).',
             'validation_email' => ':field is not a valid email address.',
+            'validation_url' => ':field must be an http or https address.',
             'validation_regex' => ':field has an invalid format.',
             'validation_numeric' => ':field must be a number.',
             'validation_between' => ':field is out of range (:value).',

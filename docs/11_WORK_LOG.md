@@ -70,3 +70,16 @@
 - **Security/data:** only aggregate counts/vocabulary shapes read from the private local audit DB with its SELECT-capable importer account; nothing printed or committed beyond aggregates. Production untouched.
 - **Current status:** PR #38 waiting on owner billing fix and approval. P2.1 blocked on D1, D3, D4, D5, D6.
 - **Next:** owner answers decisions; then P2.1 approval, P2.2, P2.3. Hardening in #39 as capacity allows.
+
+## 2026-11-22 — Emergency recovery of interrupted multi-agent session, integration, security review R2
+
+- **Issues / PR:** PR #40 (Draft, stacked on #38); #19, #21–#29, #30–#33 progressed. Not merged.
+- **Branch / commits:** `feature/p1-foundation-hardening`: `f5e5a81` (recovery checkpoint) + follow-up commit with R2 fixes and these docs (see PR head).
+- **Recovery:** found 35 modified/deleted tracked files and ~100 untracked paths (Livewire UI, transfers, API, legacy, tests) plus one unpushed local commit `1bc6ea4`. Backed up `git diff` and an untracked-files tarball to `.work/recovery-20261122/` before any edit. No reset/clean/checkout/worktree. Removed only an agent's leftover debug test (`tests/Feature/Ui/DbgTest.php`, var_dump probe; real coverage exists in `FeaturedTest`).
+- **Fresh first run:** PHP 8.3 suite 472 tests: 5 errors, 2 failures. Root causes: URL regex delimiter bug (every URL validation raised a warning -> 500), login limiter crash on array input, unexposed Sanctum CSRF route, two Livewire tests reusing a component after a 403, a second-dependent N+1 test, production-boot test without https URL. MariaDB run also exposed a legacy test that forced the default connection to sqlite.
+- **Integration/security fixes:** host/proxy trust moved off `env()` (config-cache safe) with tests; Sanctum stateless-only config; import lock store must support atomic locks; Larastan 82 -> 0 via precise model `@property` types and removing dead checks (no ignores/baseline); Pint; export page inputs had no visible borders (missing `border`); "no translation" note used the content direction instead of the UI direction.
+- **Independent security review R2** (separate read-only agent, no implementer claims): CHANGES_REQUIRED. Fixed M1, L1, L2, L3, L4 with regression tests (ADR-013). Open suspicions S1–S3 listed in status/handoff. Re-review not yet run.
+- **Commands/results (LOCAL):** PHPUnit 479 tests / 2788 assertions OK on PHP 8.3.37, PHP 8.4.28 (SQLite) and MariaDB 11.4.14 (`phpunit.mysql.xml`, full suite); Pint passed; Larastan level 6 no errors; `composer validate --strict` valid; `composer audit --locked` none; `npm audit` 0; `npm run build` OK; hygiene PASS; Python repo tests 23 OK; Gitleaks staged no leaks; `git diff --cached --check` clean.
+- **Browser (local dev DB `euro_assist_v2_local`, synthetic seeder, provisioned local test accounts):** failed/successful login; dashboard; list + live search; create provider incl. `javascript:` rejection; detail; Arabic RTL (dir=rtl, no overflow); export -> queue worker -> private download 200 `.xlsx`; Viewer/Editor route and nav access match ADR-010. Import upload not browser-tested.
+- **Security/data:** no production access; legacy audit DB not touched; only synthetic data; provisioned password files are gitignored under `storage/app/private`. D1–D8 remain provisional.
+- **Next:** see `docs/12_HANDOFF.md`.

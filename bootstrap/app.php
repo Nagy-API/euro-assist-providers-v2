@@ -1,13 +1,16 @@
 <?php
 
 use App\Http\Controllers\Api\Support\ApiErrorRenderer;
+use App\Http\Middleware\ApiIpRateLimit;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\AuthenticateSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,7 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [SetLocale::class]);
+        // AuthenticateSession ends other sessions after a password change for any session driver.
+        $middleware->web(append: [SetLocale::class, AuthenticateSession::class]);
         $middleware->append(SecurityHeaders::class);
 
         // Trusted proxies come from config('app.trusted_proxies') and are applied in
@@ -30,6 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return is_string($host) && $host !== '' ? ['^'.preg_quote($host).'$'] : [];
         }, subdomains: false);
+        // The per-IP API ceiling must run before any authentication middleware (priority sorting
+        // would otherwise move authentication first and invalid tokens would never be counted).
+        $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: ApiIpRateLimit::class);
         $middleware->alias(['active' => EnsureUserIsActive::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));

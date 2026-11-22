@@ -2,20 +2,21 @@
 
 namespace App\Services\Transfers;
 
+use App\Rules\SafeHttpUrl;
 use Illuminate\Support\Facades\Validator;
 
 /**
- * Field rules identical to App\Services\ProviderService::validate() (kept in sync by a parity test),
+ * Field rules identical to App\Services\ProviderService::validate() (kept in sync by RowRulesParityTest),
  * minus the "provider_types exists" rule: the type is resolved from an in-memory map so validation
  * performs ZERO database queries per row. Operates on one row = one locale, so translation fields
  * are flat keys.
  */
 class RowRules
 {
-    /** @var array<string, list<string>>|null */
+    /** @var array<string, list<string|SafeHttpUrl>>|null */
     private static ?array $rules = null;
 
-    /** @return array<string, list<string>> */
+    /** @return array<string, list<string|SafeHttpUrl>> */
     public static function rules(): array
     {
         if (self::$rules !== null) {
@@ -25,8 +26,8 @@ class RowRules
         $rules = [
             'phone' => ['nullable', 'string', 'max:500'],
             'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
-            'website' => ['nullable', 'string', 'max:500', 'regex:/^(https?:\/\/)?[^\s<>"\']+$/iu'],
-            'map_url' => ['nullable', 'string', 'max:2048'],
+            'website' => ['nullable', 'string', 'max:500', new SafeHttpUrl(allowBare: true)],
+            'map_url' => ['nullable', 'string', 'max:2048', new SafeHttpUrl(allowBare: false)],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ];
@@ -60,7 +61,7 @@ class RowRules
             foreach ($failed as $rule => $parameters) {
                 $errors[] = [
                     'field' => (string) $field,
-                    'code' => 'validation_'.strtolower($rule),
+                    'code' => $rule === SafeHttpUrl::class ? 'validation_url' : 'validation_'.strtolower($rule),
                     'params' => $parameters !== [] ? ['value' => implode(',', array_map('strval', $parameters))] : [],
                 ];
             }
