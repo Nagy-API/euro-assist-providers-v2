@@ -9,7 +9,7 @@
     <x-ui.alert tone="info" class="mb-4">{{ __('ui.types.no_delete_note') }}</x-ui.alert>
 
     @if ($types->isEmpty())
-        <div class="rounded-lg border border-slate-200 bg-white"><x-ui.empty-state :title="__('ui.types.none')" icon="tag" /></div>
+        <div class="ea-card"><x-ui.empty-state :title="__('ui.types.none')" icon="tag" /></div>
     @else
         <x-ui.table :caption="__('ui.nav.types')">
             <thead>
@@ -34,7 +34,7 @@
                         <td class="px-3 py-3" lang="en" dir="ltr">{{ $en ?: '—' }}</td>
                         <td class="px-3 py-3" lang="ar" dir="rtl">{{ $ar ?: '—' }}</td>
                         <td class="px-3 py-3">
-                            <a class="text-teal-900 underline underline-offset-2" href="{{ route('providers.index', ['type' => $type->id]) }}"><span class="ltr-text">{{ number_format($type->providers_count) }}</span></a>
+                            <a class="text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600" href="{{ route('providers.index', ['type' => $type->id]) }}"><span class="ltr-text">{{ number_format($type->providers_count) }}</span></a>
                             @if ($type->providers_with_deleted_count > $type->providers_count)
                                 <span class="block text-xs text-slate-600">{{ __('ui.types.incl_deleted', ['count' => $type->providers_with_deleted_count - $type->providers_count]) }}</span>
                             @endif

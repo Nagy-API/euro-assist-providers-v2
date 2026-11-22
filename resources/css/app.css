@@ -4,13 +4,144 @@
 @source '../../storage/framework/views/*.php';
 
 /*
-| Design tokens. System fonts only (no remote fonts/CDN): the stack covers Latin and Arabic.
+| Euro Assist design system for Providers V2.
+|
+| Visual language taken from the approved Euro Assist Cards System V3 release (2026-11-08):
+| ink navigation with a red glow, the Euro Assist hero gradient for the active item and hero bands,
+| a cool bright canvas, white rounded surfaces, restrained shadows and Cairo for Arabic and Latin.
+|
+| All colours live here as tokens. Views use Tailwind utilities that resolve to these tokens:
+|   brand-*  Euro Assist red (actions, links, selection). brand-600 #d10000 is 5.6:1 on white;
+|            the pure brand red #e60000 (brand-500) is for large surfaces and gradients only.
+|   slate-*  the cool "ink" neutrals of the Cards System (text, lines, fills).
+|   red-*    ERROR / destructive state, deliberately a raspberry tone distinct from the brand red
+|            so a status is never confused with an action (same rule as the Cards System).
+|   green-*  success, amber-* warning, sky-* information.
 | Layout uses logical utilities (ms-*, me-*, ps-*, pe-*, start-*, end-*, text-start) so the same
-| markup serves Arabic (RTL) and English (LTR).
+| markup serves Arabic (RTL) and English (LTR). Fonts are self-hosted (no CDN).
 */
+
+@font-face {
+    font-family: 'Cairo';
+    font-style: normal;
+    font-weight: 200 1000;
+    font-display: swap;
+    src: url('../fonts/Cairo-VariableFont_wght.ttf') format('truetype');
+}
+
 @theme {
-    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Tahoma,
-        'Noto Sans Arabic', 'Noto Naskh Arabic', Arial, sans-serif;
+    --font-sans: 'Cairo', 'Segoe UI', system-ui, -apple-system, Tahoma, Arial, sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+
+    /* Canvas */
+    --color-paper: #f3f4f9;
+    --color-ink: #12141c;
+
+    /* Euro Assist red */
+    --color-brand-50: #fff0f0;
+    --color-brand-100: #fbd5d5;
+    --color-brand-200: #f7b3b3;
+    --color-brand-300: #f08a8a;
+    --color-brand-400: #e84545;
+    --color-brand-500: #e60000;
+    --color-brand-600: #d10000;
+    --color-brand-700: #b00000;
+    --color-brand-800: #8c0000;
+    --color-brand-900: #6b0000;
+    --color-brand-950: #420000;
+
+    /* Ink neutrals (Cards System) */
+    --color-slate-50: #f8f9fc;
+    --color-slate-100: #eceef5;
+    --color-slate-200: #e2e5ee;
+    --color-slate-300: #c9cedd;
+    --color-slate-400: #9aa1bd;
+    --color-slate-500: #767d99;
+    --color-slate-600: #5f6680;
+    --color-slate-700: #383d52;
+    --color-slate-800: #272b3c;
+    --color-slate-900: #12141c;
+    --color-slate-950: #0b0c12;
+
+    /* Error / destructive (raspberry, distinct from brand red) */
+    --color-red-50: #fde6ee;
+    --color-red-100: #fbd0de;
+    --color-red-200: #f6a8c0;
+    --color-red-300: #ee7fa0;
+    --color-red-400: #e05581;
+    --color-red-500: #cc2b62;
+    --color-red-600: #b3124a;
+    --color-red-700: #9c0f40;
+    --color-red-800: #7f0c34;
+    --color-red-900: #640a29;
+    --color-red-950: #3d0619;
+
+    /* Success */
+    --color-green-50: #e2f6ee;
+    --color-green-100: #c4ecdc;
+    --color-green-200: #9bdcc2;
+    --color-green-300: #66c6a2;
+    --color-green-400: #2fae80;
+    --color-green-500: #16996b;
+    --color-green-600: #0f8a5f;
+    --color-green-700: #0c714e;
+    --color-green-800: #0a5a3f;
+    --color-green-900: #084a34;
+    --color-green-950: #042a1d;
+
+    /* Information */
+    --color-sky-50: #e6edfd;
+    --color-sky-100: #cddbfb;
+    --color-sky-200: #a5bff7;
+    --color-sky-300: #7a9ef1;
+    --color-sky-400: #4f7de8;
+    --color-sky-500: #3468de;
+    --color-sky-600: #2459d6;
+    --color-sky-700: #1d47ac;
+    --color-sky-800: #193b8a;
+    --color-sky-900: #16326f;
+    --color-sky-950: #0e1f45;
+
+    /* Radius, elevation, motion */
+    --radius-card: 1rem;
+    --shadow-xs: 0 1px 2px rgba(18, 20, 28, 0.05);
+    --shadow-sm: 0 1px 3px rgba(18, 20, 28, 0.07), 0 1px 2px rgba(18, 20, 28, 0.04);
+    --shadow-md: 0 6px 16px -4px rgba(18, 20, 28, 0.1), 0 2px 4px rgba(18, 20, 28, 0.04);
+    --shadow-lg: 0 18px 40px -12px rgba(18, 20, 28, 0.2), 0 4px 10px rgba(18, 20, 28, 0.05);
+    --shadow-brand: 0 10px 22px -10px rgba(230, 0, 0, 0.75);
+    --ease-brand: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+    --animate-enter: ea-enter 220ms var(--ease-brand) both;
+    --animate-pop: ea-pop 200ms var(--ease-brand) both;
+    --animate-fade: ea-fade 180ms ease-out both;
+    --animate-toast: ea-toast 240ms var(--ease-brand) both;
+    --animate-shimmer: ea-shimmer 1.4s linear infinite;
+    --animate-progress: ea-progress 1s linear infinite;
+
+    @keyframes ea-enter {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: none; }
+    }
+    @keyframes ea-pop {
+        from { opacity: 0; transform: translateY(8px) scale(0.98); }
+        to { opacity: 1; transform: none; }
+    }
+    @keyframes ea-fade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes ea-toast {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: none; }
+    }
+    @keyframes ea-shimmer {
+        from { background-position: 200% 0; }
+        to { background-position: -200% 0; }
+    }
+    @keyframes ea-progress {
+        from { background-position: 0 0; }
+        to { background-position: 1.5rem 0; }
+    }
 }
 
 @layer base {
@@ -23,6 +154,12 @@
         text-size-adjust: 100%;
     }
 
+    body {
+        font-feature-settings: 'tnum' 1;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
     /* Tailwind 4 resets buttons to the default cursor; interactive controls should show intent. */
     button:not(:disabled),
     [role='button']:not(:disabled),
@@ -30,10 +167,21 @@
         cursor: pointer;
     }
 
-    /* Visible keyboard focus everywhere (WCAG 2.4.7); mouse clicks stay quiet. */
+    a {
+        text-underline-offset: 3px;
+    }
+
+    /* Visible keyboard focus everywhere (WCAG 2.4.7); mouse clicks stay quiet. Blue, as in the
+       Cards System, so focus is never mistaken for the red selection state. */
     :focus-visible {
-        outline: 2px solid var(--color-teal-700);
+        outline: 2px solid var(--color-sky-600);
         outline-offset: 2px;
+    }
+
+    /* Form controls follow the brand accent. */
+    input[type='checkbox'],
+    input[type='radio'] {
+        accent-color: var(--color-brand-600);
     }
 
     /* Letter-spacing breaks Arabic letter joining. */
@@ -53,7 +201,177 @@
         *::before,
         *::after {
             animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
             transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
         }
+    }
+}
+
+@layer components {
+    /* ---- Application shell ------------------------------------------------------------------ */
+    .ea-sidebar {
+        background:
+            radial-gradient(130% 55% at 0% 0%, rgba(230, 0, 0, 0.3), transparent 62%),
+            linear-gradient(180deg, #11131c, #0b0c12);
+        color: #c9cde0;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+    [dir='rtl'] .ea-sidebar {
+        background:
+            radial-gradient(130% 55% at 100% 0%, rgba(230, 0, 0, 0.3), transparent 62%),
+            linear-gradient(180deg, #11131c, #0b0c12);
+    }
+
+    .ea-nav-label {
+        padding: 1rem 0.75rem 0.375rem;
+        font-size: 0.6875rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #8b92ad;
+    }
+
+    .ea-nav-link {
+        position: relative;
+        display: flex;
+        min-height: 2.5rem;
+        align-items: center;
+        gap: 0.75rem;
+        border-radius: 0.625rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: #c4c8dc;
+        transition:
+            background-color 150ms var(--ease-brand),
+            color 150ms var(--ease-brand);
+    }
+    .ea-nav-link svg {
+        color: #8b92ad;
+        transition: color 150ms var(--ease-brand);
+    }
+    .ea-nav-link:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+    }
+    .ea-nav-link:hover svg {
+        color: #fff;
+    }
+    .ea-nav-link[aria-current='page'] {
+        background: var(--ea-hero);
+        color: #fff;
+        box-shadow:
+            0 10px 22px -10px rgba(230, 0, 0, 0.85),
+            inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .ea-nav-link[aria-current='page'] svg {
+        color: #fff;
+    }
+    .ea-nav-link:focus-visible {
+        outline-color: #fff;
+    }
+
+    .ea-avatar {
+        display: inline-grid;
+        place-items: center;
+        flex: none;
+        border-radius: 999px;
+        background: var(--ea-hero);
+        color: #fff;
+        font-weight: 800;
+    }
+
+    /* ---- Brand surfaces ---------------------------------------------------------------------- */
+    .ea-hero {
+        position: relative;
+        overflow: hidden;
+        background: var(--ea-hero);
+        color: #fff;
+    }
+    /* Decorative concentric rings, as on the Cards System login and dashboard. */
+    .ea-hero::after {
+        content: '';
+        position: absolute;
+        inset-inline-end: -10rem;
+        top: -12rem;
+        width: 34rem;
+        height: 34rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow:
+            0 0 0 4rem rgba(255, 255, 255, 0.035),
+            0 0 0 8rem rgba(255, 255, 255, 0.025);
+        pointer-events: none;
+    }
+
+    .ea-card {
+        border-radius: var(--radius-card);
+        border: 1px solid var(--color-slate-200);
+        background: #fff;
+        box-shadow: var(--shadow-xs);
+    }
+    .ea-card-link {
+        transition:
+            box-shadow 200ms var(--ease-brand),
+            border-color 200ms var(--ease-brand),
+            transform 200ms var(--ease-brand);
+    }
+    .ea-card-link:hover {
+        border-color: var(--color-brand-200);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .ea-logo-card {
+        border-radius: 0.875rem;
+        background: #fff;
+        box-shadow:
+            0 10px 24px -10px rgba(0, 0, 0, 0.6),
+            0 0 0 1px rgba(255, 255, 255, 0.5);
+    }
+
+    /* ---- Feedback ----------------------------------------------------------------------------- */
+    .ea-skeleton {
+        border-radius: 0.375rem;
+        background: linear-gradient(90deg, var(--color-slate-100) 25%, var(--color-slate-50) 50%, var(--color-slate-100) 75%);
+        background-size: 200% 100%;
+        animation: var(--animate-shimmer);
+    }
+
+    .ea-progress-active {
+        background-image: linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.22) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.22) 50%,
+            rgba(255, 255, 255, 0.22) 75%,
+            transparent 75%,
+            transparent
+        );
+        background-size: 1.5rem 1.5rem;
+        animation: var(--animate-progress);
+    }
+
+    /* Thin top bar shown while Livewire navigates or a request is slow. */
+    .ea-topline {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--color-brand-500), transparent);
+        background-size: 200% 100%;
+        animation: var(--animate-shimmer);
+    }
+}
+
+:root {
+    --ea-hero: linear-gradient(135deg, #f01212 0%, #e60000 38%, #b3000f 78%, #7d0010 100%);
+}
+
+@media print {
+    #sidebar,
+    header,
+    .no-print {
+        display: none !important;
     }
 }

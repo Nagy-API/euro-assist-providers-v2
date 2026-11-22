@@ -2,22 +2,22 @@
     <header class="space-y-2">
         <h1 class="text-2xl font-semibold text-slate-900">{{ __('transfers.exports.title') }}</h1>
         <p class="text-sm text-slate-700">{{ __('transfers.exports.intro') }}</p>
-        <p class="text-sm"><a href="{{ route('jobs.index') }}" class="font-medium text-teal-800 underline underline-offset-2">{{ __('transfers.jobs.title') }}</a></p>
+        <p class="text-sm"><a href="{{ route('jobs.index') }}" class="font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600">{{ __('transfers.jobs.title') }}</a></p>
     </header>
 
     @if (session('status'))
-        <div role="status" class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{{ session('status') }}</div>
+        <div role="status" class="rounded-xl border border-s-4 border-green-200 border-s-green-600 bg-green-50 px-4 py-3 text-sm text-green-900">{{ session('status') }}</div>
     @endif
 
     @if ($canExport)
-        <form method="POST" action="{{ route('exports.store') }}" class="space-y-5 rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
+        <form method="POST" action="{{ route('exports.store') }}" class="space-y-5 ea-card p-5 sm:p-6">
             @csrf
 
             <fieldset class="space-y-2">
                 <legend class="text-sm font-semibold text-slate-900">{{ __('transfers.exports.scope') }}</legend>
                 @foreach (['all', 'filtered', 'selected'] as $scope)
                     <label class="flex items-center gap-3 text-sm text-slate-900">
-                        <input type="radio" name="scope" value="{{ $scope }}" @checked(old('scope', 'all') === $scope) required class="size-4 border-slate-400 text-teal-700 focus:ring-teal-600">
+                        <input type="radio" name="scope" value="{{ $scope }}" @checked(old('scope', 'all') === $scope) required class="size-4 border-slate-400 text-brand-700 focus:ring-brand-600">
                         {{ __('transfers.exports.scope_'.$scope) }}
                     </label>
                 @endforeach
@@ -28,7 +28,7 @@
 
             <div class="space-y-1">
                 <label for="export-locale" class="block text-sm font-semibold text-slate-900">{{ __('transfers.exports.locale') }}</label>
-                <select id="export-locale" name="locale" required aria-describedby="export-locale-hint" class="block w-full max-w-xs rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                <select id="export-locale" name="locale" required aria-describedby="export-locale-hint" class="block w-full max-w-xs rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
                     @foreach (config('providers.locales') as $loc)
                         <option value="{{ $loc }}" @selected(old('locale', app()->getLocale()) === $loc)>{{ strtoupper($loc) }}</option>
                     @endforeach
@@ -43,11 +43,11 @@
                 <legend class="mb-2 text-sm font-semibold text-slate-900">{{ __('transfers.exports.filters') }}</legend>
                 <div class="space-y-1">
                     <label for="f-search" class="block text-sm text-slate-900">{{ __('transfers.exports.search') }}</label>
-                    <input id="f-search" type="text" name="filters[search]" value="{{ old('filters.search') }}" maxlength="255" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <input id="f-search" type="text" name="filters[search]" value="{{ old('filters.search') }}" maxlength="255" class="block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
                 </div>
                 <div class="space-y-1">
                     <label for="f-type" class="block text-sm text-slate-900">{{ __('transfers.exports.type') }}</label>
-                    <select id="f-type" name="filters[type]" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <select id="f-type" name="filters[type]" class="block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
                         <option value="">{{ __('transfers.exports.any') }}</option>
                         @foreach ($types as $type)
                             <option value="{{ $type['id'] }}" @selected((string) old('filters.type') === (string) $type['id'])>{{ $type['label'] }}</option>
@@ -56,15 +56,15 @@
                 </div>
                 <div class="space-y-1">
                     <label for="f-city" class="block text-sm text-slate-900">{{ __('transfers.exports.city') }}</label>
-                    <input id="f-city" type="text" name="filters[city]" value="{{ old('filters.city') }}" maxlength="255" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <input id="f-city" type="text" name="filters[city]" value="{{ old('filters.city') }}" maxlength="255" class="block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
                 </div>
                 <div class="space-y-1">
                     <label for="f-district" class="block text-sm text-slate-900">{{ __('transfers.exports.district') }}</label>
-                    <input id="f-district" type="text" name="filters[district]" value="{{ old('filters.district') }}" maxlength="255" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <input id="f-district" type="text" name="filters[district]" value="{{ old('filters.district') }}" maxlength="255" class="block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
                 </div>
                 <div class="space-y-1">
                     <label for="f-status" class="block text-sm text-slate-900">{{ __('transfers.exports.status') }}</label>
-                    <select id="f-status" name="filters[status]" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                    <select id="f-status" name="filters[status]" class="block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
                         <option value="">{{ __('transfers.exports.any') }}</option>
                         <option value="active" @selected(old('filters.status') === 'active')>{{ __('transfers.exports.status_active') }}</option>
                         <option value="inactive" @selected(old('filters.status') === 'inactive')>{{ __('transfers.exports.status_inactive') }}</option>
@@ -73,7 +73,7 @@
                 @if ($isAdmin)
                     <div class="space-y-1">
                         <label for="f-trashed" class="block text-sm text-slate-900">{{ __('transfers.exports.trashed') }}</label>
-                        <select id="f-trashed" name="filters[trashed]" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:ring-teal-600">
+                        <select id="f-trashed" name="filters[trashed]" class="block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
                             <option value="">{{ __('transfers.exports.any') }}</option>
                             <option value="with" @selected(old('filters.trashed') === 'with')>{{ __('transfers.exports.trashed_with') }}</option>
                             <option value="only" @selected(old('filters.trashed') === 'only')>{{ __('transfers.exports.trashed_only') }}</option>
@@ -84,26 +84,26 @@
 
             <div class="space-y-1">
                 <label for="export-ids" class="block text-sm font-semibold text-slate-900">{{ __('transfers.exports.selected_ids') }}</label>
-                <textarea id="export-ids" name="selected_ids" rows="3" dir="ltr" aria-describedby="export-ids-hint" class="block w-full rounded-md border-slate-300 font-mono text-sm focus:border-teal-600 focus:ring-teal-600">{{ old('selected_ids') }}</textarea>
+                <textarea id="export-ids" name="selected_ids" rows="3" dir="ltr" aria-describedby="export-ids-hint" class="block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 font-mono text-sm shadow-xs focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">{{ old('selected_ids') }}</textarea>
                 <p id="export-ids-hint" class="text-sm text-slate-700">{{ __('transfers.exports.selected_hint', ['max' => $selectedMax]) }}</p>
                 @error('selected_ids')
                     <p class="text-sm font-medium text-red-700" role="alert">{{ $message }}</p>
                 @enderror
             </div>
 
-            <button type="submit" class="inline-flex min-h-10 items-center rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2">
+            <button type="submit" class="inline-flex min-h-10 items-center rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2">
                 {{ __('transfers.exports.submit') }}
             </button>
         </form>
     @endif
 
     <section aria-labelledby="export-history" class="space-y-3" @if ($jobs->contains(fn ($j) => in_array($j->status, ['queued', 'running'], true))) wire:poll.5s @endif>
-        <h2 id="export-history" class="text-lg font-semibold text-slate-900">{{ __('transfers.exports.history') }}</h2>
+        <h2 id="export-history" class="text-lg font-extrabold text-slate-900">{{ __('transfers.exports.history') }}</h2>
 
         @if ($jobs->isEmpty())
-            <p class="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-700">{{ __('transfers.exports.empty') }}</p>
+            <p class="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-700">{{ __('transfers.exports.empty') }}</p>
         @else
-            <div class="relative overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div class="relative overflow-x-auto ea-card">
                 <table class="min-w-full text-start text-sm">
                     <thead class="bg-slate-50 text-slate-700">
                         <tr>
@@ -130,7 +130,7 @@
                                 </td>
                                 <td class="px-3 py-2 text-end">
                                     @if ($job->status === 'completed')
-                                        <a href="{{ route('exports.download', $job) }}" class="font-medium text-teal-800 underline underline-offset-2">{{ __('transfers.exports.download') }}</a>
+                                        <a href="{{ route('exports.download', $job) }}" class="font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600">{{ __('transfers.exports.download') }}</a>
                                         <span class="block text-xs text-slate-700">{{ __('transfers.exports.expires', ['date' => $job->expires_at?->format('Y-m-d H:i')]) }}</span>
                                     @endif
                                 </td>

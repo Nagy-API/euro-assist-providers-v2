@@ -8,9 +8,9 @@
         @php
             $type = $notice['type'] ?? 'info';
             $style = match ($type) {
-                'success' => 'border-green-700 bg-green-50 text-green-950',
-                'error' => 'border-red-700 bg-red-50 text-red-950',
-                default => 'border-slate-500 bg-white text-slate-900',
+                'success' => 'border-s-green-600 bg-white text-slate-900',
+                'error' => 'border-s-red-600 bg-white text-slate-900',
+                default => 'border-s-sky-600 bg-white text-slate-900',
             };
             $icon = match ($type) {
                 'success' => 'check-circle',
@@ -19,8 +19,8 @@
             };
         @endphp
         <div wire:key="notice-{{ $notice['id'] ?? md5($notice['message']) }}" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, {{ $type === 'error' ? 15000 : 7000 }})"
-             class="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-lg border-s-4 px-4 py-3 shadow-lg {{ $style }}">
-            <x-ui.icon :name="$icon" class="mt-0.5 size-5" />
+             class="pointer-events-auto flex w-full max-w-md animate-toast items-start gap-3 rounded-xl border border-s-4 border-slate-200 px-4 py-3 shadow-lg {{ $style }}">
+            <x-ui.icon :name="$icon" class="mt-0.5 size-5 {{ $type === 'success' ? 'text-green-600' : ($type === 'error' ? 'text-red-600' : 'text-sky-600') }}" />
             <p class="flex-1 text-sm font-medium">{{ $notice['message'] }}</p>
             <button type="button" x-on:click="show = false" class="-me-2 -mt-1 inline-flex size-9 items-center justify-center rounded-md hover:bg-black/5" aria-label="{{ __('ui.common.dismiss') }}">
                 <x-ui.icon name="x" class="size-4" />

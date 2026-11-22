@@ -52,6 +52,8 @@ return [
         'coverage' => 'Available translations',
         'available' => 'available',
         'missing' => 'missing',
+        'short_ar' => 'عربي',
+        'short_en' => 'English',
         'no_translation' => 'There is no translation in this language. Nothing is translated automatically.',
     ],
 
@@ -63,7 +65,13 @@ return [
         'goto' => 'Go to page :page',
     ],
 
+    'brand' => [
+        'product' => 'Providers System',
+        'staff_only' => 'Authorized staff only',
+    ],
+
     'nav' => [
+        'breadcrumb' => 'Breadcrumb',
         'label' => 'Main navigation',
         'section_main' => 'Overview',
         'section_providers' => 'Providers',
@@ -84,6 +92,21 @@ return [
     ],
 
     'dashboard' => [
+        'greeting' => 'Welcome, :name',
+        'hero_subtitle' => 'Where the Euro Assist providers network stands right now.',
+        'active_share' => 'active',
+        'meaning' => [
+            'title' => 'What these numbers mean',
+            'records' => 'Canonical V2 records',
+            'records_hint' => 'Every stored provider record (one per branch and language until pairing), including recoverable deleted ones.',
+            'source_rows' => 'Imported legacy source rows',
+            'source_rows_hint' => 'Rows read from the old system (English, Arabic and featured tables). Held rows are counted here but not imported.',
+            'unpaired' => 'Unpaired bilingual records',
+            'unpaired_hint' => 'Imported records whose English and Arabic versions have not been confirmed as the same branch yet.',
+            'reviewed' => 'Reviewed English/Arabic pairs',
+            'reviewed_hint' => 'Pair suggestions an administrator has approved or rejected. Nothing is merged automatically.',
+            'note' => 'The record total is NOT the number of unique real-world branches: :count imported records still wait for English/Arabic pairing, so one branch may appear once in Arabic and once in English.',
+        ],
         'legacy' => [
             'title' => 'Legacy migration review backlog',
             'intro' => 'Migrated legacy rows stay separate (unpaired) until an administrator reviews each suggested English/Arabic pair. Nothing was merged automatically.',
@@ -91,6 +114,7 @@ return [
             'suggestions' => 'Pair suggestions to review',
             'held' => 'Source rows held for review',
             'provisional' => 'Rows on a provisional type mapping',
+            'review_local_only' => 'The review screen is available only in the local migration workspace, never on the live server. Unresolved items are preserved and listed in the release reconciliation report.',
             'open_review' => 'Open the migration review',
         ],
         'title' => 'Dashboard',
@@ -136,6 +160,7 @@ return [
         'title' => 'Providers',
         'subtitle' => 'Search, review and maintain provider records.',
         'details' => 'Provider details',
+        'more_filters' => 'More filters',
         'filters' => 'Filters',
         'search_hint' => 'Name, address, city, district, specialization, phone or email. Characters like % and _ are matched literally.',
         'exact_match' => 'Exact match (suggestions as you type)',

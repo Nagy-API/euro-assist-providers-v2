@@ -1,7 +1,7 @@
 {{-- Livewire paginator view (use via paginationView() in components). Logical utilities keep it RTL-safe. --}}
 @php
     $page = $paginator->getPageName();
-    $btn = 'inline-flex min-h-10 min-w-10 items-center justify-center rounded-md border px-3 text-sm font-medium';
+    $btn = 'inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border px-3 text-sm font-semibold transition-colors';
 @endphp
 <div>
     @if ($paginator->total() > 0)
@@ -25,7 +25,7 @@
                         @if (is_array($element))
                             @foreach ($element as $number => $url)
                                 @if ($number == $paginator->currentPage())
-                                    <span aria-current="page" class="{{ $btn }} border-teal-700 bg-teal-700 text-white">{{ $number }}</span>
+                                    <span aria-current="page" class="{{ $btn }} border-brand-600 bg-brand-600 text-white shadow-[0_6px_14px_-8px_rgba(209,0,0,0.9)]">{{ $number }}</span>
                                 @else
                                     <button type="button" wire:key="pg-{{ $page }}-{{ $number }}" wire:click="gotoPage({{ $number }}, '{{ $page }}')" class="{{ $btn }} border-slate-300 bg-white text-slate-800 hover:bg-slate-50" aria-label="{{ __('ui.pagination.goto', ['page' => $number]) }}">{{ $number }}</button>
                                 @endif

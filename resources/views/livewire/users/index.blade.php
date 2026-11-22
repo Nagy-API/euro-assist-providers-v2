@@ -12,7 +12,7 @@
     <x-ui.alert tone="info" class="mb-4">{{ __('ui.users.no_delete_note') }}</x-ui.alert>
 
     @if ($users->isEmpty())
-        <div class="rounded-lg border border-slate-200 bg-white"><x-ui.empty-state :title="__('ui.users.none')" icon="users" /></div>
+        <div class="ea-card"><x-ui.empty-state :title="__('ui.users.none')" icon="users" /></div>
     @else
         <x-ui.table :caption="__('ui.nav.users')">
             <thead>

@@ -8,6 +8,7 @@ return [
     'reset_invalid' => 'This password reset link is invalid or has expired.',
     'password_updated' => 'Your password has been updated. You can now sign in.',
     'sign_in' => 'Sign in',
+    'show_password' => 'Show or hide password',
     'email' => 'Email address',
     'password' => 'Password',
     'remember' => 'Keep me signed in',
@@ -18,4 +19,13 @@ return [
     'confirm_password' => 'Confirm password',
     'sign_out' => 'Sign out',
     'back_to_login' => 'Back to sign in',
+    'welcome' => 'Sign in to continue to the Euro Assist Providers System.',
+    'secure_session' => 'Secure, encrypted session. Authorized staff only.',
+    'hero' => [
+        'title' => 'Every provider, one trusted directory.',
+        'subtitle' => 'One focused workspace for the medical providers network, in Arabic and English.',
+        'providers' => 'Providers, branches and types',
+        'bilingual' => 'Arabic and English side by side',
+        'excel' => 'Safe Excel import and export',
+    ],
 ];

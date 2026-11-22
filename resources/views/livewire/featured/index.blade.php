@@ -13,7 +13,7 @@
     @endunless
 
     @if ($items->isEmpty())
-        <div class="rounded-lg border border-slate-200 bg-white"><x-ui.empty-state :title="__('ui.featured.none')" icon="star">{{ __('ui.featured.none_hint') }}</x-ui.empty-state></div>
+        <div class="ea-card"><x-ui.empty-state :title="__('ui.featured.none')" icon="star">{{ __('ui.featured.none_hint') }}</x-ui.empty-state></div>
     @else
         <x-ui.table :caption="__('ui.nav.featured')">
             <thead>
@@ -33,9 +33,9 @@
                     <tr wire:key="featured-{{ $item->id }}">
                         <td class="px-3 py-3">
                             @if (filled($item->logo_path))
-                                <img src="{{ route('featured.logo', $item) }}?v={{ $item->updated_at?->timestamp }}" alt="" width="48" height="48" loading="lazy" class="size-12 rounded-md border border-slate-200 bg-white object-contain">
+                                <img src="{{ route('featured.logo', $item) }}?v={{ $item->updated_at?->timestamp }}" alt="" width="48" height="48" loading="lazy" class="size-12 rounded-lg border border-slate-200 bg-white object-contain">
                             @else
-                                <span class="inline-flex size-12 items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-50 text-slate-500" title="{{ __('ui.featured.no_logo') }}"><x-ui.icon name="photo" /><span class="sr-only">{{ __('ui.featured.no_logo') }}</span></span>
+                                <span class="inline-flex size-12 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-slate-500" title="{{ __('ui.featured.no_logo') }}"><x-ui.icon name="photo" /><span class="sr-only">{{ __('ui.featured.no_logo') }}</span></span>
                             @endif
                         </td>
                         <td class="px-3 py-3">
@@ -82,12 +82,12 @@
                     <label for="f-logo" class="mb-1 block text-sm font-medium text-slate-800">{{ __('ui.featured.logo') }}</label>
                     @if ($editing && filled($editing->logo_path) && ! $removeLogo && $logo === null)
                         <div class="mb-2 flex items-center gap-3">
-                            <img src="{{ route('featured.logo', $editing) }}?v={{ $editing->updated_at?->timestamp }}" alt="" width="64" height="64" class="size-16 rounded-md border border-slate-200 object-contain">
+                            <img src="{{ route('featured.logo', $editing) }}?v={{ $editing->updated_at?->timestamp }}" alt="" width="64" height="64" class="size-16 rounded-lg border border-slate-200 object-contain">
                             <x-ui.checkbox name="removeLogo" :label="__('ui.featured.remove_logo')" wire:model="removeLogo" />
                         </div>
                     @endif
                     <input id="f-logo" type="file" wire:model="logo" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-describedby="logo-hint @error('logo') logo-error @enderror"
-                           class="block w-full text-sm text-slate-800 file:me-3 file:min-h-10 file:cursor-pointer file:rounded-md file:border file:border-slate-300 file:bg-white file:px-4 file:text-sm file:font-medium hover:file:bg-slate-50">
+                           class="block w-full text-sm text-slate-800 file:me-3 file:min-h-10 file:cursor-pointer file:rounded-lg file:border file:border-brand-200 file:bg-brand-50 file:px-4 file:text-sm file:font-bold file:text-brand-800 hover:file:bg-brand-100">
                     <p id="logo-hint" class="mt-1 text-xs text-slate-600">{{ __('ui.featured.logo_hint', ['kb' => $maxKb]) }}</p>
                     <div wire:loading wire:target="logo" class="mt-1"><x-ui.loading /></div>
                     @error('logo')<p id="logo-error" class="mt-1 text-sm font-medium text-red-800" role="alert">{{ $message }}</p>@enderror

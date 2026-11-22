@@ -6,7 +6,7 @@
 @endphp
 <div>
     <nav aria-label="{{ __('ui.common.breadcrumb') }}" class="mb-3 text-sm">
-        <a href="{{ $editing ? route('providers.show', $providerId) : route('providers.index') }}" class="inline-flex min-h-8 items-center gap-1 font-medium text-teal-800 underline underline-offset-2"><x-ui.icon name="chevron-left" flip class="size-4" />{{ __('ui.common.back') }}</a>
+        <a href="{{ $editing ? route('providers.show', $providerId) : route('providers.index') }}" class="inline-flex min-h-8 items-center gap-1 font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600"><x-ui.icon name="chevron-left" flip class="size-4" />{{ __('ui.common.back') }}</a>
     </nav>
 
     <x-ui.page-header :title="$editing ? __('ui.form.edit_title') : __('ui.form.create_title')" :subtitle="$editing ? __('ui.form.blank_preserves') : __('ui.form.create_subtitle')" />
@@ -30,8 +30,8 @@
 
     <form wire:submit="save" novalidate class="space-y-6">
         {{-- Core data --}}
-        <section class="rounded-lg border border-slate-200 bg-white p-4 sm:p-5" aria-labelledby="core-h">
-            <h2 id="core-h" class="mb-4 text-base font-semibold text-slate-900">{{ __('ui.form.core') }}</h2>
+        <section class="ea-card p-5 sm:p-5" aria-labelledby="core-h">
+            <h2 id="core-h" class="mb-4 text-base font-extrabold text-slate-900">{{ __('ui.form.core') }}</h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <x-ui.field name="provider_type_id" type="select" :label="__('ui.providers.type')" wire:model="provider_type_id" required>
                     <option value="">{{ __('ui.common.select_placeholder') }}</option>
@@ -46,9 +46,9 @@
         </section>
 
         {{-- Translations: one form, one tab per language. A language may be left empty; nothing is auto-translated. --}}
-        <section class="rounded-lg border border-slate-200 bg-white" aria-labelledby="tr-h" x-data="{ tab: $wire.$entangle('tab') }">
+        <section class="ea-card" aria-labelledby="tr-h" x-data="{ tab: $wire.$entangle('tab') }">
             <div class="border-b border-slate-200 px-4 pt-4 sm:px-5">
-                <h2 id="tr-h" class="text-base font-semibold text-slate-900">{{ __('ui.form.translations') }}</h2>
+                <h2 id="tr-h" class="text-base font-extrabold text-slate-900">{{ __('ui.form.translations') }}</h2>
                 <p class="mt-1 text-sm text-slate-600">{{ __('ui.form.translations_hint') }}</p>
                 <div role="tablist" aria-labelledby="tr-h" class="-mb-px mt-3 flex gap-1"
                      x-on:keydown.arrow-left.prevent="tab = tab === '{{ $locales[0] }}' ? '{{ $locales[1] ?? $locales[0] }}' : '{{ $locales[0] }}'; $nextTick(() => $refs['tab_' + tab].focus())"
@@ -56,7 +56,7 @@
                     @foreach ($locales as $loc)
                         <button type="button" role="tab" id="tab-{{ $loc }}" x-ref="tab_{{ $loc }}" aria-controls="panel-{{ $loc }}"
                                 x-bind:aria-selected="(tab === '{{ $loc }}').toString()" x-bind:tabindex="tab === '{{ $loc }}' ? 0 : -1" x-on:click="tab = '{{ $loc }}'"
-                                x-bind:class="tab === '{{ $loc }}' ? 'border-teal-700 bg-white text-teal-900' : 'border-transparent text-slate-700 hover:bg-slate-50'"
+                                x-bind:class="tab === '{{ $loc }}' ? 'border-brand-700 bg-white text-brand-900' : 'border-transparent text-slate-700 hover:bg-slate-50'"
                                 class="inline-flex min-h-10 items-center gap-2 rounded-t-md border-x border-t border-b-2 px-4 text-sm font-medium">
                             {{ __('ui.locale.'.$loc) }}
                             @if ($errorLocales[$loc])
@@ -95,8 +95,8 @@
         </section>
 
         {{-- Contact and location (language independent) --}}
-        <section class="rounded-lg border border-slate-200 bg-white p-4 sm:p-5" aria-labelledby="contact-h">
-            <h2 id="contact-h" class="mb-4 text-base font-semibold text-slate-900">{{ __('ui.providers.contact') }}</h2>
+        <section class="ea-card p-5 sm:p-5" aria-labelledby="contact-h">
+            <h2 id="contact-h" class="mb-4 text-base font-extrabold text-slate-900">{{ __('ui.providers.contact') }}</h2>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 @foreach ([
                     ['phone', 'text', 'ui.form.phone_hint'],

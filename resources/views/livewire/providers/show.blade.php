@@ -8,7 +8,7 @@
 @endphp
 <div>
     <nav aria-label="{{ __('ui.common.breadcrumb') }}" class="mb-3 text-sm">
-        <a href="{{ route('providers.index') }}" class="inline-flex min-h-8 items-center gap-1 font-medium text-teal-800 underline underline-offset-2"><x-ui.icon name="chevron-left" flip class="size-4" />{{ __('ui.providers.title') }}</a>
+        <a href="{{ route('providers.index') }}" class="inline-flex min-h-8 items-center gap-1 font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600"><x-ui.icon name="chevron-left" flip class="size-4" />{{ __('ui.providers.title') }}</a>
     </nav>
 
     <x-ui.page-header :title="$display?->name ?? __('ui.providers.details')">
@@ -44,8 +44,8 @@
     <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         @foreach ($locales as $loc)
             @php $t = $provider->translation($loc); @endphp
-            <section class="rounded-lg border border-slate-200 bg-white" aria-labelledby="tr-{{ $loc }}" lang="{{ $loc }}" dir="{{ in_array($loc, config('providers.rtl_locales'), true) ? 'rtl' : 'ltr' }}">
-                <h2 id="tr-{{ $loc }}" class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">{{ __('ui.locale.'.$loc) }}</h2>
+            <section class="ea-card" aria-labelledby="tr-{{ $loc }}" lang="{{ $loc }}" dir="{{ in_array($loc, config('providers.rtl_locales'), true) ? 'rtl' : 'ltr' }}">
+                <h2 id="tr-{{ $loc }}" class="border-b border-slate-200 bg-slate-50/70 px-5 py-3.5 text-sm font-extrabold text-slate-900">{{ __('ui.locale.'.$loc) }}</h2>
                 @if ($t === null)
                     {{-- UI text, not provider content: use the interface language and direction. --}}
                     <p class="px-4 py-6 text-sm text-slate-600" lang="{{ app()->getLocale() }}" dir="{{ in_array(app()->getLocale(), config('providers.rtl_locales'), true) ? 'rtl' : 'ltr' }}">{{ __('ui.translation.no_translation') }}</p>
@@ -64,8 +64,8 @@
     </div>
 
     <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <section class="rounded-lg border border-slate-200 bg-white" aria-labelledby="contact-h">
-            <h2 id="contact-h" class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">{{ __('ui.providers.contact') }}</h2>
+        <section class="ea-card" aria-labelledby="contact-h">
+            <h2 id="contact-h" class="border-b border-slate-200 bg-slate-50/70 px-5 py-3.5 text-sm font-extrabold text-slate-900">{{ __('ui.providers.contact') }}</h2>
             <dl class="divide-y divide-slate-100 text-sm">
                 <div class="grid grid-cols-3 gap-3 px-4 py-2.5">
                     <dt class="text-slate-600">{{ __('ui.providers.phone') }}</dt>
@@ -76,7 +76,7 @@
                     <dd class="col-span-2">
                         @if (filled($provider->email))
                             @if (filter_var($provider->email, FILTER_VALIDATE_EMAIL))
-                                <a class="ltr-text break-all text-teal-900 underline underline-offset-2" href="mailto:{{ $provider->email }}">{{ $provider->email }}</a>
+                                <a class="ltr-text break-all text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600" href="mailto:{{ $provider->email }}">{{ $provider->email }}</a>
                             @else
                                 <span class="ltr-text break-all">{{ $provider->email }}</span>
                             @endif
@@ -87,7 +87,7 @@
                     <dt class="text-slate-600">{{ __('ui.providers.website') }}</dt>
                     <dd class="col-span-2">
                         @if ($siteLink)
-                            <a class="ltr-text break-all text-teal-900 underline underline-offset-2" href="{{ $siteLink }}" target="_blank" rel="noopener noreferrer">{{ $provider->website }}</a>
+                            <a class="ltr-text break-all text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600" href="{{ $siteLink }}" target="_blank" rel="noopener noreferrer">{{ $provider->website }}</a>
                         @elseif (filled($provider->website))
                             <span class="ltr-text break-all">{{ $provider->website }}</span>
                         @else — @endif
@@ -97,7 +97,7 @@
                     <dt class="text-slate-600">{{ __('ui.providers.map_url') }}</dt>
                     <dd class="col-span-2">
                         @if ($mapLink)
-                            <a class="inline-flex items-center gap-1 text-teal-900 underline underline-offset-2" href="{{ $mapLink }}" target="_blank" rel="noopener noreferrer">{{ __('ui.providers.open_map') }}<span class="sr-only"> ({{ __('ui.common.new_tab') }})</span></a>
+                            <a class="inline-flex items-center gap-1 text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600" href="{{ $mapLink }}" target="_blank" rel="noopener noreferrer">{{ __('ui.providers.open_map') }}<span class="sr-only"> ({{ __('ui.common.new_tab') }})</span></a>
                         @elseif (filled($provider->map_url))
                             <span class="ltr-text break-all text-slate-700">{{ $provider->map_url }}</span>
                             <span class="block text-xs text-slate-600">{{ __('ui.providers.map_not_linked') }}</span>
@@ -111,8 +111,8 @@
             </dl>
         </section>
 
-        <section class="rounded-lg border border-slate-200 bg-white" aria-labelledby="meta-h">
-            <h2 id="meta-h" class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">{{ __('ui.providers.record') }}</h2>
+        <section class="ea-card" aria-labelledby="meta-h">
+            <h2 id="meta-h" class="border-b border-slate-200 bg-slate-50/70 px-5 py-3.5 text-sm font-extrabold text-slate-900">{{ __('ui.providers.record') }}</h2>
             <dl class="divide-y divide-slate-100 text-sm">
                 <div class="grid grid-cols-3 gap-3 px-4 py-2.5"><dt class="text-slate-600">ID</dt><dd class="col-span-2"><span class="ltr-text">{{ $provider->id }}</span></dd></div>
                 <div class="grid grid-cols-3 gap-3 px-4 py-2.5"><dt class="text-slate-600">{{ __('ui.providers.created') }}</dt><dd class="col-span-2"><span class="ltr-text">{{ $provider->created_at?->format('Y-m-d H:i') }}</span> · <bdi>{{ $createdBy ?? '—' }}</bdi></dd></div>
@@ -123,8 +123,8 @@
     </div>
 
     @can('audit.view')
-        <section class="rounded-lg border border-slate-200 bg-white" aria-labelledby="audit-h">
-            <h2 id="audit-h" class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">{{ __('ui.providers.audit_snippet') }}</h2>
+        <section class="ea-card" aria-labelledby="audit-h">
+            <h2 id="audit-h" class="border-b border-slate-200 bg-slate-50/70 px-5 py-3.5 text-sm font-extrabold text-slate-900">{{ __('ui.providers.audit_snippet') }}</h2>
             @if ($audit->isEmpty())
                 <p class="px-4 py-6 text-sm text-slate-600">{{ __('ui.audit.none') }}</p>
             @else
@@ -138,7 +138,7 @@
                     @endforeach
                 </ul>
                 @can('audit.view')
-                    <p class="border-t border-slate-100 px-4 py-2 text-sm"><a class="text-teal-900 underline underline-offset-2" href="{{ route('audit.index') }}">{{ __('ui.audit.open_log') }}</a></p>
+                    <p class="border-t border-slate-100 px-4 py-2 text-sm"><a class="text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600" href="{{ route('audit.index') }}">{{ __('ui.audit.open_log') }}</a></p>
                 @endcan
             @endif
         </section>
