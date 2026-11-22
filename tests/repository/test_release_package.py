@@ -46,7 +46,8 @@ class ReleasePackageTest(unittest.TestCase):
         self.assertIn('url="index.php"', cfg)
         self.assertIn('<directoryBrowse enabled="false" />', cfg)
         self.assertIn('segment=".env"', cfg)
-        self.assertTrue((ROOT / "public" / ".htaccess").is_file())
+        self.assertIn('segment=".htaccess"', cfg)
+        self.assertIn('<Files "web.config">', read(ROOT / "public" / ".htaccess"))
 
     def test_builder_guards(self):
         src = read(BUILDER)

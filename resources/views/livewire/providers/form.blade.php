@@ -56,8 +56,9 @@
                     @foreach ($locales as $loc)
                         <button type="button" role="tab" id="tab-{{ $loc }}" x-ref="tab_{{ $loc }}" aria-controls="panel-{{ $loc }}"
                                 x-bind:aria-selected="(tab === '{{ $loc }}').toString()" x-bind:tabindex="tab === '{{ $loc }}' ? 0 : -1" x-on:click="tab = '{{ $loc }}'"
-                                x-bind:class="tab === '{{ $loc }}' ? 'border-brand-700 bg-white text-brand-900' : 'border-transparent text-slate-700 hover:bg-slate-50'"
-                                class="inline-flex min-h-10 items-center gap-2 rounded-t-md border-x border-t border-b-2 px-4 text-sm font-medium">
+                                x-bind:class="tab === '{{ $loc }}' ? 'border-brand-600 border-b-brand-600 bg-brand-50 text-brand-800 font-extrabold' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+                                class="inline-flex min-h-11 items-center gap-2 rounded-t-lg border-x border-t border-b-[3px] px-4 text-sm font-semibold transition-colors">
+                            <span x-show="tab === '{{ $loc }}'" class="size-2 rounded-full bg-brand-600" aria-hidden="true"></span>
                             {{ __('ui.locale.'.$loc) }}
                             @if ($errorLocales[$loc])
                                 <span class="inline-flex size-5 items-center justify-center rounded-full bg-red-700 text-xs font-bold text-white" aria-hidden="true">!</span>
@@ -70,6 +71,10 @@
 
             @foreach ($locales as $loc)
                 <div role="tabpanel" id="panel-{{ $loc }}" aria-labelledby="tab-{{ $loc }}" x-show="tab === '{{ $loc }}'" x-cloak class="p-4 sm:p-5" lang="{{ $loc }}">
+                    {{-- Which language is being typed, stated in the interface language so it is never guessed. --}}
+                    <p class="mb-4 inline-flex items-center gap-2 rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-bold text-brand-800 ring-1 ring-brand-200" lang="{{ app()->getLocale() }}" dir="{{ $isRtl(app()->getLocale()) ? 'rtl' : 'ltr' }}">
+                        <x-ui.icon name="pencil" class="size-4" />{{ __('ui.form.editing_language', ['language' => __('ui.locale.'.$loc)]) }}
+                    </p>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <x-ui.field :name="'translations.'.$loc.'.name'" :label="__('ui.providers.fields.name')" wire:model="translations.{{ $loc }}.name" dir="{{ $isRtl($loc) ? 'rtl' : 'ltr' }}" maxlength="255" :hint="__('ui.form.required_if_language')" />
                         <x-ui.field :name="'translations.'.$loc.'.address'" :label="__('ui.providers.fields.address')" wire:model="translations.{{ $loc }}.address" dir="{{ $isRtl($loc) ? 'rtl' : 'ltr' }}" maxlength="500" :hint="__('ui.form.required_if_language')" />

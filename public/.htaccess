@@ -23,3 +23,8 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# The IIS configuration file is not content; never serve it (Apache 2.4).
+<Files "web.config">
+    Require all denied
+</Files>

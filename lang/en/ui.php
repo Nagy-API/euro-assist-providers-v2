@@ -242,6 +242,7 @@ return [
     ],
 
     'form' => [
+        'editing_language' => 'You are editing the :language text',
         'create_title' => 'Add provider',
         'create_subtitle' => 'Fill in at least one language. A language you leave empty is simply not stored.',
         'edit_title' => 'Edit provider',

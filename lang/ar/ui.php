@@ -242,6 +242,7 @@ return [
     ],
 
     'form' => [
+        'editing_language' => 'أنت تعدّل النص باللغة :language',
         'create_title' => 'إضافة مقدم خدمة',
         'create_subtitle' => 'املأ لغة واحدة على الأقل. اللغة التي تتركها فارغة لا تُحفظ.',
         'edit_title' => 'تعديل مقدم الخدمة',

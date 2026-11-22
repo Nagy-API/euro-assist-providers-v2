@@ -286,4 +286,11 @@ class ProviderFormTest extends UiTestCase
         Livewire::actingAs($this->editor())->test(Form::class, ['provider' => $provider])
             ->assertDontSeeHtml('<script>alert(1)</script>');
     }
+
+    public function test_each_language_panel_states_which_language_is_being_edited(): void
+    {
+        Livewire::actingAs($this->editor())->test(Form::class)
+            ->assertSee(__('ui.form.editing_language', ['language' => __('ui.locale.ar')]))
+            ->assertSee(__('ui.form.editing_language', ['language' => __('ui.locale.en')]));
+    }
 }
