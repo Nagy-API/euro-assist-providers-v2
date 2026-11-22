@@ -77,6 +77,7 @@ def main() -> int:
     ap.add_argument('--composer', required=True, help='path to composer.phar')
     ap.add_argument('--npm', default='npm')
     args = ap.parse_args()
+    args.npm = shutil.which(args.npm) or args.npm  # resolves npm.cmd on Windows
 
     out = args.out.resolve()
     if REPO in out.parents or out == REPO:
