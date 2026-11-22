@@ -102,7 +102,8 @@ def main() -> int:
     tar.unlink()
 
     print('[2/5] Production dependencies and frontend build')
-    env = dict(os.environ, COMPOSER_NO_INTERACTION='1')
+    # APP_ENV other than "production": the production boot guard needs a real .env, which the build has not.
+    env = dict(os.environ, COMPOSER_NO_INTERACTION='1', APP_ENV='packaging')
     run([args.php, args.composer, 'install', '--no-dev', '--optimize-autoloader', '--no-interaction', '--no-progress', '--prefer-dist'], app, env)
     run([args.npm, 'ci', '--no-audit', '--no-fund', '--prefer-offline'], app)
     run([args.npm, 'run', 'build'], app)
@@ -110,8 +111,10 @@ def main() -> int:
     print('[3/5] Removing development-only files')
     for rel in DEV_ONLY:
         rmtree(app / rel)
-    for cache in (app / 'bootstrap' / 'cache').glob('*.php'):
-        cache.unlink()
+    # Keep the environment-independent package manifest (packages.php, services.php); drop anything
+    # environment-specific so the server builds its own config/route/event caches.
+    for name in ('config.php', 'routes-v7.php', 'events.php'):
+        (app / 'bootstrap' / 'cache' / name).unlink(missing_ok=True)
 
     print('[4/5] Adding IT documents and data')
     docs = REPO / 'deploy' / 'it-package'
