@@ -11,10 +11,10 @@
 | Gate | Status | Evidence / smallest next action |
 |---|---|---|
 | Source implementation and frontend redesign | PASS (local) | redesign on all screens; reviewed; tests below |
-| Automated tests on final code | PASS (local) | PHPUnit 519 tests on PHP 8.3.37 and 8.4.28 (SQLite) and MariaDB 11.4.14 (1 SQLite-only skip); Pint; Larastan; composer/npm audit 0; Python repo tests; hygiene; Gitleaks full history |
+| Automated tests on final code | PASS (local) | PHPUnit 520 tests on PHP 8.3.37 and 8.4.28 (SQLite) and MariaDB 11.4.14 (1 SQLite-only skip); Pint; Larastan; composer/npm audit 0; Python repo tests; hygiene; Gitleaks full history |
 | Clean authentic release dataset reconciled | PASS (local) | `docs/18_RELEASE_PACKAGE.md` §2 — 2,197/2,197 rows accounted, 0 field differences |
 | Package extraction / install / restore rehearsal | PASS (local, Windows) | `docs/18_RELEASE_PACKAGE.md` §4 |
-| Independent review | see work log entry of 2026-11-22 (release candidate) | |
+| Independent review | PASS (after fixes) | R4: frontend PASS_WITH_NOTES; package CHANGES_REQUIRED → all confirmed findings fixed in `e05e78e` (work log) |
 | **Plesk staging (real host)** | **BLOCKED** | needs a staging subdomain, empty DB + user, PHP 8.3+ CLI path, IIS URL Rewrite, scheduled task; IT runs `deploy/it-package/VERIFY_AND_SMOKE_TEST.md` |
 | **Production PHP/extension compatibility** | **UNVERIFIED** | legacy runs Laravel 12 (`php ^8.2`); V2 needs PHP 8.3+ |
 | **Fresh data synchronization** | **NOT DONE** | SQL is the frozen snapshot; `deploy/it-package/FRESH_DATA_SYNC.md` before cutover |
