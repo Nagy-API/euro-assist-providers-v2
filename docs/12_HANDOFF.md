@@ -45,9 +45,17 @@ Order: preflight → stage → map-types --from-legacy → apply --actor=admin@l
 
 Pint, PHPStan, PHPUnit on PHP 8.3 and 8.4, `phpunit.mysql.xml` on MariaDB (docs07), composer/npm audit, `npm run build`, `python scripts/check_repo_hygiene.py`, Python repo tests, Gitleaks `git --staged`, `git diff --cached --check`.
 
+## Release candidate 2.0.0-rc.1 (2026-11-22)
+
+* Branch `feature/release-candidate` (PR stacked on #41). Build from the repository root: `python scripts/release/build_release.py --version 2.0.0-rc.1 --out ..\.work\release-20261122\out --data-sql ..\.work\release-20261122\build\EuroAssist_Providers_V2_DATA_2.0.0-rc.1.sql --php ..\.tools\php-8.3.37\php.exe --composer ..\.tools\composer.phar` (set `COMPOSER_HOME`, `COMPOSER_CACHE_DIR`, `npm_config_cache` to the `.tools` folders; first build ~10 min on N:).
+* Verify a built ZIP exactly as `docs/18_RELEASE_PACKAGE.md` §4 (scripts used: ZIP audit, SQL restore into `euro_assist_v2_install_rehearsal`, HTTP role matrix — recreate them from that section; they are not in the repository).
+* Release DB `euro_assist_v2_release` (account `v2_release` in the private `connections.json`) is the source of the SQL. Rebuild it only from a snapshot through the pipeline, never by copying `euro_assist_v2_local`.
+* IT guides: `deploy/it-package/`. Gates: `docs/01_CURRENT_STATUS.md`.
+
 ## Exactly what to do next
 
-1. Owner: UAT (`docs/16_UAT_CHECKLIST.md`); D1–D8 + 4 provisional labels + "Eye Center"; billing; PR review/merge approval (#38 then #40).
+1. King: review the release-candidate PR; authorize an isolated Plesk staging install; send IT the ZIP and (separately) its SHA-256; answer D3 (4 labels, "Eye Center", 2 map links) and D7 (who calls the old `/api/...`); fix GitHub billing.
+1b. IT: staging per `deploy/it-package/INSTALL_GUIDE.md`, results per `VERIFY_AND_SMOKE_TEST.md`.
 2. With the owner: work through the 334 pair suggestions on the review screen (reason required for every decision).
 3. Independent final review of the merged-candidate diff; then isolated Plesk staging only after written approval (`docs/09_PLESK_DEPLOYMENT.md` checklist).
 

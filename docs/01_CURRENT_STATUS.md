@@ -1,44 +1,43 @@
 # Current project status — update after EVERY task
 
-**Date:** 2026-11-22. **Stage:** owner UAT environment ready (`start-uat.ps1`, isolated `euro_assist_v2_uat`). Nothing merged, nothing deployed.
-**Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — PRIVATE.
-**Branches:** `feature/uat-environment` (UAT launcher/reset, stacked PR on #40) → `feature/p1-foundation-hardening` = PR #40 (Draft, stacked on PR #38). Latest SHA: see the PR heads.
+**Date:** 2026-11-22. **Stage:** release candidate `2.0.0-rc.1` built and rehearsed **locally**. Nothing merged, nothing deployed.
+**Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — PRIVATE (verified 2026-11-22).
+**Branches (stacked PRs):** `feature/release-candidate` → `feature/uat-environment` (PR #41) → `feature/p1-foundation-hardening` (PR #40) → PR #38 → `main`. Latest SHA: see the PR head.
 **Hosted CI:** NEVER EXECUTED — GitHub account billing blocker. All evidence below is LOCAL.
-**Production / Plesk:** untouched; Plesk capabilities unverified.
+**Production / Plesk:** untouched; Plesk staging not performed.
 
-## Workstream classification (evidence-based)
+## Release gates (production GO requires every row = PASS)
 
-| Workstream | Classification | Evidence / what is missing |
+| Gate | Status | Evidence / smallest next action |
 |---|---|---|
-| Auth & roles (Admin/Editor/Viewer) | IMPLEMENTED — ACCEPTANCE PENDING | tests + browser route/nav checks for all 3 roles on migrated data; owner UAT pending |
-| Provider management UI (list/search/filter/CRUD/concurrency/soft delete) | IMPLEMENTED — ACCEPTANCE PENDING | browser-tested on 2,185 migrated records incl. lost-update refusal; owner UAT pending |
-| Arabic/English, RTL/LTR, responsive | IMPLEMENTED — ACCEPTANCE PENDING | 14 pages at 375 px in RTL with 0 overflow after fixes; no formal UI parity review vs. V1 (P1.6) |
-| Featured providers, types | IMPLEMENTED — ACCEPTANCE PENDING | 3 featured + 30 types migrated; tests; owner UAT |
-| Import/Export | IMPLEMENTED — ACCEPTANCE PENDING | real browser uploads (invalid blocked, valid applied), full 2,188-row export→dry-run round trip 100% unchanged, 5k–25k benchmarks, recovery/lock/IDOR tests |
-| `/api/v2` | IMPLEMENTED — ACCEPTANCE PENDING | all endpoints exercised on migrated data, token revoke → 401, no internal fields; real consumers unknown (P5.3) |
-| Legacy migration (local) | VERIFIED COMPLETE (local rehearsal) | 2,197/2,197 rows accounted, 0 byte diffs on 13 fields, idempotent, rollback rehearsed, source unchanged |
-| Bilingual pairing | PARTIALLY COMPLETE | 334 suggestions + reasoned review workflow working; 0 pairs reviewed by the owner |
-| Security review | IMPLEMENTED — ACCEPTANCE PENDING | R3 PASS_WITH_NOTES (no Critical/High/Medium); all Lows fixed; final re-review by an independent reviewer recommended before merge |
-| Plesk staging readiness | NOT STARTED (checklist ready) | host facts unknown; `docs/09_PLESK_DEPLOYMENT.md` checklist |
-| GitHub CI | BLOCKED | account billing |
-| Owner decisions D1–D8 | BLOCKED (owner) | provisional defaults documented in `docs/05_DATA_MIGRATION.md` |
+| Source implementation and frontend redesign | PASS (local) | redesign on all screens; reviewed; tests below |
+| Automated tests on final code | PASS (local) | PHPUnit 519 tests on PHP 8.3.37 and 8.4.28 (SQLite) and MariaDB 11.4.14 (1 SQLite-only skip); Pint; Larastan; composer/npm audit 0; Python repo tests; hygiene; Gitleaks full history |
+| Clean authentic release dataset reconciled | PASS (local) | `docs/18_RELEASE_PACKAGE.md` §2 — 2,197/2,197 rows accounted, 0 field differences |
+| Package extraction / install / restore rehearsal | PASS (local, Windows) | `docs/18_RELEASE_PACKAGE.md` §4 |
+| Independent review | see work log entry of 2026-11-22 (release candidate) | |
+| **Plesk staging (real host)** | **BLOCKED** | needs a staging subdomain, empty DB + user, PHP 8.3+ CLI path, IIS URL Rewrite, scheduled task; IT runs `deploy/it-package/VERIFY_AND_SMOKE_TEST.md` |
+| **Production PHP/extension compatibility** | **UNVERIFIED** | legacy runs Laravel 12 (`php ^8.2`); V2 needs PHP 8.3+ |
+| **Fresh data synchronization** | **NOT DONE** | SQL is the frozen snapshot; `deploy/it-package/FRESH_DATA_SYNC.md` before cutover |
+| **V1 API consumers** (D7) | **UNKNOWN — release dependency** | no `/api/...` V1 compatibility layer; owner must name any system calling the old API |
+| **Business classifications** (D3 + held rows) | **OPEN (owner)** | 972 provisional-type rows (4 labels), 7 "Eye Center" + 2 map-link rows held; 334 pair suggestions unreviewed (not blocking staging) |
+| Hosted CI | BLOCKED (billing) | local manual CI documented in `docs/15_QUALITY_GATES.md` |
+| Owner cutover authorization | NOT GIVEN | written approval from King |
 
-## Latest local verification (2026-11-22, final code of this session)
+**Verdict:** engineering release candidate ready for an **isolated Plesk staging** installation once King authorizes it.
+Production: **NO-GO** until the BLOCKED/UNVERIFIED/NOT DONE/UNKNOWN rows above are closed.
 
-- PHPUnit: 516 tests / 2,951 assertions on PHP 8.3.37 and PHP 8.4.28 (SQLite); MariaDB 11.4.14 full suite 516 tests (1 SQLite-only skip).
-- Pint, Larastan level 6, `composer validate --strict`, `composer audit` (0), `npm audit` (0), `npm run build`, repo hygiene, 30 Python repo tests, Gitleaks (history + staged): clean.
-
-## Local databases (all on isolated MariaDB 127.0.0.1:33316)
+## Local databases (isolated MariaDB 127.0.0.1:33316)
 
 | Database | Purpose |
 |---|---|
 | `euro_assist_legacy_audit_20261121` | frozen legacy restore — READ ONLY via `legacy_reader` |
-| `euro_assist_v2_local` | PRESERVED migration reference (migrated legacy data + 3 synthetic test providers); not used by UAT |
-| `euro_assist_v2_uat` | owner UAT copy: 2,185 migrated providers, 3 featured, 30 types, 334 open suggestions, 9 held rows; accounts admin@/editor@/viewer@uat.local; resettable baseline |
-| `euro_assist_v2_rehearsal` | disposable rollback/benchmark target |
-| `euro_assist_v2_test` | automated tests only |
+| `euro_assist_v2_local` | preserved migration reference (contains 3 synthetic providers and test activity; not for release) |
+| `euro_assist_v2_release` | clean release dataset (source of the SQL in the ZIP) |
+| `euro_assist_v2_install_rehearsal` | disposable: restored from the packaged SQL for the installation rehearsal |
+| `euro_assist_v2_uat` | owner UAT copy (temporary QA accounts deactivated 2026-11-22; `reset-uat.ps1` restores the baseline) |
+| `euro_assist_v2_rehearsal`, `euro_assist_v2_test` | rollback rehearsal / automated tests |
 
-## Next actions
+## Release artefacts (private, outside Git)
 
-1. King: `powershell -ExecutionPolicy Bypass -File .\start-uat.ps1`, then follow `docs/16_UAT_CHECKLIST.md` (bugs: `docs/17_UAT_BUG_REPORT.md`); answer D1–D8 and the 4 provisional type labels + "Eye Center"; fix GitHub billing; review PR #38 then #40.
-2. Engineering after owner input: process the 334 pair suggestions with the owner, final independent review, then isolated Plesk staging (P6) only with written approval.
+`..\.work\release-20261122\out\EuroAssist_Providers_V2_2.0.0-rc.1.zip` (+ `.sha256`). Exact size and SHA-256 of the
+final build: work log entry of 2026-11-22 and the PR description.
