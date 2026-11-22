@@ -11,7 +11,7 @@
 | Gate | Status | Evidence / smallest next action |
 |---|---|---|
 | Source implementation and frontend redesign | PASS (local) | redesign on all screens; reviewed; tests below |
-| Automated tests on final code | PASS (local) | PHPUnit 520 tests on PHP 8.3.37 and 8.4.28 (SQLite) and MariaDB 11.4.14 (1 SQLite-only skip); Pint; Larastan; composer/npm audit 0; Python repo tests; hygiene; Gitleaks full history |
+| Automated tests on final code | PASS (local) | PHPUnit 519 tests on PHP 8.3.37 and 8.4.28 (SQLite) and MariaDB 11.4.14 (1 SQLite-only skip); Pint; Larastan; composer/npm audit 0; Python repo tests; hygiene; Gitleaks full history |
 | Clean authentic release dataset reconciled | PASS (local) | `docs/18_RELEASE_PACKAGE.md` §2 — 2,197/2,197 rows accounted, 0 field differences |
 | Package extraction / install / restore rehearsal | PASS (local, Windows) | `docs/18_RELEASE_PACKAGE.md` §4 |
 | Independent review | PASS (after fixes) | R4: frontend PASS_WITH_NOTES; package CHANGES_REQUIRED → all confirmed findings fixed in `e05e78e` (work log) |
@@ -39,5 +39,6 @@ Production: **NO-GO** until the BLOCKED/UNVERIFIED/NOT DONE/UNKNOWN rows above a
 
 ## Release artefacts (private, outside Git)
 
-`..\.work\release-20261122\out\EuroAssist_Providers_V2_2.0.0-rc.1.zip` (+ `.sha256`). Exact size and SHA-256 of the
-final build: work log entry of 2026-11-22 and the PR description.
+`..\.work\release-20261122\out\EuroAssist_Providers_V2_2.0.0-rc.1.zip` — built from `c6b7826`, 13,355,454 bytes,
+SHA-256 `a8962fce2dc3540116c1fe817f0772cbcd15b3c82ac0ea912771f45f40ed9e5e` (also in `<zip>.sha256`). The earlier build
+from `771a6cf` is kept only under `out\superseded-771a6cf\` and must not be delivered.
