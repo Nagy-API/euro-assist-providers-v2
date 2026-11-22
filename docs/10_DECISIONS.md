@@ -189,3 +189,18 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 - xlsx imports: limits are enforced on bytes actually inflated (per entry and total), declared/actual size mismatch is corrupt, every entry is scanned for DTD/ENTITY, and non-UTF-8 XML is refused.
 
 **Consequences:** A future production migration needs a new, explicitly approved ADR, environment allow-list change and operator runbook. If the owner rejects a provisional label, roll the batch back and re-apply without the flag.
+
+## ADR-015 — Euro Assist design system, single IT delivery ZIP with the business SQL, and a rebuilt release dataset
+
+**Date:** 2026-11-22 | **Status:** Accepted (engineering, on King's instructions of 2026-11-22). Deployment is **not** authorized by this ADR.
+
+**Context:** King asked for (1) a frontend that belongs to the Euro Assist family of applications, (2) one practical delivery archive for IT that mirrors the legacy handoff (website folder + database SQL), with the authentic business SQL included unencrypted because King transfers it directly to authorized staff, and (3) a clean release dataset without development artefacts. The read-only inspection of the legacy archive showed Plesk on **Windows/IIS** (`web.config`, `C:\Inetpub\vhosts\…`), a nested `providers/` Laravel app whose `public/` was the document root, and a copy of that `public/` folder at the archive's top level.
+
+**Decision:**
+- **Design system:** tokens in `resources/css/app.css` taken from the approved Cards System V3 release (2026-11-08; GitHub `main` is older and has no `brand.css`, the local checkout's `brand.css` hash equals the release's). Brand red `#d10000` for actions, pure `#e60000` only in gradients; Cards ink neutrals override Tailwind `slate`; errors use a raspberry `red` scale distinct from the brand. Authentic logos copied byte-for-byte; Cairo self-hosted (OFL). Stack unchanged (Laravel + Livewire + Tailwind).
+- **Release dataset:** built by running the existing local pipeline from the frozen snapshot into a NEW empty database `euro_assist_v2_release` (added to the destination allow-list), not by copying `euro_assist_v2_local`, because that preserved reference contains 3 synthetic providers, test activity and one real record edited during an earlier test. Then all users, sessions, tokens, reset tokens, cache, queue and import/export jobs and non-migration audit events are removed; migration audit events keep no actor and no IP.
+- **Delivery:** one ZIP `EuroAssist_Providers_V2_<version>.zip` = `providers/` (application, production `vendor/`, built assets, `public/web.config` + `.htaccess`) + `database/…sql` + IT guides + `MANIFEST.json` + `SHA256SUMS.txt`, built only by `scripts/release/build_release.py` from a clean commit. The legacy top-level copy of `public/` is **not** reproduced: the document root must be `providers/public`.
+- The SQL has no `DROP`/`CREATE DATABASE`/`USE` statements, so importing into a non-empty database fails instead of overwriting (verified).
+- The ZIP and SQL never enter Git; the earlier "separately encrypted data package" requirement is superseded by King's clarification.
+
+**Consequences:** the ZIP contains real provider contact data and must be handled as confidential (private channel, deletion after import). Production still requires: Plesk staging verification, a fresh data snapshot rebuilt with the same pipeline (`deploy/it-package/FRESH_DATA_SYNC.md`), V1 API consumer decision (D7), owner decisions on provisional types/held rows (D3), and King's written cutover approval.

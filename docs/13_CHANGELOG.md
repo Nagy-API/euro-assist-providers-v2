@@ -4,6 +4,8 @@ This log describes **delivered application behavior**, not planned features. Kee
 
 ## Unreleased
 
+- 2026-11-22 (release candidate 2.0.0-rc.1, not deployed): Euro Assist visual identity across every screen (ink sidebar, logo, Cairo, red accents, restrained motion, reduced-motion support); branded split-screen login with password visibility toggle; dashboard hero, overview and a "what these numbers mean" section separating V2 records, imported legacy rows, unpaired bilingual records and reviewed pairs; readable language chips ("عربي ✓ / English —"); provider filters fold on phones; provider form states which language is being edited; IIS `web.config` for Plesk on Windows; one IT delivery ZIP with the migrated business SQL and installation, verification, backup/rollback and fresh-data guides.
+
 - 2026-11-22: owner UAT environment — `start-uat.ps1` / `stop-uat.ps1` / `reset-uat.ps1` run the app locally against an isolated, resettable copy of the migrated data; `php artisan uat:check` refuses any other database.
 
 - 2026-11-22: legacy migration tooling is local-only with SELECT-only source checks (`legacy:preflight`); provisional type mappings (`--accept-provisional-types`); pair review requires a reason and shows held source rows; Admin dashboard shows the migration backlog.

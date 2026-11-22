@@ -22,11 +22,11 @@ class ReleasePackageTest(unittest.TestCase):
     def test_required_it_documents_exist(self):
         for name in ("00_READ_ME_FIRST.md", "INSTALL_GUIDE.md", "DATABASE_IMPORT.md", "VERIFY_AND_SMOKE_TEST.md",
                      "BACKUP_AND_ROLLBACK.md", "FRESH_DATA_SYNC.md", "KNOWN_LIMITATIONS_AND_OPEN_DECISIONS.md",
-                     "env.production.example"):
+                     "production.env.example"):
             self.assertTrue((PKG / name).is_file(), name)
 
     def test_env_template_is_production_safe_and_secret_free(self):
-        env = read(PKG / "env.production.example")
+        env = read(PKG / "production.env.example")
         self.assertRegex(env, r"(?m)^APP_ENV=production$")
         self.assertRegex(env, r"(?m)^APP_DEBUG=false$")
         self.assertRegex(env, r"(?m)^APP_KEY=$")

@@ -11,7 +11,7 @@ EuroAssist_Providers_V2_<version>/
 ├── BACKUP_AND_ROLLBACK.md         ← backup, restore and return to the old site
 ├── FRESH_DATA_SYNC.md             ← REQUIRED before production: refresh the data from the live old system
 ├── KNOWN_LIMITATIONS_AND_OPEN_DECISIONS.md
-├── env.production.example         ← configuration template (no secrets inside)
+├── production.env.example         ← configuration template (no secrets inside)
 ├── providers/                     ← the complete Laravel application (vendor/ and built assets included)
 │   └── public/                    ← THE ONLY FOLDER THE WEB SERVER MAY SERVE (document root)
 ├── database/
@@ -43,7 +43,7 @@ Administrator accounts are created on the server after the import (`php artisan 
 2. Confirm the host meets the requirements (PHP 8.3+, extensions, MySQL/MariaDB, scheduled task).
 3. Create a **staging** subdomain, a **new empty** database and a dedicated database user.
 4. Upload `providers/` outside the web root; set the document root to `providers/public`.
-5. Create `providers/.env` from `env.production.example`; run `php artisan key:generate --force`.
+5. Create `providers/.env` from `production.env.example`; run `php artisan key:generate --force`.
 6. Import the SQL into the empty database (DATABASE_IMPORT.md); run `php artisan migrate --force` (expects "Nothing to migrate").
 7. Create the first Admin: `php artisan users:provision <email> --role=admin` (hidden password prompt).
 8. Cache configuration, add the every-minute scheduled task, check HTTPS.

@@ -76,7 +76,7 @@ check from Git Bash/WSL.
 
 ```bash
 cd <path>/providers-v2
-# copy env.production.example from the extracted ZIP to <path>/providers-v2/.env, then
+# copy production.env.example from the extracted ZIP to <path>/providers-v2/.env, then
 # edit .env: APP_URL (https://…), DB_* values, TRUSTED_PROXIES, MAIL_* when SMTP is available
 php artisan key:generate --force          # once; keep a private copy of APP_KEY with the server records
 ```
