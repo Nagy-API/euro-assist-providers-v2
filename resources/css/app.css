@@ -365,7 +365,8 @@
 }
 
 :root {
-    --ea-hero: linear-gradient(135deg, #f01212 0%, #e60000 38%, #b3000f 78%, #7d0010 100%);
+    /* Cards System hero gradient, starting at the pure brand red so white text keeps >= 4.5:1 everywhere. */
+    --ea-hero: linear-gradient(135deg, #e60000 0%, #d70000 38%, #b3000f 78%, #7d0010 100%);
 }
 
 @media print {

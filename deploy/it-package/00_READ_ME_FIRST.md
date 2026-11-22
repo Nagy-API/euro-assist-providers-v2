@@ -42,7 +42,8 @@ Administrator accounts are created on the server after the import (`php artisan 
 1. Verify the ZIP checksum against the value King sent you separately; then `SHA256SUMS.txt`.
 2. Confirm the host meets the requirements (PHP 8.3+, extensions, MySQL/MariaDB, scheduled task).
 3. Create a **staging** subdomain, a **new empty** database and a dedicated database user.
-4. Upload `providers/` outside the web root; set the document root to `providers/public`.
+4. Upload the contents of `providers/` to a folder outside the web root (e.g. `providers-v2`); set the document root to
+   its `public` subfolder (`providers-v2/public`); enable Plesk's HTTP to HTTPS 301 redirect.
 5. Create `providers/.env` from `production.env.example`; run `php artisan key:generate --force`.
 6. Import the SQL into the empty database (DATABASE_IMPORT.md); run `php artisan migrate --force` (expects "Nothing to migrate").
 7. Create the first Admin: `php artisan users:provision <email> --role=admin` (hidden password prompt).

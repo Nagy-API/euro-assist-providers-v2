@@ -21,7 +21,7 @@
                 <h2 id="{{ $uid }}-title" class="text-lg font-extrabold text-slate-900">{{ $title }}</h2>
                 @if ($description)<p id="{{ $uid }}-desc" class="mt-1 text-sm text-slate-600">{{ $description }}</p>@endif
             </div>
-            <button type="button" wire:click="{{ $close }}" class="-me-2 -mt-1 inline-flex size-10 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900" aria-label="{{ __('ui.common.close') }}">
+            <button type="button" wire:click="{{ $close }}" class="-me-2 -mt-1 inline-flex size-10 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900" aria-label="{{ __('ui.common.close') }}">
                 <x-ui.icon name="x" />
             </button>
         </div>

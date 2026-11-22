@@ -55,14 +55,18 @@ check from Git Bash/WSL.
 
 ## 4. Create the staging site and database
 
-1. Plesk → create a subdomain, e.g. `providers-v2-staging.<company domain>`; issue the HTTPS certificate.
+1. Plesk → create a subdomain, e.g. `providers-v2-staging.<company domain>`; issue the HTTPS certificate and turn on
+   **Hosting settings → "Permanent SEO-safe 301 redirect from HTTP to HTTPS"**. This is required: session cookies are
+   HTTPS-only, so sign-in over plain `http://` fails with "Page expired" (419).
 2. Plesk → Databases → **add a new, empty database** (e.g. `euro_assist_providers_v2`) with a **new user** that has
    rights on that database only. Never reuse the old site's database or user.
 
 ## 5. Upload the application
 
-* Upload the folder `providers/` to the subscription **outside** the public web folder, for example
-  `…\vhosts\<domain>\providers-v2\` (Windows) or `/var/www/vhosts/<domain>/providers-v2/` (Linux).
+* Create a folder `providers-v2` in the subscription **outside** the public web folder, for example
+  `…\vhosts\<domain>\providers-v2\` (Windows) or `/var/www/vhosts/<domain>/providers-v2/` (Linux), and upload the
+  **contents** of the ZIP's `providers/` folder into it, so that `providers-v2\artisan` and
+  `providers-v2\public\index.php` exist. The ZIP's `providers/public` is then `providers-v2/public`.
 * Plesk → Hosting settings → **Document root = `providers-v2/public`**.
 * Make these two folders writable by the web server's PHP identity (and by the scheduled-task user):
   * Windows/IIS: give the application-pool identity (or the subscription's system user / `IIS_IUSRS`, as configured
@@ -96,7 +100,8 @@ Do **not** run `db:seed` on an imported database: the 30 provider types are alre
 ```bash
 php artisan users:provision it.admin@<company domain> --name="IT Administrator" --role=admin
 ```
-The password is asked **hidden** (min. 12 characters, letters and numbers). Then sign in and create the other staff
+In production the command first asks *"This is PRODUCTION. Create the account?"* — answer `yes`. The password is then
+asked **hidden** (min. 12 characters, letters and numbers). Then sign in and create the other staff
 accounts from **Users** in the application (Admin / Editor / Viewer). There are no default accounts in the package.
 
 ## 9. Production caches, queue and scheduler

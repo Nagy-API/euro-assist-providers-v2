@@ -81,7 +81,7 @@
                             <label for="reason-{{ $suggestion->id }}" class="block text-sm font-medium text-slate-800">{{ __('migration.reason_label') }}</label>
                             <input id="reason-{{ $suggestion->id }}" type="text" maxlength="500" wire:model="reasons.{{ $suggestion->id }}"
                                    aria-describedby="reason-error-{{ $suggestion->id }}"
-                                   class="mt-1 block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15">
+                                   class="mt-1 block w-full rounded-lg border border-slate-500 bg-white px-3 py-2 text-sm shadow-xs transition-[border-color,box-shadow] duration-150 hover:border-slate-600 focus:border-brand-600 focus:ring-3 focus:ring-brand-600/25">
                             @error('reasons.'.$suggestion->id)
                                 <p id="reason-error-{{ $suggestion->id }}" class="mt-1 text-sm text-red-700" role="alert">{{ $message }}</p>
                             @enderror

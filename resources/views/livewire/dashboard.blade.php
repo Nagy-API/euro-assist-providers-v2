@@ -16,9 +16,9 @@
     <section class="ea-hero animate-enter rounded-3xl px-6 pt-7 pb-24 sm:px-8 lg:pb-28" aria-labelledby="dash-title">
         <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div class="min-w-0">
-                <p class="text-xs font-extrabold tracking-[0.14em] text-white/85 uppercase">{{ now()->locale($locale)->translatedFormat('l, j F Y') }}</p>
+                <p class="text-xs font-extrabold tracking-[0.14em] text-white uppercase">{{ now()->locale($locale)->translatedFormat('l, j F Y') }}</p>
                 <h1 id="dash-title" class="mt-2 text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl">{{ __('ui.dashboard.greeting', ['name' => $user?->name]) }}</h1>
-                <p class="mt-1 max-w-2xl text-base text-white/90">{{ __('ui.dashboard.hero_subtitle') }}</p>
+                <p class="mt-1 max-w-2xl text-base text-white">{{ __('ui.dashboard.hero_subtitle') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 @can('providers.create')
@@ -46,7 +46,7 @@
                 </svg>
                 <div class="absolute inset-0 flex flex-col items-center justify-center leading-tight">
                     <span class="ltr-text text-2xl font-extrabold">{{ $activeShare }}%</span>
-                    <span class="text-xs font-semibold text-slate-500">{{ __('ui.dashboard.active_share') }}</span>
+                    <span class="text-xs font-semibold text-slate-600">{{ __('ui.dashboard.active_share') }}</span>
                 </div>
             </div>
             <dl class="grid min-w-0 flex-1 grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200 {{ count($figures) === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }}">
@@ -90,7 +90,7 @@
                 ['reviewed', $provenance['reviewed_pairs'], 'check-circle'],
             ] as [$key, $value, $icon])
                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <dt class="flex items-center gap-2 text-sm font-bold text-slate-700"><x-ui.icon :name="$icon" class="size-4 text-slate-500" />{{ __('ui.dashboard.meaning.'.$key) }}</dt>
+                    <dt class="flex items-center gap-2 text-sm font-bold text-slate-700"><x-ui.icon :name="$icon" class="size-4 text-slate-600" />{{ __('ui.dashboard.meaning.'.$key) }}</dt>
                     <dd class="mt-1 text-2xl font-extrabold text-slate-900"><span class="ltr-text">{{ number_format($value) }}</span></dd>
                     <dd class="mt-1 text-xs leading-relaxed text-slate-600">{{ __('ui.dashboard.meaning.'.$key.'_hint') }}</dd>
                 </div>

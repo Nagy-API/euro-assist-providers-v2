@@ -13,7 +13,7 @@
     $id ??= 'f-'.preg_replace('/[^A-Za-z0-9_-]/', '-', $name);
     $message = $errors->first($error ?? $name);
     $describedBy = trim(($hint ? $id.'-hint ' : '').($message ? $id.'-error' : ''));
-    $control = 'block min-h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 shadow-xs transition-[border-color,box-shadow] duration-150 placeholder:text-slate-500 hover:border-slate-600 focus:border-brand-600 focus:outline-none focus:ring-3 focus:ring-brand-600/15 disabled:bg-slate-100 disabled:text-slate-600 '
+    $control = 'block min-h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm text-slate-900 shadow-xs transition-[border-color,box-shadow] duration-150 placeholder:text-slate-600 hover:border-slate-600 focus:border-brand-600 focus:ring-3 focus:ring-brand-600/25 disabled:bg-slate-100 disabled:text-slate-600 '
         .($message ? 'border-red-600 ring-3 ring-red-600/15' : 'border-slate-500');
 @endphp
 <div {{ $attributes->only('class') }}>

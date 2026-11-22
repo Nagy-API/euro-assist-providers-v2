@@ -68,6 +68,22 @@ def rmtree(path: Path) -> None:
         path.unlink()
 
 
+def check_data_sql(path: Path) -> None:
+    """Refuse a data dump that could overwrite a database or carries authentication material."""
+    import re
+    text = path.read_text(encoding='utf-8')
+    rules = {
+        'authentication/transient table rows': r'INSERT INTO `(users|sessions|personal_access_tokens|password_reset_tokens|jobs|failed_jobs|job_batches|cache|cache_locks)`',
+        'DROP statement': r'(?im)^\s*DROP\s',
+        'CREATE DATABASE statement': r'(?im)^\s*CREATE\s+DATABASE',
+        'USE statement': r'(?im)^\s*USE\s',
+        'password hash': r'\$2[aby]\$\d\d\$|\$argon2',
+    }
+    for label, pattern in rules.items():
+        if re.search(pattern, text):
+            sys.exit(f'Refusing the data SQL: it contains a {label}.')
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--version', required=True)
@@ -87,6 +103,9 @@ def main() -> int:
         sys.exit('Refusing: the working tree is not clean; commit first so the package equals a commit.')
     commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
 
+    import re
+    if not re.fullmatch(r'[0-9A-Za-z][0-9A-Za-z.\-]{0,40}', args.version):
+        sys.exit('Refusing: --version may contain only letters, digits, dots and hyphens.')
     name = f'EuroAssist_Providers_V2_{args.version}'
     stage = out / f'{name}.staging'
     rmtree(stage)
@@ -118,24 +137,32 @@ def main() -> int:
         (app / 'bootstrap' / 'cache' / cached).unlink(missing_ok=True)
 
     print('[4/5] Adding IT documents and data')
-    docs = REPO / 'deploy' / 'it-package'
+    # IT documents come from the exported COMMIT (tracked files only), never from the working tree:
+    # a gitignored file such as a filled-in .env next to them must not reach the ZIP.
+    docs = app / 'deploy' / 'it-package'
     for item in sorted(docs.iterdir()):
         target = root / item.name
         if item.is_dir():
             shutil.copytree(item, target)
         else:
             shutil.copy2(item, target)
+    data_rel = None
     if args.data_sql:
+        check_data_sql(args.data_sql)
         (root / 'database').mkdir(exist_ok=True)
         shutil.copy2(args.data_sql, root / 'database' / args.data_sql.name)
+        data_rel = f'database/{args.data_sql.name}'
 
-    # Safety net: nothing secret or data-like may be in the application folder.
-    for p in app.rglob('*'):
+    # Safety net over the WHOLE package: nothing secret or data-like except the checked data SQL.
+    for p in root.rglob('*'):
         if p.is_file():
+            rel = p.relative_to(root).as_posix()
             low = p.name.lower()
-            if low == '.env' or (low.endswith(FORBIDDEN_SUFFIXES) and 'vendor' not in p.parts):
-                sys.exit(f'Refusing: unexpected file in the application folder: {p.relative_to(root)}')
-    if (app / '.git').exists():
+            if rel == data_rel or 'vendor' in p.parts:
+                continue
+            if low == '.env' or (low.startswith('.env.') and not low.endswith('.example')) or low.endswith(FORBIDDEN_SUFFIXES):
+                sys.exit(f'Refusing: unexpected file in the package: {rel}')
+    if any(part == '.git' for p in root.rglob('*') for part in p.relative_to(root).parts):
         sys.exit('Refusing: .git found in the package.')
 
     files = sorted(p for p in root.rglob('*') if p.is_file())

@@ -10,7 +10,7 @@ production as the first test.
 | 3 | Application boots | `php artisan about --only=environment` | Environment production, Debug Mode OFF, URL https://… | |
 | 4 | Schema | `php artisan migrate:status` | all migrations "Ran"; `migrate --force` says "Nothing to migrate" | |
 | 5 | Health URL | open `https://<host>/up` | HTTP 200 page | |
-| 6 | HTTPS | open `http://<host>/login` | redirected to https; padlock valid | |
+| 6 | HTTPS | open `http://<host>/login` | redirected (301) to https by the Plesk redirect setting; padlock valid | |
 | 7 | App files not exposed | open `https://<host>/.env`, `https://<host>/../composer.json`, `https://<host>/storage/logs/` | 404/403, never file content | |
 | 8 | Login page | `https://<host>/login` | Euro Assist branded page in Arabic/English | |
 | 9 | Admin sign-in | account created with `users:provision` | dashboard shows 2,185 records, 3 featured | |

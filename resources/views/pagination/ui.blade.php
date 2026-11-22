@@ -13,14 +13,14 @@
             @if ($paginator->hasPages())
                 <div class="flex flex-wrap items-center justify-center gap-1">
                     @if ($paginator->onFirstPage())
-                        <span class="{{ $btn }} border-slate-200 bg-slate-50 text-slate-500" aria-disabled="true"><x-ui.icon name="chevron-left" flip class="size-4" /><span class="sr-only">{{ __('ui.pagination.previous') }}</span></span>
+                        <span class="{{ $btn }} border-slate-200 bg-slate-50 text-slate-600" aria-disabled="true"><x-ui.icon name="chevron-left" flip class="size-4" /><span class="sr-only">{{ __('ui.pagination.previous') }}</span></span>
                     @else
                         <button type="button" wire:click="previousPage('{{ $page }}')" wire:loading.attr="disabled" class="{{ $btn }} border-slate-300 bg-white text-slate-800 hover:bg-slate-50"><x-ui.icon name="chevron-left" flip class="size-4" /><span class="sr-only">{{ __('ui.pagination.previous') }}</span></button>
                     @endif
 
                     @foreach ($elements as $element)
                         @if (is_string($element))
-                            <span class="px-1 text-slate-500" aria-hidden="true">{{ $element }}</span>
+                            <span class="px-1 text-slate-600" aria-hidden="true">{{ $element }}</span>
                         @endif
                         @if (is_array($element))
                             @foreach ($element as $number => $url)
@@ -36,7 +36,7 @@
                     @if ($paginator->hasMorePages())
                         <button type="button" wire:click="nextPage('{{ $page }}')" wire:loading.attr="disabled" class="{{ $btn }} border-slate-300 bg-white text-slate-800 hover:bg-slate-50"><x-ui.icon name="chevron-right" flip class="size-4" /><span class="sr-only">{{ __('ui.pagination.next') }}</span></button>
                     @else
-                        <span class="{{ $btn }} border-slate-200 bg-slate-50 text-slate-500" aria-disabled="true"><x-ui.icon name="chevron-right" flip class="size-4" /><span class="sr-only">{{ __('ui.pagination.next') }}</span></span>
+                        <span class="{{ $btn }} border-slate-200 bg-slate-50 text-slate-600" aria-disabled="true"><x-ui.icon name="chevron-right" flip class="size-4" /><span class="sr-only">{{ __('ui.pagination.next') }}</span></span>
                     @endif
                 </div>
             @endif

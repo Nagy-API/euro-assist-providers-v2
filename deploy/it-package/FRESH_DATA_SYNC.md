@@ -13,9 +13,13 @@ changed or deleted in the old system after that snapshot is **not** in it.
    with a read-only account, records its SHA-256, and hands it to the engineering team through a private channel.
 3. Engineering (local, isolated machine — the migration tooling refuses to run against production, ADR-014):
    * restores that file into a new local audit database with a SELECT-only reader account;
-   * runs `legacy:preflight → legacy:stage → legacy:map-types --from-legacy → legacy:apply → legacy:suggest-pairs →
-     legacy:reconcile --expect-baseline` into a new empty release database (the same steps that produced this
-     package; see `docs/05_DATA_MIGRATION.md` and `docs/18_RELEASE_PACKAGE.md` in the source repository);
+   * records the new file's SHA-256 in the private environment (`LEGACY_SNAPSHOT_SHA256=<new sha>`; the default in
+     `config/legacy.php` is the frozen snapshot and would refuse the new file), updates the expected row counts
+     (`legacy.baseline_counts`) from the new dump, and runs into a new empty release database:
+     `legacy:preflight --snapshot-sha256=<new sha>` → `legacy:stage --snapshot-sha256=<new sha>` →
+     `legacy:map-types --from-legacy` → `legacy:apply --actor=<temporary local admin> --accept-provisional-types`
+     (omit the flag if King rejected the provisional labels) → `legacy:suggest-pairs` → `legacy:reconcile --expect-baseline`
+     (the same steps that produced this package; see `docs/18_RELEASE_PACKAGE.md` in the source repository);
    * removes development accounts and transient tables exactly as for this release, re-runs the field-fidelity and
      integrity checks, and produces `EuroAssist_Providers_V2_DATA_<new version>.sql` with a new reconciliation
      report (counts per source table, 0 unaccounted rows, 0 field differences).

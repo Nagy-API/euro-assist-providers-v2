@@ -27,9 +27,9 @@
                 </span>
             </div>
             <div class="relative z-10 hidden max-w-lg animate-enter sm:block">
-                <p class="mb-4 flex items-center gap-3 text-xs font-extrabold tracking-[0.16em] text-white/90 uppercase"><span class="h-px w-8 bg-white/80" aria-hidden="true"></span>{{ __('ui.brand.product') }}</p>
+                <p class="mb-4 flex items-center gap-3 text-xs font-extrabold tracking-[0.16em] text-white uppercase"><span class="h-px w-8 bg-white/80" aria-hidden="true"></span>{{ __('ui.brand.product') }}</p>
                 <p class="text-4xl leading-[1.1] font-extrabold tracking-tight lg:text-5xl">{{ __('auth.hero.title') }}</p>
-                <p class="mt-4 text-base leading-relaxed text-white/90 lg:text-lg">{{ __('auth.hero.subtitle') }}</p>
+                <p class="mt-4 text-base leading-relaxed text-white lg:text-lg">{{ __('auth.hero.subtitle') }}</p>
                 <ul class="mt-8 space-y-3 text-sm font-bold">
                     @foreach (['providers' => 'building', 'bilingual' => 'globe', 'excel' => 'upload'] as $key => $icon)
                         <li class="flex items-center gap-3">
@@ -39,7 +39,7 @@
                     @endforeach
                 </ul>
             </div>
-            <p class="relative z-10 hidden text-xs font-semibold text-white/85 lg:block">Euro Assist · {{ __('ui.brand.staff_only') }}</p>
+            <p class="relative z-10 hidden text-xs font-semibold text-white lg:block">Euro Assist · {{ __('ui.brand.staff_only') }}</p>
         </section>
 
         <main id="main" tabindex="-1" class="flex flex-col items-center justify-center px-4 py-10 focus:outline-none sm:px-8">
@@ -54,7 +54,7 @@
                     <div class="mt-6">
                         {{ $slot }}
                     </div>
-                    <p class="mt-6 flex items-center gap-2 text-xs text-slate-500"><x-ui.icon name="shield" class="size-4" />{{ __('auth.secure_session') }}</p>
+                    <p class="mt-6 flex items-center gap-2 text-xs text-slate-600"><x-ui.icon name="shield" class="size-4" />{{ __('auth.secure_session') }}</p>
                 </div>
                 <form method="POST" action="{{ route('locale.update', $otherLocale) }}" class="mt-4 text-center">
                     @csrf

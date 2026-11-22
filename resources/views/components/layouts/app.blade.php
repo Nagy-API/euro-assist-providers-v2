@@ -28,8 +28,8 @@
 
         {{-- Sidebar: static on large screens, off-canvas on small ones. Ink navigation with the
              Euro Assist red glow and hero-gradient active item, as in the Cards System. --}}
-        <aside id="sidebar" x-bind:class="nav ? 'flex' : 'hidden'" aria-label="{{ __('ui.nav.label') }}"
-               class="ea-sidebar fixed inset-y-0 start-0 z-40 w-72 max-w-[85vw] flex-col overflow-y-auto shadow-lg lg:sticky lg:top-0 lg:z-auto lg:flex lg:h-screen lg:w-[264px] lg:max-w-none lg:shrink-0 lg:shadow-none">
+        <aside id="sidebar" x-bind:class="nav && '!flex'" aria-label="{{ __('ui.nav.label') }}"
+               class="ea-sidebar hidden fixed inset-y-0 start-0 z-40 w-72 max-w-[85vw] flex-col overflow-y-auto shadow-lg lg:sticky lg:top-0 lg:z-auto lg:flex lg:h-screen lg:w-[264px] lg:max-w-none lg:shrink-0 lg:shadow-none">
             <div class="flex shrink-0 items-start justify-between gap-2 px-4 pt-5 pb-3">
                 <a href="{{ route('dashboard') }}" class="group inline-flex flex-col gap-2 rounded-xl focus-visible:outline-white">
                     <span class="ea-logo-card block p-1.5 transition-transform duration-200 ease-brand group-hover:-translate-y-0.5">
@@ -89,7 +89,7 @@
                     <img src="{{ asset('brand/euro-assist-logo-red.png') }}" alt="" width="367" height="155" class="h-8 w-auto rounded-md">
                 </a>
                 <nav aria-label="{{ __('ui.nav.breadcrumb') }}" class="hidden min-w-0 flex-1 lg:block">
-                    <ol class="flex items-center gap-2 text-sm font-semibold text-slate-500">
+                    <ol class="flex items-center gap-2 text-sm font-semibold text-slate-600">
                         <li><a href="{{ route('dashboard') }}" class="hover:text-slate-900">{{ __('ui.brand.product') }}</a></li>
                         @if ($plainTitle !== null)
                             <li aria-hidden="true" class="opacity-50">/</li>
@@ -113,7 +113,7 @@
                         <button type="button" class="inline-flex min-h-10 items-center gap-2 rounded-lg px-1.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-white" x-on:click="open = !open" x-bind:aria-expanded="open.toString()" aria-haspopup="true">
                             <span class="ea-avatar size-8 text-sm" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
                             <span class="hidden max-w-40 truncate sm:inline" dir="auto">{{ $user->name }}</span>
-                            <x-ui.icon name="chevron-down" class="size-4 text-slate-500" />
+                            <x-ui.icon name="chevron-down" class="size-4 text-slate-600" />
                         </button>
                         <div x-show="open" x-cloak
                              x-transition:enter="transition duration-150 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
@@ -143,7 +143,7 @@
                 {{ $slot }}
             </main>
 
-            <footer class="border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-500 sm:px-6">
+            <footer class="border-t border-slate-200 px-4 py-4 text-center text-xs text-slate-600 sm:px-6">
                 Euro Assist · {{ __('ui.brand.product') }} · {{ __('ui.brand.staff_only') }}
             </footer>
         </div>

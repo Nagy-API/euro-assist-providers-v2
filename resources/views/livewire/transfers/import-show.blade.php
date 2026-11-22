@@ -100,7 +100,7 @@
             @if ($canRetry)
                 <form method="POST" action="{{ route('imports.retry', $job) }}">
                     @csrf
-                    <button type="submit" class="inline-flex min-h-10 items-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">{{ __('transfers.imports.retry') }}</button>
+                    <button type="submit" class="inline-flex min-h-10 items-center rounded-lg bg-amber-800 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 focus-visible:ring-offset-2">{{ __('transfers.imports.retry') }}</button>
                 </form>
             @endif
             @if ($canCancel)

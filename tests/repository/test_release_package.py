@@ -5,7 +5,9 @@ secrets, the IIS front-controller configuration, a complete document set, and a 
 package a dirty tree, writes outside the repository and blocks secret/data files in the application folder.
 """
 
+import importlib.util
 import re
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -54,7 +56,7 @@ class ReleasePackageTest(unittest.TestCase):
         self.assertIn("working tree is not clean", src)
         self.assertIn("must be outside the repository", src)
         self.assertIn("'--no-dev'", src)
-        self.assertIn("unexpected file in the application folder", src)
+        self.assertIn("unexpected file in the package", src)
         self.assertIn(".git found in the package", src)
         for dev in ("'tests'", "'start-uat.ps1'", "'database/seeders/SyntheticProvidersSeeder.php'", "'node_modules'"):
             self.assertIn(dev, src)
@@ -64,6 +66,26 @@ class ReleasePackageTest(unittest.TestCase):
         self.assertIn("Document root = `providers-v2/public`", read(PKG / "INSTALL_GUIDE.md"))
         self.assertIn("no `DROP TABLE`", read(PKG / "DATABASE_IMPORT.md"))
 
+    def test_data_sql_guard_refuses_overwrite_and_credentials(self):
+        spec = importlib.util.spec_from_file_location("builder", BUILDER)
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        with tempfile.TemporaryDirectory() as tmp:
+            ok = Path(tmp) / "ok.sql"
+            ok.write_text("-- no DROP or CREATE DATABASE statements here\nCREATE TABLE `providers` (`id` int);\n"
+                          "INSERT INTO `providers` VALUES (1);\n", encoding="utf-8")
+            builder.check_data_sql(ok)
+            for bad in ("INSERT INTO `users` VALUES (1);", "INSERT INTO `sessions` VALUES (1);", "DROP TABLE `providers`;",
+                        "CREATE DATABASE prod;", "USE prod;", "SELECT '$2y$12$abcdefghijklmnopqrstuv';"):
+                f = Path(tmp) / "bad.sql"
+                f.write_text("CREATE TABLE `t` (`id` int);\n" + bad + "\n", encoding="utf-8")
+                with self.assertRaises(SystemExit, msg=bad):
+                    builder.check_data_sql(f)
+
+    def test_builder_takes_it_documents_from_the_commit_and_scans_the_whole_package(self):
+        src = read(BUILDER)
+        self.assertIn("docs = app / 'deploy' / 'it-package'", src)
+        self.assertIn("for p in root.rglob('*')", src)
 
 if __name__ == "__main__":
     unittest.main()

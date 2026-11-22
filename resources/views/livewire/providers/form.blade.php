@@ -56,8 +56,8 @@
                     @foreach ($locales as $loc)
                         <button type="button" role="tab" id="tab-{{ $loc }}" x-ref="tab_{{ $loc }}" aria-controls="panel-{{ $loc }}"
                                 x-bind:aria-selected="(tab === '{{ $loc }}').toString()" x-bind:tabindex="tab === '{{ $loc }}' ? 0 : -1" x-on:click="tab = '{{ $loc }}'"
-                                x-bind:class="tab === '{{ $loc }}' ? 'border-brand-600 border-b-brand-600 bg-brand-50 text-brand-800 font-extrabold' : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-                                class="inline-flex min-h-11 items-center gap-2 rounded-t-lg border-x border-t border-b-[3px] px-4 text-sm font-semibold transition-colors">
+                                x-bind:class="tab === '{{ $loc }}' ? 'border-brand-600 border-b-brand-600 bg-brand-50 text-brand-800 font-extrabold' : 'border-transparent font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+                                class="inline-flex min-h-11 items-center gap-2 rounded-t-lg border-x border-t border-b-[3px] px-4 text-sm transition-colors">
                             <span x-show="tab === '{{ $loc }}'" class="size-2 rounded-full bg-brand-600" aria-hidden="true"></span>
                             {{ __('ui.locale.'.$loc) }}
                             @if ($errorLocales[$loc])

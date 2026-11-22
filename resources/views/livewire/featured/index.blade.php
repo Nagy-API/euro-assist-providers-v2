@@ -35,7 +35,7 @@
                             @if (filled($item->logo_path))
                                 <img src="{{ route('featured.logo', $item) }}?v={{ $item->updated_at?->timestamp }}" alt="" width="48" height="48" loading="lazy" class="size-12 rounded-lg border border-slate-200 bg-white object-contain">
                             @else
-                                <span class="inline-flex size-12 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-slate-500" title="{{ __('ui.featured.no_logo') }}"><x-ui.icon name="photo" /><span class="sr-only">{{ __('ui.featured.no_logo') }}</span></span>
+                                <span class="inline-flex size-12 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-slate-600" title="{{ __('ui.featured.no_logo') }}"><x-ui.icon name="photo" /><span class="sr-only">{{ __('ui.featured.no_logo') }}</span></span>
                             @endif
                         </td>
                         <td class="px-3 py-3">
