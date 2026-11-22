@@ -204,3 +204,16 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 - The ZIP and SQL never enter Git; the earlier "separately encrypted data package" requirement is superseded by King's clarification.
 
 **Consequences:** the ZIP contains real provider contact data and must be handled as confidential (private channel, deletion after import). Production still requires: Plesk staging verification, a fresh data snapshot rebuilt with the same pipeline (`deploy/it-package/FRESH_DATA_SYNC.md`), V1 API consumer decision (D7), owner decisions on provisional types/held rows (D3), and King's written cutover approval.
+
+## ADR-016 — Preserve legitimate legacy staff identities; password policy is an explicit owner decision
+
+**Date:** 2026-11-22 | **Status:** Proposed — implementation ready and tested; the password policy awaits King's decision. Supersedes, for staff identities only, ADR-015's "no accounts in the release SQL".
+
+**Context:** V2 replaces an operational system whose administrator `admin@euro-assist.com` must keep access. The frozen snapshot holds exactly one account (role `super_admin`, bcrypt cost 12). The release dataset had excluded all accounts. Evidence: `docs/19_LEGACY_ACCOUNTS.md`.
+
+**Decision:**
+- `legacy:import-users` (local-only, SELECT-only source, idempotent) imports legacy identities: e-mail, name, verification date; roles `super_admin`/`admin` → Admin, `editor` → Editor, `viewer` → Viewer, others held; existing V2 e-mails are never touched; remember tokens never copied.
+- Password policy `activation` (default, recommended): an unusable random password; the account is activated by `users:set-password` (hidden prompt) or the reset e-mail. Policy `preserve-hash`: the legacy bcrypt hash is copied unchanged only if the V2 hasher accepts it; chosen only by explicit owner decision.
+- The legacy hash is read only under `preserve-hash` (`LegacySource::accounts(true)`); `users` is not on the generic source allow-list.
+
+**Consequences:** a revised release (data SQL + ZIP) is required to ship the identity. The fresh-data sync must re-run the import and report the account count. Setting a migrated account's password is an authorized cutover step, never done silently.
