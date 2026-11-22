@@ -4,6 +4,8 @@ This log describes **delivered application behavior**, not planned features. Kee
 
 ## Unreleased
 
+- 2026-11-22: owner UAT environment — `start-uat.ps1` / `stop-uat.ps1` / `reset-uat.ps1` run the app locally against an isolated, resettable copy of the migrated data; `php artisan uat:check` refuses any other database.
+
 - 2026-11-22: legacy migration tooling is local-only with SELECT-only source checks (`legacy:preflight`); provisional type mappings (`--accept-provisional-types`); pair review requires a reason and shows held source rows; Admin dashboard shows the migration backlog.
 - 2026-11-22: provider city/district filters match either language; Excel imports reject archives that expand beyond limits, DTD/entity declarations and non-UTF-8 XML; map links may be scheme-less and contain apostrophes; phone layouts no longer scroll sideways; production refuses insecure cookies and wildcard proxies; login is also limited per account; deleted-record counts are Admin-only.
 

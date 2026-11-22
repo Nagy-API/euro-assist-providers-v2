@@ -35,6 +35,10 @@ The original documentation-first seed history is preserved. The working foundati
 
 The source-based audit lives in [`docs/03_LEGACY_AUDIT.md`](docs/03_LEGACY_AUDIT.md), the sanitized schema/restore evidence in [`docs/05_DATA_MIGRATION.md`](docs/05_DATA_MIGRATION.md), and API source contracts in [`docs/06_API_CONTRACT.md`](docs/06_API_CONTRACT.md). Private raw inputs, tooling and credentials stay outside this repository. Follow the [phased issue backlog](https://github.com/Nagy-API/euro-assist-providers-v2/issues) and [`docs/02_MASTER_PLAN.md`](docs/02_MASTER_PLAN.md).
 
+## Owner acceptance testing (local)
+
+Run `powershell -ExecutionPolicy Bypass -File .\start-uat.ps1` and follow `docs/16_UAT_CHECKLIST.md`. It uses the isolated, resettable database `euro_assist_v2_uat` only (`reset-uat.ps1`, `stop-uat.ps1`).
+
 ## Quick start for a new conversation
 
 Provide the private repository link and ask: **“Read AGENTS.md, docs/01_CURRENT_STATUS.md, docs/10_DECISIONS.md, docs/11_WORK_LOG.md and docs/12_HANDOFF.md; inspect recent commits and open issues; continue from the next uncompleted task without touching production.”**

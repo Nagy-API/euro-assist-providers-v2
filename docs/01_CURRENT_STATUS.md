@@ -1,8 +1,8 @@
 # Current project status — update after EVERY task
 
-**Date:** 2026-11-22. **Stage:** local release candidate for the owner's review. Nothing merged, nothing deployed.
+**Date:** 2026-11-22. **Stage:** owner UAT environment ready (`start-uat.ps1`, isolated `euro_assist_v2_uat`). Nothing merged, nothing deployed.
 **Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — PRIVATE.
-**Branch:** `feature/p1-foundation-hardening` = PR #40 (Draft, stacked on PR #38). Latest SHA: see the PR head (the commit containing this file).
+**Branches:** `feature/uat-environment` (UAT launcher/reset, stacked PR on #40) → `feature/p1-foundation-hardening` = PR #40 (Draft, stacked on PR #38). Latest SHA: see the PR heads.
 **Hosted CI:** NEVER EXECUTED — GitHub account billing blocker. All evidence below is LOCAL.
 **Production / Plesk:** untouched; Plesk capabilities unverified.
 
@@ -25,19 +25,20 @@
 
 ## Latest local verification (2026-11-22, final code of this session)
 
-- PHPUnit: PHP 8.3.37 and PHP 8.4.28 (SQLite) and MariaDB 11.4.14 full suite — see the work log for the exact count of the final commit.
-- Pint, Larastan level 6, `composer validate --strict`, `composer audit` (0), `npm audit` (0), `npm run build`, repo hygiene, 23 Python repo tests, Gitleaks (history + staged): clean.
+- PHPUnit: 516 tests / 2,951 assertions on PHP 8.3.37 and PHP 8.4.28 (SQLite); MariaDB 11.4.14 full suite 516 tests (1 SQLite-only skip).
+- Pint, Larastan level 6, `composer validate --strict`, `composer audit` (0), `npm audit` (0), `npm run build`, repo hygiene, 30 Python repo tests, Gitleaks (history + staged): clean.
 
 ## Local databases (all on isolated MariaDB 127.0.0.1:33316)
 
 | Database | Purpose |
 |---|---|
 | `euro_assist_legacy_audit_20261121` | frozen legacy restore — READ ONLY via `legacy_reader` |
-| `euro_assist_v2_local` | V2 dev DB containing the migrated legacy data + 3 synthetic UAT providers |
+| `euro_assist_v2_local` | PRESERVED migration reference (migrated legacy data + 3 synthetic test providers); not used by UAT |
+| `euro_assist_v2_uat` | owner UAT copy: 2,185 migrated providers, 3 featured, 30 types, 334 open suggestions, 9 held rows; accounts admin@/editor@/viewer@uat.local; resettable baseline |
 | `euro_assist_v2_rehearsal` | disposable rollback/benchmark target |
 | `euro_assist_v2_test` | automated tests only |
 
 ## Next actions
 
-1. King: run `docs/16_UAT_CHECKLIST.md` locally; answer D1–D8 and the 4 provisional type labels + "Eye Center"; fix GitHub billing; review PR #38 then #40.
+1. King: `powershell -ExecutionPolicy Bypass -File .\start-uat.ps1`, then follow `docs/16_UAT_CHECKLIST.md` (bugs: `docs/17_UAT_BUG_REPORT.md`); answer D1–D8 and the 4 provisional type labels + "Eye Center"; fix GitHub billing; review PR #38 then #40.
 2. Engineering after owner input: process the 334 pair suggestions with the owner, final independent review, then isolated Plesk staging (P6) only with written approval.
