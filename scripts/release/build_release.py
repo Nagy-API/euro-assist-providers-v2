@@ -114,8 +114,8 @@ def main() -> int:
         rmtree(app / rel)
     # Keep the environment-independent package manifest (packages.php, services.php); drop anything
     # environment-specific so the server builds its own config/route/event caches.
-    for name in ('config.php', 'routes-v7.php', 'events.php'):
-        (app / 'bootstrap' / 'cache' / name).unlink(missing_ok=True)
+    for cached in ('config.php', 'routes-v7.php', 'events.php'):
+        (app / 'bootstrap' / 'cache' / cached).unlink(missing_ok=True)
 
     print('[4/5] Adding IT documents and data')
     docs = REPO / 'deploy' / 'it-package'
