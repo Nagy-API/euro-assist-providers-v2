@@ -82,10 +82,27 @@ htmlcov/
 test-results/
 *.test-output
 
-# Private raw inputs and generated exports at any depth
-private-data/
-private_data/
-backups/
-dumps/
-exports/
-uploads/
+# Private raw inputs and generated exports. Anchored to data locations so that
+# application source such as app/Exports/ or app/Models/Uploads/ stays trackable;
+# scripts/check_repo_hygiene.py blocks data files in same-named nested folders.
+/private-data/
+/private_data/
+/backups/
+/dumps/
+/exports/
+/uploads/
+/public/uploads/
+/storage/**/exports/
+/storage/**/uploads/
+/storage/**/backups/
+
+# Spreadsheet/contact data is never committed, except synthetic fixtures under tests/fixtures/.
+*.xlsx
+*.xls
+*.xlsm
+*.ods
+*.vcf
+*.csv
+*.tsv
+*.ndjson
+!/tests/fixtures/**

@@ -2,6 +2,8 @@
 
 Statuses: `TODO` (not started), `IN PROGRESS`, `BLOCKED`, `DONE` (must have evidence). Use GitHub issues to track task ownership; this document is the cross-phase reference.
 
+> **Status 2026-11-22 (evidence: `docs/01_CURRENT_STATUS.md`, work log):** P2–P5 are implemented and locally verified as a release candidate on PR #40 (not merged). P5 local migration rehearsal is complete (2,197/2,197 rows accounted); bilingual pair review, owner decisions D1–D8, API consumer contracts (P5.3), hosted CI and all of P6 (Plesk staging, UAT sign-off, cutover) remain open. Checkboxes below are the original plan and are not individually re-ticked.
+
 ## P0 — Project governance (IN PROGRESS)
 
 - [x] Record scope, constraints, technical findings and risk register in local docs.

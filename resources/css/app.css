@@ -3,7 +3,57 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+| Design tokens. System fonts only (no remote fonts/CDN): the stack covers Latin and Arabic.
+| Layout uses logical utilities (ms-*, me-*, ps-*, pe-*, start-*, end-*, text-start) so the same
+| markup serves Arabic (RTL) and English (LTR).
+*/
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Tahoma,
+        'Noto Sans Arabic', 'Noto Naskh Arabic', Arial, sans-serif;
+}
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    html {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+
+    /* Tailwind 4 resets buttons to the default cursor; interactive controls should show intent. */
+    button:not(:disabled),
+    [role='button']:not(:disabled),
+    summary {
+        cursor: pointer;
+    }
+
+    /* Visible keyboard focus everywhere (WCAG 2.4.7); mouse clicks stay quiet. */
+    :focus-visible {
+        outline: 2px solid var(--color-teal-700);
+        outline-offset: 2px;
+    }
+
+    /* Letter-spacing breaks Arabic letter joining. */
+    [dir='rtl'] * {
+        letter-spacing: 0 !important;
+    }
+
+    /* Phone numbers, URLs, codes and ids are always left-to-right, even inside Arabic text. */
+    .ltr-text {
+        display: inline-block;
+        direction: ltr;
+        unicode-bidi: isolate;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
 }

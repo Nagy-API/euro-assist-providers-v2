@@ -126,3 +126,66 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 **Consequences / test obligations:** the matrix in `docs/08_SECURITY.md` is now complete (no TBD cells) and each cell maps to a named permission and a policy test. Required negative tests: Editor cannot delete, restore, bulk-delete, bulk-restore, manage featured providers, view the global audit log, manage users/roles/settings, or open another user's import/export job or error report; Viewer cannot reach any write, import, export, job, audit or settings action; a bulk write that is unvalidated, unpreviewed or unconfirmed is rejected; every bulk write and import application writes an audit event. Error reports contain provider data, so they are stored privately, served only through authenticated authorization (owner or Admin), and expire per the retention policy in `docs/04_IMPORT_EXPORT_SPEC.md`.
 
 **Remaining minor question (not invented here):** ADR-008 requires an explicit separate operation to clear an existing value. Which role may perform that clearing operation is not stated by the owner; until decided it is available to Admin only (default deny). Tracked on #19.
+
+## ADR-011 — Provisional canonical schema implemented behind unapproved decisions D1–D8
+
+**Date:** 2026-11-21 | **Status:** PROVISIONAL — implemented for local development only. **D1–D8 are NOT owner-approved**; nothing here may be treated as approved, and no irreversible real-data transformation depends on it.
+
+**Context:** The owner has not yet answered D1–D8 (docs/05 "P1.4 / P2.1 decision proposal"). Development must continue; the recommendations are reversible defaults.
+
+**Decision (what was built, each tagged with the decision it assumes):**
+- D1: `providers` holds language-independent data (type FK, phone, email, website, original `map_url`, nullable parsed `latitude`/`longitude`, raw `logo_path`, `is_active`); `provider_translations` (unique `provider_id`+`locale`) holds name, address, city, district, specialization, hours, discount text, package text as lossless strings.
+- D2: city/district are localized free text; no governorate/city lookup tables, no governorate column.
+- D3: 30 legacy type keys seeded as `provider_types` + `provider_type_translations`; Admin-only management; legacy raw-value mapping is versioned in `legacy_type_mappings` and unmapped/ambiguous raw values go to review, never guessed.
+- D4: required = provider type, at least one translation, and `name` + `address` for each translation present; everything else nullable; a provider may have one language; `email`/`hours` are retained although unused in the snapshot.
+- D5: `featured_providers` are brand-level, independent records without a provider FK; `sort_order`/`is_active` are NEW V2 capabilities, not legacy rules.
+- D6: legacy rows become one canonical provider per source locale row, `unpaired`; `legacy_pair_suggestions` only suggest; pairing needs explicit Admin approval and is reversible.
+- D7: API is versioned `/api/v2` with allow-listed resources; public read exposure is OFF by default (`PROVIDERS_API_PUBLIC_READ=false`); V1 consumer compatibility is unverified and not claimed.
+- D8: every source row must land in exactly one reconciliation state; rollback is by `migration_batch_id`; copying legacy media is deferred.
+- ADR-008 is implemented as: blank/absent values preserve; clearing is a separate `ProviderService::update(..., $clear)` operation requiring `providers.clear_values` (Admin only, default deny until the owner decides).
+- `providers.revision` is an optimistic-concurrency counter bumped on every real change.
+- `providers.clear_values`, `types.manage` and `migration.review` are implementation permission keys beyond the doc table; all are Admin-only.
+
+**Consequences:** If the owner chooses differently, the affected migrations are new, reversible migrations; no destructive redesign of data is needed. The owner-decision package lists only what is still open.
+
+## ADR-012 — Test database guard runs before any database trait
+
+**Date:** 2026-11-21 | **Status:** Accepted (engineering).
+
+**Context:** Independent review of PR #38 found the guard ran after `parent::setUp()`, so `RefreshDatabase` could migrate before the guard threw.
+
+**Decision:** `tests/TestCase::refreshApplication()` builds the app, then calls `Tests\Support\TestDatabaseGuard`, which fails closed unless: environment is `testing`, config is not cached, no database URL, and the target is either SQLite `:memory:` or MySQL/MariaDB at host `127.0.0.1`, an allow-listed port (33316, 3306), database exactly `euro_assist_v2_test`, an allow-listed account (`v2_test`, `ci_test`), no unix socket. The guard is a pure function with 16 negative unit cases. `phpunit.mysql.xml` now runs the whole suite on MariaDB; CI has a MariaDB service job.
+
+**Alternatives:** database-name substring check (rejected: bypassable). **Revisit:** if more test targets are needed, extend the allow-lists in `TestDatabaseGuard`, never loosen them to patterns.
+
+## ADR-013 — Security review R2 remediation: shared URL rule, pre-auth API limit, full credential revocation
+
+**Date:** 2026-11-22 | **Status:** Accepted (engineering; reversible).
+
+**Context:** Independent read-only security review R2 of the recovered integration (`f5e5a81`) returned CHANGES_REQUIRED: M1 import accepted `javascript:` website/map URLs (form did not); L1 invalid API tokens were never rate limited; L2 password reset/deactivation left API tokens (and non-database sessions) alive; L3 import lock (1800 s) shorter than the apply job timeout (3600 s); L4 private `local` disk had `serve => true`. The recovery also found host/proxy trust read with `env()` in `bootstrap/app.php`, which silently disables both guards after `config:cache`.
+
+**Decision:**
+- `App\Rules\SafeHttpUrl` is the single URL rule for the web form and the spreadsheet import (`validation_url` error code); `RowRulesParityTest` proves both accept/reject the same corpus. `/api/v2` additionally returns `null` for any stored non-http(s) `website`/`map_url` (preserved legacy data) — defense in depth.
+- `ApiIpRateLimit` (per-IP ceiling, default 300/min, `PROVIDERS_API_IP_RATE_LIMIT`) runs before token authentication; it is registered in the middleware priority list before `AuthenticatesRequests`, because Laravel otherwise reorders it after authentication.
+- `User::revokeAllAccess()` rotates the remember token, deletes database sessions and all personal access tokens; used on password reset and deactivation. `AuthenticateSession` is in the web group for other session drivers.
+- Import lock default 3900 s (> job timeout). Private disk `serve => false`.
+- Trusted hosts are a per-request closure over `config('app.url')` (exact host, no subdomains, all non-local environments); trusted proxies come from `config('app.trusted_proxies')` (`TRUSTED_PROXIES`) applied in `AppServiceProvider::boot`. Sanctum is stateless-only (`config/sanctum.php`: no stateful domains, no routes).
+
+**Open (not decided here):** S1 xlsx decompression byte cap, S2 legacy account grants/host comparison, S3 migration review availability in production.
+
+## ADR-014 — Legacy migration is LOCAL-ONLY with fail-closed source/destination guards; provisional type mappings
+
+**Date:** 2026-11-22 | **Status:** Accepted (engineering; reversible). Production migration is **not** authorized by this ADR.
+
+**Context:** Security review findings S1–S3 and the first full local rehearsal of the frozen snapshot. The existing `legacy_import` account could write to the audit database; the review screen and commands only refused `production`; 980 rows were blocked by plural/synonym type labels awaiting D3; 149 rows were blocked by an over-strict URL rule.
+
+**Decision:**
+- All migration staging, mapping, suggestion, apply, reconcile, report, rollback and pair review run only in `legacy.allowed_environments` (`local`, `testing`). The review route is not registered elsewhere. No command falls back to other credentials: the source comes only from `LEGACY_DB_*`, and `legacy.expected_source_database` has no default.
+- Source: loopback host (resolved), expected database name, no URL, never equal to the destination (resolved host/port/db), and a live `SHOW GRANTS` check that refuses any privilege beyond SELECT/SHOW VIEW/USAGE or GRANT OPTION. Every read goes through `LegacySource::connection()`. A dedicated `legacy_reader` account (SELECT only) is used.
+- Destination: loopback MySQL/MariaDB database on `legacy.allowed_destination_databases` (default: `euro_assist_v2_local`, `euro_assist_v2_rehearsal`, `euro_assist_v2_test`); SQLite only under `testing`.
+- Type mappings gain a `provisional` status for deterministic plural/synonym labels, used only with `legacy:apply --accept-provisional-types` and tagged `provisional_type` on each row. Genuinely ambiguous labels (e.g. "Eye Center") are stored without a type and can never be resolved by a flag.
+- URL rule: the apostrophe (RFC 3986 sub-delimiter, present in real DMS map links) is allowed; map links may be scheme-less like websites. Schemes other than http(s), whitespace, double quotes, angle brackets, backtick and backslash remain refused; the API documents these fields as untrusted text.
+- Pair decisions require a 3–500 character reason, kept in `legacy_pair_suggestions.review_history` (not in audit metadata).
+- xlsx imports: limits are enforced on bytes actually inflated (per entry and total), declared/actual size mismatch is corrupt, every entry is scanned for DTD/ENTITY, and non-UTF-8 XML is refused.
+
+**Consequences:** A future production migration needs a new, explicitly approved ADR, environment allow-list change and operator runbook. If the owner rejects a provisional label, roll the batch back and re-apply without the flag.

@@ -84,6 +84,30 @@ return [
             ]) : [],
         ],
 
+        /*
+        | Frozen legacy audit database (SELECT only, never migrated, never the default connection).
+        | Values come from the environment; nothing is committed. The session is switched to
+        | READ ONLY as a second line of defence behind the SELECT-only LegacySource service.
+        */
+        'legacy_audit' => [
+            'driver' => 'mariadb',
+            'host' => env('LEGACY_DB_HOST', ''),
+            'port' => env('LEGACY_DB_PORT', ''),
+            'database' => env('LEGACY_DB_DATABASE', ''),
+            'username' => env('LEGACY_DB_USERNAME', ''),
+            'password' => env('LEGACY_DB_PASSWORD', ''),
+            'unix_socket' => '',
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? [
+                Mysql::ATTR_INIT_COMMAND => 'SET SESSION TRANSACTION READ ONLY',
+            ] : [],
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DB_URL'),

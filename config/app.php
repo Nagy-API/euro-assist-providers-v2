@@ -55,6 +55,12 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Reverse proxies whose X-Forwarded-* headers are trusted (comma separated IPs/CIDRs, or "*").
+    | Empty = no proxy is trusted. Applied in AppServiceProvider::boot.
+    */
+    'trusted_proxies' => env('TRUSTED_PROXIES', ''),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

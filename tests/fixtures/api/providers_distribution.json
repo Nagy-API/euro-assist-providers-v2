@@ -1,0 +1,23 @@
+{
+    "data": [
+        {
+            "type": "clinic",
+            "label": "Clinic",
+            "providers": 1
+        },
+        {
+            "type": "laboratory",
+            "label": "Laboratory",
+            "providers": 2
+        }
+    ],
+    "meta": {
+        "api_version": "v2",
+        "lang": "en",
+        "total_providers": 3,
+        "definition": "Number of active, non-deleted canonical providers per active provider type. A provider with both Arabic and English translations counts once."
+    },
+    "links": {
+        "self": "{base}/api/v2/providers/distribution"
+    }
+}

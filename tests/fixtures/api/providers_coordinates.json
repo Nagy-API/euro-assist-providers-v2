@@ -1,0 +1,38 @@
+{
+    "data": [
+        {
+            "id": 1,
+            "name": "عيادة تجريبية واحد",
+            "locale_fallback": false,
+            "type": "clinic",
+            "latitude": 30.0444196,
+            "longitude": 31.2357116
+        },
+        {
+            "id": 3,
+            "name": "معمل تجريبي ثلاثة",
+            "locale_fallback": false,
+            "type": "laboratory",
+            "latitude": -33.8688197,
+            "longitude": 151.2092955
+        }
+    ],
+    "meta": {
+        "api_version": "v2",
+        "current_page": 1,
+        "last_page": 1,
+        "per_page": 1000,
+        "total": 2,
+        "from": 1,
+        "to": 2,
+        "lang": "ar",
+        "max_per_page": 5000
+    },
+    "links": {
+        "self": "{base}/api/v2/providers/coordinates?lang=ar&page=1",
+        "first": "{base}/api/v2/providers/coordinates?lang=ar&page=1",
+        "last": "{base}/api/v2/providers/coordinates?lang=ar&page=1",
+        "prev": null,
+        "next": null
+    }
+}

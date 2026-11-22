@@ -1,0 +1,30 @@
+{
+    "data": [
+        {
+            "key": "clinic",
+            "label": "Clinic",
+            "labels": {
+                "ar": "عيادة",
+                "en": "Clinic"
+            },
+            "sort_order": 1
+        },
+        {
+            "key": "laboratory",
+            "label": "Laboratory",
+            "labels": {
+                "ar": "معمل تحاليل",
+                "en": "Laboratory"
+            },
+            "sort_order": 2
+        }
+    ],
+    "meta": {
+        "api_version": "v2",
+        "lang": "en",
+        "total": 2
+    },
+    "links": {
+        "self": "{base}/api/v2/provider-types"
+    }
+}

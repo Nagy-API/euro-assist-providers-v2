@@ -1,0 +1,23 @@
+{
+    "data": [
+        "Synthetic Clinic One",
+        "Synthetic Lab Two"
+    ],
+    "meta": {
+        "api_version": "v2",
+        "current_page": 1,
+        "last_page": 1,
+        "per_page": 25,
+        "total": 2,
+        "from": 1,
+        "to": 2,
+        "lang": "en"
+    },
+    "links": {
+        "self": "{base}/api/v2/providers/names?page=1",
+        "first": "{base}/api/v2/providers/names?page=1",
+        "last": "{base}/api/v2/providers/names?page=1",
+        "prev": null,
+        "next": null
+    }
+}
