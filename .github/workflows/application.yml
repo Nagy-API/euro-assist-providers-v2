@@ -31,8 +31,6 @@ jobs:
           extensions: mbstring, pdo_sqlite, pdo_mysql, intl, zip, fileinfo, xml
           coverage: none
           tools: composer:v2
-      - run: git diff --check HEAD~1 HEAD || true
-        if: github.event_name == 'push'
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer check-platform-reqs
       - run: composer check

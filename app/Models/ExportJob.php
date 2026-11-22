@@ -4,8 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
+/**
+ * @property array<string, mixed>|null $filters
+ * @property list<int>|null $selected_ids
+ * @property Carbon|null $started_at
+ * @property Carbon|null $finished_at
+ * @property Carbon|null $expires_at
+ */
 class ExportJob extends Model
 {
     public const SCOPE_ALL = 'all';

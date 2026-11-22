@@ -52,14 +52,15 @@ class ProviderService
         $locales = config('providers.locales');
 
         $rules = [
-            'provider_type_id' => [$creating ? 'required' : 'sometimes', 'integer', Rule::exists('provider_types', 'id')],
+            // On update a blank type preserves the stored one (ADR-008); create requires it.
+            'provider_type_id' => [$creating ? 'required' : 'nullable', 'integer', Rule::exists('provider_types', 'id')],
             'phone' => ['nullable', 'string', 'max:500'],
             'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
-            'website' => ['nullable', 'string', 'max:500', 'regex:/^(https?:\/\/)?[^\s<>"\']+$/iu'],
-            'map_url' => ['nullable', 'string', 'max:2048'],
+            'website' => ['nullable', 'string', 'max:500', $this->safeUrlRule(allowBare: true)],
+            'map_url' => ['nullable', 'string', 'max:2048', $this->safeUrlRule(allowBare: false)],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
-            'logo_path' => ['nullable', 'string', 'max:500'],
+            'logo_path' => ['nullable', 'string', 'max:500', $this->safeLogoPathRule()],
             'is_active' => ['nullable', 'boolean'],
             'translations' => [$creating ? 'required' : 'sometimes', 'array'],
         ];
@@ -140,6 +141,37 @@ class ProviderService
         return $out;
     }
 
+    /**
+     * Only http(s) links may be stored: `javascript:`/`data:`/`file:` values would become stored
+     * XSS when rendered as hrefs. A bare host (website only) is allowed and kept as typed.
+     */
+    private function safeUrlRule(bool $allowBare): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($allowBare): void {
+            $v = (string) $value;
+            $ok = ! preg_match('/[\x00-\x20\x7F<>"\'\\\\]/u', $v) && (
+                preg_match('#^https?://[^/\s]+#i', $v) === 1
+                || ($allowBare && ! preg_match('#^[a-z][a-z0-9+.\-]*:(?!\d+(/|$))#i', $v) && preg_match('/^[^\s\/:]+\.[^\s\/:]+/u', $v) === 1)
+            );
+            if (! $ok) {
+                $fail("The $attribute must be an http or https address.");
+            }
+        };
+    }
+
+    /** logo_path is a raw reference: an http(s) URL or a plain relative path, never traversal. */
+    private function safeLogoPathRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            $v = (string) $value;
+            $isUrl = preg_match('#^https?://[^/\s]+[^\s<>"\'\\\\]*$#i', $v) === 1;
+            $isRelative = preg_match('#^(?!/)(?!.*\.\.)[A-Za-z0-9_\-./]+$#', $v) === 1;
+            if (! $isUrl && ! $isRelative) {
+                $fail("The $attribute must be a safe relative path or an http(s) URL.");
+            }
+        };
+    }
+
     /** @param array<string, mixed> $fields */
     private function localeHasContent(array $fields): bool
     {
@@ -188,12 +220,21 @@ class ProviderService
         if ($clear !== []) {
             $this->authorize($actor, Permission::ProvidersClearValues);
         }
+        // Optional optimistic-concurrency guard: callers that loaded a form pass the revision they saw.
+        $expectedRevision = isset($input['expected_revision']) ? (int) $input['expected_revision'] : null;
+        unset($input['expected_revision']);
         $data = $this->validate($input, creating: false, existing: $provider->load('translations'));
         $clear = $this->validateClear($clear);
 
-        $changed = DB::transaction(function () use ($actor, $provider, $data, $clear) {
+        $changed = DB::transaction(function () use ($actor, $provider, $data, $clear, $expectedRevision) {
             // Re-read under lock so revision checks and writes are serialized per provider.
             $locked = Provider::query()->withTrashed()->lockForUpdate()->findOrFail($provider->getKey());
+            if ($locked->trashed()) {
+                throw ValidationException::withMessages(['provider' => 'A deleted provider cannot be edited; restore it first.']);
+            }
+            if ($expectedRevision !== null && $expectedRevision !== (int) $locked->revision) {
+                throw ValidationException::withMessages(['revision' => 'This provider was changed by someone else. Reload and try again.']);
+            }
             $locked->load('translations');
 
             $changed = [];
@@ -293,6 +334,7 @@ class ProviderService
     public function bulkDelete(User $actor, array $ids): int
     {
         $this->authorize($actor, Permission::ProvidersBulkDelete);
+        $ids = $this->validatedIds($ids);
         $count = DB::transaction(fn () => Provider::query()->whereIn('id', $ids)->get()->each->delete()->count());
         $this->audit->record('provider.bulk_deleted', ['provider', null], 'success', ['count' => $count, 'ids' => array_slice($ids, 0, 50)], $actor);
 
@@ -305,6 +347,7 @@ class ProviderService
     public function bulkRestore(User $actor, array $ids): int
     {
         $this->authorize($actor, Permission::ProvidersBulkDelete);
+        $ids = $this->validatedIds($ids);
         $count = DB::transaction(fn () => Provider::onlyTrashed()->whereIn('id', $ids)->get()->each->restore()->count());
         $this->audit->record('provider.bulk_restored', ['provider', null], 'success', ['count' => $count, 'ids' => array_slice($ids, 0, 50)], $actor);
 
@@ -329,9 +372,8 @@ class ProviderService
             array_intersect_key($changes, array_flip(['provider_type_id', 'is_active'])),
             fn ($v) => filled($v) || $v === false
         );
-        Validator::make($changes + ['ids' => $ids], [
-            'ids' => ['required', 'array', 'min:1', 'max:1000'],
-            'ids.*' => ['integer'],
+        $ids = $this->validatedIds($ids);
+        Validator::make($changes, [
             'provider_type_id' => ['sometimes', 'integer', Rule::exists('provider_types', 'id')],
             'is_active' => ['sometimes', 'boolean'],
         ])->validate();
@@ -355,7 +397,9 @@ class ProviderService
     public function applyBulk(User $actor, string $token): int
     {
         $this->authorize($actor, Permission::ProvidersBulkWrite);
-        $plan = cache()->pull($this->bulkKey($actor, $token));
+        // Atomic single-use: Cache::add succeeds for exactly one caller, even under a race.
+        $claimed = cache()->add($this->bulkKey($actor, $token).':used', 1, now()->addMinutes(15));
+        $plan = $claimed ? cache()->pull($this->bulkKey($actor, $token)) : null;
         if (! is_array($plan)) {
             throw ValidationException::withMessages(['token' => 'The bulk update was not previewed and confirmed, or it expired.']);
         }
@@ -374,9 +418,27 @@ class ProviderService
         });
 
         $this->audit->record('provider.bulk_updated', ['provider', null], 'success',
-            ['count' => $count, 'fields' => array_keys($plan['changes'])], $actor);
+            ['count' => $count, 'changes' => $plan['changes'], 'ids' => array_slice($plan['ids'], 0, 50)], $actor);
 
         return $count;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $ids
+     * @return list<int>
+     */
+    private function validatedIds(array $ids): array
+    {
+        if ($ids === [] || count($ids) > 1000) {
+            throw ValidationException::withMessages(['ids' => 'Select between 1 and 1000 providers.']);
+        }
+        foreach ($ids as $id) {
+            if (! is_int($id) && ! (is_string($id) && ctype_digit($id))) {
+                throw ValidationException::withMessages(['ids' => 'Provider ids must be integers.']);
+            }
+        }
+
+        return array_values(array_map('intval', $ids));
     }
 
     private function bulkKey(User $actor, string $token): string

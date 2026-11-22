@@ -1,0 +1,40 @@
+{
+    "data": [
+        {
+            "id": 2,
+            "name": "Synthetic Brand A",
+            "name_en": "Synthetic Brand A",
+            "name_ar": null,
+            "type": null,
+            "sort_order": 1
+        },
+        {
+            "id": 1,
+            "name": "Synthetic Brand B",
+            "name_en": "Synthetic Brand B",
+            "name_ar": "علامة ب",
+            "type": {
+                "key": "laboratory",
+                "label": "Laboratory"
+            },
+            "sort_order": 2
+        }
+    ],
+    "meta": {
+        "api_version": "v2",
+        "current_page": 1,
+        "last_page": 1,
+        "per_page": 25,
+        "total": 2,
+        "from": 1,
+        "to": 2,
+        "lang": "en"
+    },
+    "links": {
+        "self": "{base}/api/v2/featured-providers?page=1",
+        "first": "{base}/api/v2/featured-providers?page=1",
+        "last": "{base}/api/v2/featured-providers?page=1",
+        "prev": null,
+        "next": null
+    }
+}

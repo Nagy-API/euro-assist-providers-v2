@@ -1,0 +1,106 @@
+{
+    "data": [
+        {
+            "id": 1,
+            "type": {
+                "key": "clinic",
+                "label": "Clinic"
+            },
+            "locale": "en",
+            "locale_fallback": false,
+            "available_locales": [
+                "ar",
+                "en"
+            ],
+            "name": "Synthetic Clinic One",
+            "address": "1 Test Street",
+            "city": "Cairo",
+            "district": "Nasr City",
+            "specialization": "Cardiology",
+            "hours": "Sat-Thu 09:00-17:00",
+            "discount_text": "10% to 20% discount",
+            "package_text": "Basic, Plus",
+            "phone": "0100 000 0001",
+            "email": "info@example.test",
+            "website": "https://example.test",
+            "map_url": "https://maps.example.test/?q=30.0444196,31.2357116",
+            "latitude": 30.0444196,
+            "longitude": 31.2357116,
+            "is_active": true,
+            "updated_at": "2026-01-01T00:00:00Z"
+        },
+        {
+            "id": 2,
+            "type": {
+                "key": "laboratory",
+                "label": "Laboratory"
+            },
+            "locale": "en",
+            "locale_fallback": false,
+            "available_locales": [
+                "en"
+            ],
+            "name": "Synthetic Lab Two",
+            "address": "2 Test Street",
+            "city": "Giza",
+            "district": "Dokki",
+            "specialization": null,
+            "hours": null,
+            "discount_text": null,
+            "package_text": null,
+            "phone": "01000000002",
+            "email": null,
+            "website": null,
+            "map_url": null,
+            "latitude": null,
+            "longitude": null,
+            "is_active": true,
+            "updated_at": "2026-01-01T00:00:00Z"
+        },
+        {
+            "id": 3,
+            "type": {
+                "key": "laboratory",
+                "label": "Laboratory"
+            },
+            "locale": "ar",
+            "locale_fallback": true,
+            "available_locales": [
+                "ar"
+            ],
+            "name": "معمل تجريبي ثلاثة",
+            "address": "٣ شارع الاختبار",
+            "city": "الجيزة",
+            "district": "الدقي",
+            "specialization": null,
+            "hours": null,
+            "discount_text": null,
+            "package_text": null,
+            "phone": null,
+            "email": null,
+            "website": null,
+            "map_url": null,
+            "latitude": -33.8688197,
+            "longitude": 151.2092955,
+            "is_active": true,
+            "updated_at": "2026-01-01T00:00:00Z"
+        }
+    ],
+    "meta": {
+        "api_version": "v2",
+        "current_page": 1,
+        "last_page": 1,
+        "per_page": 25,
+        "total": 3,
+        "from": 1,
+        "to": 3,
+        "lang": "en"
+    },
+    "links": {
+        "self": "{base}/api/v2/providers?page=1",
+        "first": "{base}/api/v2/providers?page=1",
+        "last": "{base}/api/v2/providers?page=1",
+        "prev": null,
+        "next": null
+    }
+}

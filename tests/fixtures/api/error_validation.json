@@ -1,0 +1,17 @@
+{
+    "error": {
+        "code": "validation_failed",
+        "message": "The given data was invalid.",
+        "details": {
+            "lang": [
+                "The selected lang is invalid."
+            ],
+            "per_page": [
+                "The per page field must be at least 1."
+            ],
+            "sort": [
+                "The selected sort is invalid."
+            ]
+        }
+    }
+}

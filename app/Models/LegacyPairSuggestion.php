@@ -4,7 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property array<string, mixed>|null $signals
+ * @property Carbon|null $reviewed_at
+ */
 class LegacyPairSuggestion extends Model
 {
     public const STATUS_SUGGESTED = 'suggested';

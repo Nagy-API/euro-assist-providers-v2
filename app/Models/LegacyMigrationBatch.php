@@ -4,8 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
+/**
+ * @property array<string, mixed>|null $counts
+ * @property bool $is_rehearsal
+ * @property Carbon|null $applied_at
+ * @property Carbon|null $rolled_back_at
+ */
 class LegacyMigrationBatch extends Model
 {
     /** @var list<string> */

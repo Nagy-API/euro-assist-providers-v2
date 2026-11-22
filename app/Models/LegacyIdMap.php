@@ -4,7 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $status
+ * @property array<string, mixed>|null $review_evidence
+ * @property Carbon|null $reviewed_at
+ */
 class LegacyIdMap extends Model
 {
     public const STATUS_UNPAIRED = 'unpaired';

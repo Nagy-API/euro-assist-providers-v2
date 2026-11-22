@@ -1,24 +1,16 @@
 <x-layouts.guest :title="__('auth.sign_in')">
     @if (session('status'))
-        <p class="mb-4 rounded bg-green-50 p-3 text-sm text-green-800" role="status">{{ session('status') }}</p>
+        <x-ui.alert tone="success" class="mb-4" :live="true">{{ session('status') }}</x-ui.alert>
     @endif
-    <form method="POST" action="{{ route('login.store') }}" class="space-y-4">
+    <form method="POST" action="{{ route('login.store') }}" class="space-y-4" novalidate>
         @csrf
-        <div>
-            <label for="email" class="mb-1 block text-sm font-medium">{{ __('auth.email') }}</label>
-            <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="username"
-                   class="w-full rounded border border-slate-300 px-3 py-2">
-            @error('email') <p class="mt-1 text-sm text-red-700" role="alert">{{ $message }}</p> @enderror
+        <x-ui.field name="email" type="email" :label="__('auth.email')" :value="old('email')" required autofocus autocomplete="username" dir="ltr" />
+        <x-ui.field name="password" type="password" :label="__('auth.password')" required autocomplete="current-password" dir="ltr" />
+        <div class="flex items-center gap-2">
+            <input id="remember" type="checkbox" name="remember" value="1" class="size-5 rounded border-slate-500 text-teal-700">
+            <label for="remember" class="text-sm text-slate-800">{{ __('auth.remember') }}</label>
         </div>
-        <div>
-            <label for="password" class="mb-1 block text-sm font-medium">{{ __('auth.password') }}</label>
-            <input id="password" name="password" type="password" required autocomplete="current-password"
-                   class="w-full rounded border border-slate-300 px-3 py-2">
-        </div>
-        <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="remember" value="1"> {{ __('auth.remember') }}
-        </label>
-        <button type="submit" class="w-full rounded bg-slate-900 px-4 py-2 font-medium text-white">{{ __('auth.sign_in') }}</button>
-        <p class="text-center text-sm"><a class="underline" href="{{ route('password.request') }}">{{ __('auth.forgot') }}</a></p>
+        <x-ui.button type="submit" class="w-full">{{ __('auth.sign_in') }}</x-ui.button>
+        <p class="text-center text-sm"><a class="inline-block py-2 font-medium text-teal-800 underline underline-offset-2" href="{{ route('password.request') }}">{{ __('auth.forgot') }}</a></p>
     </form>
 </x-layouts.guest>

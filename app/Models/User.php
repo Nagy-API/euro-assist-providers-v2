@@ -11,7 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
- * @property Role $role
+ * @property Role|null $role
  * @property bool $is_active
  * @property Carbon|null $last_login_at
  */
@@ -47,7 +47,7 @@ class User extends Authenticatable
 
     public function hasPermission(Permission $permission): bool
     {
-        return $this->is_active && $this->role->can($permission);
+        return (bool) $this->is_active && ($this->role?->can($permission) ?? false);
     }
 
     public function isAdmin(): bool

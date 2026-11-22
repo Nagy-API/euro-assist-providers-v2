@@ -23,11 +23,16 @@ class UserService
      * Create an account with an unusable random password and send a password-set invitation
      * through Laravel's password broker. No password is ever chosen, shown or logged here.
      *
-     * @param  array{name: string, email: string, role: string}  $input
+     * @param  array<string, mixed>  $input  client input: name, email, role (validated below)
      */
     public function invite(User $actor, array $input): User
     {
         $this->authorize($actor);
+
+        // Canonicalize before validation so a mixed-case duplicate is a validation error, not a 500.
+        if (isset($input['email']) && is_string($input['email'])) {
+            $input['email'] = mb_strtolower(trim($input['email']));
+        }
 
         $data = Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
@@ -53,6 +58,8 @@ class UserService
         DB::transaction(function () use ($actor, $target, $role) {
             // Lock all admin rows so two concurrent demotions cannot both pass the last-admin check.
             $admins = User::query()->where('role', Role::Admin->value)->where('is_active', true)->lockForUpdate()->pluck('id');
+            // Re-read the target under the lock: the in-memory model may be stale.
+            $target = User::query()->lockForUpdate()->findOrFail($target->getKey());
             $isLastAdmin = $target->role === Role::Admin && $target->is_active
                 && $admins->count() === 1 && $admins->contains($target->getKey());
 
@@ -64,7 +71,7 @@ class UserService
             $target->role = $role;
             $target->save();
             $this->audit->record('user.role_changed', $target, 'success',
-                ['from' => $before->value, 'to' => $role->value], $actor);
+                ['from' => $before?->value, 'to' => $role->value], $actor);
         });
 
         return $target->refresh();
@@ -76,6 +83,8 @@ class UserService
 
         DB::transaction(function () use ($actor, $target, $active) {
             $admins = User::query()->where('role', Role::Admin->value)->where('is_active', true)->lockForUpdate()->pluck('id');
+            // Re-read the target under the lock: the in-memory model may be stale.
+            $target = User::query()->lockForUpdate()->findOrFail($target->getKey());
             $isLastAdmin = $target->role === Role::Admin && $target->is_active
                 && $admins->count() === 1 && $admins->contains($target->getKey());
 

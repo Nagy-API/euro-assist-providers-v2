@@ -43,6 +43,8 @@ Set in the server's real environment or an untracked `.env` created on the serve
 | `SESSION_SECURE_COOKIE` | `true` | Cookies only over HTTPS. |
 | `SESSION_ENCRYPT` | `true` | Encrypt session payloads at rest. |
 | `SESSION_SAME_SITE` | `lax` (default) | CSRF defense in depth. |
+| `APP_URL` host | exactly the public host | In production the app **only answers to this host** (`trustHosts`) and pins generated links (password-reset/invitation mails) to it; boot refuses a non-https `APP_URL`. |
+| `TRUSTED_PROXIES` | proxy IPs, comma separated | Unset = no proxy trusted. Behind Plesk/nginx set the proxy address so the real client IP is used for rate limiting and audit; otherwise all staff share one IP bucket. |
 | `DB_*` | dedicated least-privilege account | Never the root or legacy account. |
 | `QUEUE_CONNECTION` | `database` | See worker strategy below. |
 | `PROVIDERS_API_PUBLIC_READ` | `false` until approved | Public read exposure is disabled by default (D7 pending). |

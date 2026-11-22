@@ -4,6 +4,7 @@
 This is not a full content-based secret scanner; run dedicated secret scanning too.
 """
 from pathlib import Path, PurePosixPath
+import re
 import subprocess
 import sys
 
@@ -22,7 +23,7 @@ FORBIDDEN_EXTS = ('.sql', '.dump', '.bak', '.rar', '.zip', '.7z', '.sqlite', '.s
                   '.kdbx', '.gpg', '.mdb', '.accdb', '.log',
                   '.tar', '.gz', '.tgz', '.bz2', '.xz', '.zst', '.backup', '.pyc')
 # Spreadsheet/contact data may only be committed as synthetic fixtures under tests/fixtures/.
-DATA_EXTS = ('.csv', '.tsv', '.xlsx', '.xls', '.xlsm', '.xlsb', '.ods', '.vcf')
+DATA_EXTS = ('.csv', '.tsv', '.xlsx', '.xls', '.xlsm', '.xlsb', '.ods', '.vcf', '.ndjson', '.jsonl')
 FIXTURE_PREFIX = 'tests/fixtures/'
 # Dependency/cache directories are never source, at any depth.
 FORBIDDEN_DIRS = {'vendor', 'node_modules', '.venv', '__pycache__'}
@@ -34,7 +35,8 @@ SOURCE_EXTS = ('.php', '.py', '.js', '.ts', '.md', '.css')
 SENSITIVE_NAME_TERMS = ('providers.sql', 'providers.rar', 'credentials', 'production-backup',
                         'production_export', 'production-export', 'db_backup', 'db-backup',
                         'providers-export', 'providers_export')
-SENSITIVE_JSON = ('auth.json', 'secret', 'secrets')
+SENSITIVE_JSON = ('auth.json', 'secret', 'secrets', 'service-account', 'adminsdk', 'credential')
+SENSITIVE_BASENAMES = ('.htpasswd', '.netrc', '.pgpass', '.git-credentials', 'contacts.txt', 'providers.json')
 
 
 def tracked_paths():
@@ -71,13 +73,17 @@ def forbidden(name):
                            'storage/framework/sessions/', 'storage/framework/views/',
                            'storage/framework/testing/')):
         return True
-    if low.endswith(FORBIDDEN_EXTS):
+    if low.endswith(FORBIDDEN_EXTS) or re.search(r'\.(zip|rar|7z|tar|gz)\.\d+$', low):
+        return True
+    if base in SENSITIVE_BASENAMES:
         return True
     if low.endswith(DATA_EXTS) and not low.startswith(FIXTURE_PREFIX):
         return True
     if (base.endswith('.json') and any(term in base for term in SENSITIVE_JSON)
             and not low.startswith(FIXTURE_PREFIX)):
         return True
+    if base != '.gitignore' and parents[:1] and parents[0] in DATA_DIRS:
+        return True  # repo-root data directories hold data only, whatever the extension
     if base != '.gitignore' and not is_source and any(part in DATA_DIRS for part in parents):
         return True
     if base != '.gitignore' and parents[:1] == ('public',) and 'uploads' in parents:

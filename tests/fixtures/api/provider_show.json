@@ -1,0 +1,60 @@
+{
+    "data": {
+        "id": 1,
+        "type": {
+            "key": "clinic",
+            "label": "Clinic"
+        },
+        "locale": "en",
+        "locale_fallback": false,
+        "available_locales": [
+            "ar",
+            "en"
+        ],
+        "name": "Synthetic Clinic One",
+        "address": "1 Test Street",
+        "city": "Cairo",
+        "district": "Nasr City",
+        "specialization": "Cardiology",
+        "hours": "Sat-Thu 09:00-17:00",
+        "discount_text": "10% to 20% discount",
+        "package_text": "Basic, Plus",
+        "phone": "0100 000 0001",
+        "email": "info@example.test",
+        "website": "https://example.test",
+        "map_url": "https://maps.example.test/?q=30.0444196,31.2357116",
+        "latitude": 30.0444196,
+        "longitude": 31.2357116,
+        "is_active": true,
+        "updated_at": "2026-01-01T00:00:00Z",
+        "translations": {
+            "ar": {
+                "name": "عيادة تجريبية واحد",
+                "address": "١ شارع الاختبار",
+                "city": "القاهرة",
+                "district": "مدينة نصر",
+                "specialization": null,
+                "hours": null,
+                "discount_text": null,
+                "package_text": null
+            },
+            "en": {
+                "name": "Synthetic Clinic One",
+                "address": "1 Test Street",
+                "city": "Cairo",
+                "district": "Nasr City",
+                "specialization": "Cardiology",
+                "hours": "Sat-Thu 09:00-17:00",
+                "discount_text": "10% to 20% discount",
+                "package_text": "Basic, Plus"
+            }
+        }
+    },
+    "meta": {
+        "api_version": "v2",
+        "lang": "en"
+    },
+    "links": {
+        "self": "{base}/api/v2/providers/1"
+    }
+}

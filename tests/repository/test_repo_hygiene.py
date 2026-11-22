@@ -140,6 +140,20 @@ class HardenedRuleTests(unittest.TestCase):
         self.assertFalse(hygiene.forbidden('package.json'))
 
 
+class ReviewR1HygieneTests(unittest.TestCase):
+    def test_root_data_directories_block_source_extensions_too(self):
+        for name in ('exports/x.php', 'backups/db.js', 'dumps/x.md', 'private-data/x.php'):
+            with self.subTest(name=name):
+                self.assertTrue(hygiene.forbidden(name))
+        self.assertFalse(hygiene.forbidden('app/Exports/ProviderExport.php'))
+
+    def test_more_secret_and_data_shapes_are_blocked(self):
+        for name in ('providers.json', 'contacts.txt', 'data/export.ndjson', 'service-account.json',
+                     'x-adminsdk-abc.json', '.htpasswd', '.netrc', '.pgpass', 'backup.zip.001'):
+            with self.subTest(name=name):
+                self.assertTrue(hygiene.forbidden(name))
+
+
 class GitIndexIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(prefix='repo-hygiene-test-')

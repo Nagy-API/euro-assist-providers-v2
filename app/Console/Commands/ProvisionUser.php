@@ -24,7 +24,7 @@ class ProvisionUser extends Command
     protected $signature = 'users:provision
         {email : Account e-mail}
         {--name= : Display name (defaults to the e-mail local part)}
-        {--role=admin : admin|editor|viewer}
+        {--role=viewer : admin|editor|viewer (least privilege by default)}
         {--generate : Generate a random password and store it in storage/app/private/provisioned/}';
 
     protected $description = 'Create a user account locally (hidden password prompt or generated private file).';
@@ -34,9 +34,19 @@ class ProvisionUser extends Command
         $email = mb_strtolower((string) $this->argument('email'));
         $role = Role::tryFrom((string) $this->option('role'));
 
+        if ($this->option('generate') && app()->environment('production')) {
+            $this->error('--generate (password written to a file) is not allowed in production; use the hidden prompt.');
+
+            return self::FAILURE;
+        }
+
         $validator = Validator::make(
-            ['email' => $email, 'role' => $this->option('role')],
-            ['email' => ['required', 'email:rfc', Rule::unique('users', 'email')], 'role' => ['required', Rule::enum(Role::class)]]
+            ['email' => $email, 'role' => $this->option('role'), 'name' => $this->option('name')],
+            [
+                'email' => ['required', 'email:rfc', Rule::unique('users', 'email')],
+                'role' => ['required', Rule::enum(Role::class)],
+                'name' => ['nullable', 'string', 'max:255'],
+            ]
         );
         if ($validator->fails() || $role === null) {
             foreach ($validator->errors()->all() as $error) {
@@ -76,8 +86,10 @@ class ProvisionUser extends Command
             if (! is_dir($dir)) {
                 mkdir($dir, 0700, true);
             }
-            $file = $dir.DIRECTORY_SEPARATOR.Str::slug($email).'.txt';
+            // Random suffix: two different e-mails can never collide on (and overwrite) one file.
+            $file = $dir.DIRECTORY_SEPARATOR.Str::slug($email).'-'.Str::lower(Str::random(6)).'.txt';
             file_put_contents($file, "email: {$email}\npassword: {$plain}\n");
+            @chmod($file, 0600);
             $this->line('The generated password was saved (not printed) to: '.$file);
             $this->warn('Delete that file after first sign-in and change the password.');
         }

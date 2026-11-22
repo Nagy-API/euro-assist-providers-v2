@@ -95,3 +95,14 @@ test-results/
 /storage/**/exports/
 /storage/**/uploads/
 /storage/**/backups/
+
+# Spreadsheet/contact data is never committed, except synthetic fixtures under tests/fixtures/.
+*.xlsx
+*.xls
+*.xlsm
+*.ods
+*.vcf
+*.csv
+*.tsv
+*.ndjson
+!/tests/fixtures/**

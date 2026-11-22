@@ -12,7 +12,17 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AuditLogger
 {
-    private const FORBIDDEN_KEY_FRAGMENTS = ['password', 'token', 'secret', 'cookie', 'authorization', 'api_key'];
+    private const FORBIDDEN_KEY_FRAGMENTS = [
+        'password', 'passwd', 'pwd', 'token', 'secret', 'cookie', 'authorization', 'api_key', 'apikey',
+        'private_key', 'privatekey', 'credential', 'otp', 'session', 'signature',
+    ];
+
+    /** Values that look like credentials are dropped whatever their key is called. */
+    private const FORBIDDEN_VALUE_PATTERNS = [
+        '/bearer\s+\S+/i',
+        '#://[^/\s:@]+:[^/\s@]+@#',      // DSN / URL with embedded password
+        '/-----BEGIN [A-Z ]*PRIVATE KEY-----/',
+    ];
 
     /** Metadata values longer than this are truncated so a record can never be dumped into the log. */
     private const MAX_VALUE_LENGTH = 200;
@@ -65,6 +75,11 @@ class AuditLogger
             if (is_array($value)) {
                 $clean[$key] = $this->sanitize($value);
             } elseif (is_string($value)) {
+                foreach (self::FORBIDDEN_VALUE_PATTERNS as $pattern) {
+                    if (preg_match($pattern, $value)) {
+                        continue 2;
+                    }
+                }
                 $clean[$key] = mb_strlen($value) > self::MAX_VALUE_LENGTH
                     ? mb_substr($value, 0, self::MAX_VALUE_LENGTH).'…'
                     : $value;

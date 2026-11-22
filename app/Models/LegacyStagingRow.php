@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property array<string, mixed> $payload
+ */
 class LegacyStagingRow extends Model
 {
     public const STATE_STAGED = 'staged';

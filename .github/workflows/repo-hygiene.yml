@@ -19,6 +19,9 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Whitespace and conflict-marker check (PR diff)
+        if: github.event_name == 'pull_request'
+        run: git diff --check "origin/${{ github.base_ref }}...HEAD"
       - name: Configure Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:

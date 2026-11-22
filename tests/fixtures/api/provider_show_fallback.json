@@ -1,0 +1,49 @@
+{
+    "data": {
+        "id": 3,
+        "type": {
+            "key": "laboratory",
+            "label": "Laboratory"
+        },
+        "locale": "ar",
+        "locale_fallback": true,
+        "available_locales": [
+            "ar"
+        ],
+        "name": "معمل تجريبي ثلاثة",
+        "address": "٣ شارع الاختبار",
+        "city": "الجيزة",
+        "district": "الدقي",
+        "specialization": null,
+        "hours": null,
+        "discount_text": null,
+        "package_text": null,
+        "phone": null,
+        "email": null,
+        "website": null,
+        "map_url": null,
+        "latitude": -33.8688197,
+        "longitude": 151.2092955,
+        "is_active": true,
+        "updated_at": "2026-01-01T00:00:00Z",
+        "translations": {
+            "ar": {
+                "name": "معمل تجريبي ثلاثة",
+                "address": "٣ شارع الاختبار",
+                "city": "الجيزة",
+                "district": "الدقي",
+                "specialization": null,
+                "hours": null,
+                "discount_text": null,
+                "package_text": null
+            }
+        }
+    },
+    "meta": {
+        "api_version": "v2",
+        "lang": "en"
+    },
+    "links": {
+        "self": "{base}/api/v2/providers/3"
+    }
+}

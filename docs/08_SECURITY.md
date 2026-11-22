@@ -63,4 +63,12 @@ Permission keys are proposed identifiers for implementation and tests, not addit
 4. Bulk write without validation/preview/confirmation is rejected and writes nothing; applied bulk writes and imports each create an audit event.
 5. No default account or embedded credential exists.
 
-Status: **documented only; not implemented** (no authentication exists in the foundation).
+### Implementation additions (engineering, all Admin-only, default deny)
+
+| Permission key | Purpose | Admin | Editor | Viewer |
+|---|---|---|---|---|
+| `providers.clear_values` | The explicit ADR-008 clear-a-value operation (owner decision still open; Admin only until decided) | Yes | No | No |
+| `types.manage` | Manage provider types | Yes | No | No |
+| `migration.review` | Review/approve/undo legacy bilingual pair suggestions | Yes | No | No |
+
+Status: **implemented and tested** (`tests/Feature/PermissionMatrixTest.php` holds a hand-written copy of the matrix and fails if any cell differs; direct-call/negative tests exist in the service, UI and API suites). Independent security review R1 (2026-11-21) found no matrix defect; its Important findings (Host-header reset-link poisoning, `javascript:` URLs/path traversal in stored fields, revision not enforced) were fixed and covered by `tests/Feature/SecurityRegressionTest.php`. Known remaining minor items: forgot-password mail is sent synchronously (response-time enumeration signal), no script CSP (Livewire/Alpine inline evaluation), `$guarded=['id']` on internal job/legacy models (never filled from requests).

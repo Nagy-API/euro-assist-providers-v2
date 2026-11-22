@@ -166,8 +166,9 @@ class AuthenticationTest extends TestCase
         $user = User::query()->where('email', 'local.admin@example.test')->firstOrFail();
         $this->assertSame('admin', $user->role->value);
 
-        $file = storage_path('app/private/provisioned/'.Str::slug('local.admin@example.test').'.txt');
-        $this->assertFileExists($file);
+        $files = glob(storage_path('app/private/provisioned/'.Str::slug('local.admin@example.test').'-*.txt'));
+        $this->assertCount(1, $files);
+        $file = $files[0];
         $this->assertTrue(\Hash::check(trim(explode('password: ', file_get_contents($file))[1]), $user->password));
         @unlink($file);
     }

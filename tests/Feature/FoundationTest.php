@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Providers\AppServiceProvider;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Livewire\Component;
 use Livewire\Livewire;
 use RuntimeException;
@@ -52,13 +53,18 @@ class FoundationTest extends TestCase
         (new AppServiceProvider($this->app))->boot();
     }
 
-    public function test_production_boot_is_allowed_with_debug_disabled(): void
+    public function test_production_boot_is_allowed_with_debug_disabled_and_https_url(): void
     {
         $this->app['env'] = 'production';
-        config(['app.debug' => false]);
+        config(['app.debug' => false, 'app.url' => 'https://providers.example.test']);
 
         (new AppServiceProvider($this->app))->boot();
-        $this->addToAssertionCount(1);
+
+        // Generated links are pinned to the configured URL, never to the request Host header.
+        $this->assertSame('https://providers.example.test/login', url('/login'));
+
+        URL::forceRootUrl(null);
+        URL::forceScheme(null);
     }
 
     public function test_robots_txt_disallows_all_crawling_until_launch_is_approved(): void
