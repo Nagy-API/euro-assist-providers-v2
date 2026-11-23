@@ -19,6 +19,7 @@ changed or deleted in the old system after that snapshot is **not** in it.
      `legacy:preflight --snapshot-sha256=<new sha>` → `legacy:stage --snapshot-sha256=<new sha>` →
      `legacy:map-types --from-legacy` → `legacy:apply --actor=<temporary local admin> --accept-provisional-types`
      (omit the flag if King rejected the provisional labels) → `legacy:suggest-pairs` → `legacy:reconcile --expect-baseline`
+     → `legacy:import-users` (activation policy: identities and roles only, never the old passwords; report the account count to King)
      (the same steps that produced this package; see `docs/18_RELEASE_PACKAGE.md` in the source repository);
    * removes development accounts and transient tables exactly as for this release, re-runs the field-fidelity and
      integrity checks, and produces `EuroAssist_Providers_V2_DATA_<new version>.sql` with a new reconciliation

@@ -325,6 +325,8 @@ return [
     ],
 
     'users' => [
+        'activation_pending' => 'Activation pending',
+        'activation_pending_hint' => 'Migrated account: no password is set yet. Activate it with users:set-password or a password-reset link.',
         'subtitle' => 'Invite people and manage their role and access.',
         'search_hint' => 'Search by name or email.',
         'no_delete_note' => 'Accounts are never deleted: deactivate an account to remove access while keeping the history.',

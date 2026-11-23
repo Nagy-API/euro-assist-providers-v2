@@ -21,6 +21,7 @@ Built by the existing local pipeline from the frozen snapshot into a new empty d
 ```
 legacy:preflight --snapshot-sha256=19a71fe3…  → legacy:stage --snapshot-sha256=…  → legacy:map-types --from-legacy
 → legacy:apply --actor=<temporary builder admin> --accept-provisional-types → legacy:suggest-pairs → legacy:reconcile --expect-baseline
+(rc.2, after the cleanup below) → legacy:import-users   # activation policy, ADR-016: admin@euro-assist.com, Admin, placeholder password
 ```
 then, in that database only: delete all users (FKs `SET NULL`), sessions, personal access tokens, password reset tokens,
 cache, cache locks, jobs, failed jobs, job batches, import/export jobs and rows, and every audit event except
@@ -36,7 +37,8 @@ Private evidence (outside Git): `..\.work\release-20261122\` (`pipeline.log`, `c
 | Open pair suggestions / provisional rows / held rows | 334 / 972 / 9 (7 "Eye Center", 2 map links) |
 | Field fidelity, 13 fields × 2,185 rows + featured names | 0 differences |
 | Integrity (≠1 translation, locale mismatch, duplicate maps, orphan types, held-with-map, mapped-without-map) | all 0 |
-| Users, sessions, tokens, reset tokens, jobs, cache in the release DB | all 0 |
+| Users in the release DB | rc.1: 0; **rc.2: 1** (`admin@euro-assist.com`, Admin, activation placeholder, not the legacy hash) |
+| Sessions, tokens, reset tokens, jobs, cache in the release DB | all 0 |
 | Legacy audit DB and `euro_assist_v2_local` checksums before vs. after | identical |
 
 Dump: `mariadb-dump --single-transaction --skip-add-drop-table --skip-routines --skip-triggers --no-tablespaces` with

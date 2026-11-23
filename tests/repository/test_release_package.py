@@ -72,11 +72,17 @@ class ReleasePackageTest(unittest.TestCase):
         spec.loader.exec_module(builder)
         with tempfile.TemporaryDirectory() as tmp:
             ok = Path(tmp) / "ok.sql"
+            placeholder = builder.ACTIVATION_PLACEHOLDER
             ok.write_text("-- no DROP or CREATE DATABASE statements here\nCREATE TABLE `providers` (`id` int);\n"
-                          "INSERT INTO `providers` VALUES (1);\n", encoding="utf-8")
+                          "INSERT INTO `providers` VALUES (1);\n"
+                          f"INSERT INTO `users` VALUES (2,'Admin','admin@example.test',NULL,'{placeholder}','admin',NULL);\n",
+                          encoding="utf-8")
             builder.check_data_sql(ok)
-            for bad in ("INSERT INTO `users` VALUES (1);", "INSERT INTO `sessions` VALUES (1);", "DROP TABLE `providers`;",
-                        "CREATE DATABASE prod;", "USE prod;", "SELECT '$2y$12$abcdefghijklmnopqrstuv';"):
+            usable = "$2y$12$" + "b" * 53  # any bcrypt string other than the placeholder
+            for bad in (f"INSERT INTO `users` VALUES (2,'A','a@example.test',NULL,'{usable}','admin',NULL);",
+                        "INSERT INTO `sessions` VALUES (1);", "INSERT INTO `personal_access_tokens` VALUES (1);",
+                        "DROP TABLE `providers`;", "CREATE DATABASE prod;", "USE prod;",
+                        "SELECT '$2y$12$abcdefghijklmnopqrstuv';", "SELECT '$argon2id$v=19$m=65536';"):
                 f = Path(tmp) / "bad.sql"
                 f.write_text("CREATE TABLE `t` (`id` int);\n" + bad + "\n", encoding="utf-8")
                 with self.assertRaises(SystemExit, msg=bad):
@@ -86,6 +92,15 @@ class ReleasePackageTest(unittest.TestCase):
         src = read(BUILDER)
         self.assertIn("docs = app / 'deploy' / 'it-package'", src)
         self.assertIn("for p in root.rglob('*')", src)
+
+    def test_activation_placeholder_is_identical_in_builder_and_application(self):
+        spec = importlib.util.spec_from_file_location("builder", BUILDER)
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        php = re.search(r"ACTIVATION_REQUIRED_PASSWORD = '([^']+)'", read(ROOT / "app" / "Models" / "User.php"))
+        self.assertIsNotNone(php)
+        self.assertEqual(php.group(1), builder.ACTIVATION_PLACEHOLDER)
+        self.assertEqual(len(builder.ACTIVATION_PLACEHOLDER), 60)
 
 if __name__ == "__main__":
     unittest.main()

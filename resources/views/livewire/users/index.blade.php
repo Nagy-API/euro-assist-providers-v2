@@ -35,7 +35,12 @@
                         </td>
                         <td class="hidden px-3 py-3 sm:table-cell"><span class="ltr-text break-all">{{ $user->email }}</span></td>
                         <td class="px-3 py-3"><x-ui.role-badge :role="$user->role" /></td>
-                        <td class="px-3 py-3"><x-ui.status-badge :active="$user->is_active" /></td>
+                        <td class="px-3 py-3">
+                            <x-ui.status-badge :active="$user->is_active" />
+                            @if ($user->requiresActivation())
+                                <x-ui.badge tone="amber" class="mt-1" :title="__('ui.users.activation_pending_hint')">{{ __('ui.users.activation_pending') }}</x-ui.badge>
+                            @endif
+                        </td>
                         <td class="hidden px-3 py-3 whitespace-nowrap text-slate-700 md:table-cell"><span class="ltr-text">{{ $user->last_login_at?->format('Y-m-d H:i') ?? '—' }}</span></td>
                         <td class="px-3 py-2 text-end">
                             <x-ui.button size="sm" variant="secondary" icon="pencil" wire:click="openManage({{ $user->id }})">{{ __('ui.users.manage') }}<span class="sr-only">: {{ $user->name }}</span></x-ui.button>

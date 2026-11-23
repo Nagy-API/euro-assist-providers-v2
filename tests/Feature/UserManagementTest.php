@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\Role;
+use App\Livewire\Users\Index as UsersIndex;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\UserService;
@@ -11,6 +12,7 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -18,6 +20,17 @@ class UserManagementTest extends TestCase
     use RefreshDatabase;
 
     private UserService $users;
+
+    public function test_users_page_flags_migrated_accounts_awaiting_activation(): void
+    {
+        $admin = User::factory()->create(['role' => Role::Admin, 'is_active' => true]);
+        $migrated = User::factory()->create(['email' => 'migrated@example.test', 'role' => Role::Admin, 'is_active' => true]);
+        $migrated->setRawAttributes(['password' => User::ACTIVATION_REQUIRED_PASSWORD] + $migrated->getAttributes())->save();
+
+        $this->assertTrue($migrated->fresh()->requiresActivation());
+        $this->assertFalse($admin->requiresActivation());
+        Livewire::actingAs($admin)->test(UsersIndex::class)->assertSee(__('ui.users.activation_pending'));
+    }
 
     protected function setUp(): void
     {

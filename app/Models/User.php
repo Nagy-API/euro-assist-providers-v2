@@ -25,6 +25,19 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * Password value of an account that exists but has never been activated (ADR-016, migrated legacy staff).
+     * It is a syntactically valid bcrypt string (cost 12), so the hasher never throws, but it can NEVER
+     * verify: its 22nd salt character is one bcrypt cannot produce, so the recomputed hash always differs.
+     * It is not derived from any password. Activation replaces it via `users:set-password` or a reset link.
+     */
+    public const ACTIVATION_REQUIRED_PASSWORD = '$2y$12$EuroAssistV2ActivationRequiredNoPasswordSetYet.LocKED';
+
+    public function requiresActivation(): bool
+    {
+        return $this->getAttributes()['password'] === self::ACTIVATION_REQUIRED_PASSWORD;
+    }
+
+    /**
      * Role and activity are deliberately NOT mass assignable: privilege changes must go
      * through UserService, which enforces the last-admin rule and writes an audit event.
      *

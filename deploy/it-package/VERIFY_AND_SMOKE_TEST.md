@@ -13,7 +13,7 @@ production as the first test.
 | 6 | HTTPS | open `http://<host>/login` | redirected (301) to https by the Plesk redirect setting; padlock valid | |
 | 7 | App files not exposed | open `https://<host>/.env`, `https://<host>/../composer.json`, `https://<host>/storage/logs/` | 404/403, never file content | |
 | 8 | Login page | `https://<host>/login` | Euro Assist branded page in Arabic/English | |
-| 9 | Admin sign-in | account created with `users:provision` | dashboard shows 2,185 records, 3 featured | |
+| 9 | Admin sign-in | `admin@euro-assist.com` after `users:set-password` (before activation, sign-in must fail) | dashboard shows 2,185 records, 3 featured; Users shows the account without "Activation pending" | |
 | 10 | Providers list | Providers → search a known name, filter by type and city | results appear, Arabic text correct | |
 | 11 | Roles | create an Editor and a Viewer in Users; sign in as each | Viewer read-only; Editor cannot see Users/Audit | |
 | 12 | Create/edit | as Admin: add a test provider, edit it, delete it, restore it | each step succeeds; Audit log shows the events. Then delete the test provider again. | |

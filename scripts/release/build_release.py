@@ -68,20 +68,34 @@ def rmtree(path: Path) -> None:
         path.unlink()
 
 
+# Fixed, documented placeholder of migrated accounts awaiting activation (App\Models\User::ACTIVATION_REQUIRED_PASSWORD).
+# It can never verify; it is the ONLY password value a release SQL may contain.
+ACTIVATION_PLACEHOLDER = '$2y$12$EuroAssistV2ActivationRequiredNoPasswordSetYet.LocKED'
+
+
 def check_data_sql(path: Path) -> None:
-    """Refuse a data dump that could overwrite a database or carries authentication material."""
+    """Refuse a data dump that could overwrite a database or carries authentication material.
+
+    Staff identities (ADR-016) may be present, but only with the activation placeholder: any other
+    password hash, any session/token/reset row and any transient queue/cache row is refused.
+    """
     import re
     text = path.read_text(encoding='utf-8')
     rules = {
-        'authentication/transient table rows': r'INSERT INTO `(users|sessions|personal_access_tokens|password_reset_tokens|jobs|failed_jobs|job_batches|cache|cache_locks)`',
+        'session, token, reset or transient table rows': r'INSERT INTO `(sessions|personal_access_tokens|password_reset_tokens|jobs|failed_jobs|job_batches|cache|cache_locks)`',
         'DROP statement': r'(?im)^\s*DROP\s',
         'CREATE DATABASE statement': r'(?im)^\s*CREATE\s+DATABASE',
         'USE statement': r'(?im)^\s*USE\s',
-        'password hash': r'\$2[aby]\$\d\d\$|\$argon2',
+        'argon2 password hash': r'\$argon2',
     }
     for label, pattern in rules.items():
         if re.search(pattern, text):
             sys.exit(f'Refusing the data SQL: it contains a {label}.')
+    for found in re.findall(r'\$2[aby]\$\d\d\$[./A-Za-z0-9]{53}', text):
+        if found != ACTIVATION_PLACEHOLDER:
+            sys.exit('Refusing the data SQL: it contains a usable password hash (only the activation placeholder is allowed).')
+    if re.search(r'\$2[aby]\$\d\d\$', text.replace(ACTIVATION_PLACEHOLDER, '')):
+        sys.exit('Refusing the data SQL: it contains a password-hash fragment.')
 
 
 def main() -> int:

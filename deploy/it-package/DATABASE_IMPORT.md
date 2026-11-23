@@ -15,8 +15,9 @@ File: `database/EuroAssist_Providers_V2_DATA_<version>.sql` (UTF-8, utf8mb4 tabl
 | Open English/Arabic pair suggestions (nothing merged automatically) | 334 |
 | Source rows **held** for a business decision (7 "Eye Center", 2 malformed map links) | 9 |
 | Rows imported on a **provisional** type mapping (owner decision D3) | 972 |
-| Migration audit events (no user, no IP) | 2,187 |
-| Users, password hashes, sessions, API tokens, reset tokens, queue jobs | **0 (none)** |
+| Migration audit events (no user, no IP) | 2,188 |
+| Staff accounts: `admin@euro-assist.com` (Admin, identity from the old system, **activation required**, no usable password) | 1 |
+| Password hashes, sessions, API tokens, reset tokens, queue jobs | **0 (none)** |
 
 Source: frozen snapshot `Providers.sql`, SHA-256 `19a71fe301c1038b52473b76bec64d2a95ca606dd701c4a2054c72f5bb791814`.
 Reconciliation: every one of the 2,197 source rows is accounted for; 0 byte differences on 13 compared fields.
@@ -53,7 +54,7 @@ SELECT COUNT(*) FROM featured_providers;        -- 3
 SELECT COUNT(*) FROM provider_types;            -- 30
 SELECT COUNT(*) FROM legacy_staging_rows;       -- 2197
 SELECT COUNT(*) FROM legacy_pair_suggestions WHERE status = 'suggested';  -- 334
-SELECT COUNT(*) FROM users;                     -- 0 (before provisioning the first Admin)
+SELECT email, role, is_active FROM users;       -- 1 row: admin@euro-assist.com, admin, 1 (activation pending)
 SELECT name FROM provider_translations WHERE locale = 'ar' LIMIT 3;     -- Arabic must display correctly, not ????
 ```
 Then on the server: `php artisan migrate --force` must print **Nothing to migrate**.

@@ -20,11 +20,11 @@
 | **Fresh data synchronization** | **NOT DONE** | SQL is the frozen snapshot; `deploy/it-package/FRESH_DATA_SYNC.md` before cutover |
 | **V1 API consumers** (D7) | **UNKNOWN — release dependency** | no `/api/...` V1 compatibility layer; owner must name any system calling the old API |
 | **Business classifications** (D3 + held rows) | **OPEN (owner)** | 972 provisional-type rows (4 labels), 7 "Eye Center" + 2 map-link rows held; 334 pair suggestions unreviewed (not blocking staging) |
-| **Legacy staff access** (ADR-016) | **OPEN (owner) — release requirement** | snapshot has 1 account (`admin@euro-assist.com`, legacy `super_admin` → Admin); import tool + activation tested on an isolated DB (`docs/19_LEGACY_ACCOUNTS.md`); King must choose the password policy (recommended: activation); then a **revised release** (SQL + ZIP) is required |
+| Legacy staff access (ADR-016) | PASS (local) | King chose **activation** (2026-11-23). rc.2 ships `admin@euro-assist.com` (Admin) with the never-verifying placeholder; activation at cutover with `users:set-password` (owner-authorized). Accounts created in the old system after the snapshot need the fresh sync. |
 | Hosted CI | BLOCKED (billing) | local manual CI documented in `docs/15_QUALITY_GATES.md` |
 | Owner cutover authorization | NOT GIVEN | written approval from King |
 
-**Verdict:** `2.0.0-rc.1` is suitable for an **isolated Plesk staging** trial once King authorizes it, but it does NOT yet carry the legacy administrator identity; a revised release candidate is required before production.
+**Verdict:** `2.0.0-rc.2` is the candidate for an **isolated Plesk staging** installation once King authorizes it (rc.1 is superseded).
 Production: **NO-GO** until the BLOCKED/UNVERIFIED/NOT DONE/UNKNOWN rows above are closed.
 
 ## Local databases (isolated MariaDB 127.0.0.1:33316)

@@ -15,3 +15,4 @@ None of these blocks a **staging** installation. Items marked *before production
 | 9 | **Password-reset e-mail** | `MAIL_MAILER=log` until SMTP details are provided. | SMTP account for the no-reply address. |
 | 10 | **Hosted CI** | GitHub Actions blocked by account billing; all test evidence is local. | Fix billing (optional for deployment). |
 | 11 | **Old data timestamps** | Original created/updated dates kept in provenance, not shown on V2 screens. | None. |
+| 12 | **Legacy staff accounts** (ADR-016) | The snapshot holds 1 account (`admin@euro-assist.com`), included with Admin role and no usable password; activation is a cutover step. Accounts added in the old system after the snapshot appear only after the fresh sync. | Authorize the activation at cutover. |

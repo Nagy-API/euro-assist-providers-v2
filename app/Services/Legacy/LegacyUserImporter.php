@@ -19,8 +19,8 @@ use RuntimeException;
  *   is HELD (not imported) and reported; nothing is guessed.
  * - An e-mail that already exists in V2 is never overwritten, merged or re-activated (skipped).
  * - Password policy:
- *     activation    (default) the legacy hash is NOT read; the account gets an unusable random password
- *                   and is activated with `users:set-password` (hidden prompt) or the password-reset e-mail.
+ *     activation    (default) the legacy hash is NOT read; the account gets User::ACTIVATION_REQUIRED_PASSWORD
+ *                   (never verifies) and is activated with `users:set-password` (hidden prompt) or the password-reset e-mail.
  *     preserve-hash the legacy bcrypt hash is copied unchanged so the existing password keeps working;
  *                   allowed only for bcrypt hashes the V2 hasher verifies (algorithm + cost <= BCRYPT_ROUNDS).
  * Output and audit metadata never contain a hash, a password or a token.
@@ -62,7 +62,12 @@ class LegacyUserImporter
 
                 if ($outcome === 'create') {
                     $user = new User(['name' => trim((string) $row['name']) ?: Str::before($email, '@'), 'email' => $email]);
-                    $user->password = $mode === 'preserve-hash' ? (string) $row['password'] : Hash::make(Str::random(64));
+                    if ($mode === 'preserve-hash') {
+                        $user->password = (string) $row['password'];   // through the hashed cast: verified, kept unchanged
+                    } else {
+                        // Raw: the fixed placeholder must not depend on the configured BCRYPT_ROUNDS.
+                        $user->setRawAttributes(['password' => User::ACTIVATION_REQUIRED_PASSWORD] + $user->getAttributes());
+                    }
                     $user->role = $role;
                     $user->is_active = true;
                     $user->email_verified_at = $row['email_verified_at'];

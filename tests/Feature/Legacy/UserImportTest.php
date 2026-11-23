@@ -5,6 +5,7 @@ namespace Tests\Feature\Legacy;
 use App\Enums\Role;
 use App\Models\AuditEvent;
 use App\Models\User;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,14 @@ class UserImportTest extends LegacyTestCase
         $this->legacyPassword = $this->synthetic();
     }
 
+    protected function tearDown(): void
+    {
+        // UserFactory memoizes its hashed password in a static; a hash made at cost 12 here must not
+        // leak into later tests that run with the suite's BCRYPT_ROUNDS=4 (the hashed cast refuses it).
+        (fn () => static::$password = null)->bindTo(null, UserFactory::class)();
+        parent::tearDown();
+    }
+
     /** @param array<string, mixed> $attrs */
     private function legacyUser(int $id, array $attrs): void
     {
@@ -77,6 +86,8 @@ class UserImportTest extends LegacyTestCase
         $this->assertFalse(Hash::check($this->legacyPassword, $admin->password), 'activation policy must not keep the legacy password');
         $this->assertFalse(Auth::guard('web')->validate(['email' => 'admin@legacy.example.test', 'password' => $this->legacyPassword]));
         $this->assertNull($admin->remember_token, 'legacy remember tokens are never copied');
+        $this->assertSame(User::ACTIVATION_REQUIRED_PASSWORD, $admin->getAttributes()['password'], 'the fixed activation placeholder, never a random or legacy hash');
+        $this->assertTrue($admin->requiresActivation());
 
         $this->assertSame(Role::Editor, User::query()->where('email', 'user2@legacy.example.test')->firstOrFail()->role);
         $this->assertFalse(User::query()->where('email', 'user3@legacy.example.test')->exists(), 'unknown role is held');
@@ -162,6 +173,7 @@ class UserImportTest extends LegacyTestCase
 
         $this->assertSame(0, DB::table('sessions')->where('user_id', $admin->id)->count(), 'existing sessions are ended');
         $this->assertTrue(AuditEvent::query()->where('action', 'user.password_set_by_operator')->exists());
+        $this->assertFalse($admin->fresh()->requiresActivation(), 'activation replaces the placeholder');
         $this->post(route('login.store'), ['email' => 'admin@legacy.example.test', 'password' => $new])
             ->assertRedirect(route('dashboard'));
         $this->assertAuthenticatedAs($admin->fresh());
@@ -178,5 +190,24 @@ class UserImportTest extends LegacyTestCase
             ->expectsQuestion('Repeat the new password (hidden)', $this->synthetic())
             ->assertFailed();
         $this->assertSame($hash, $user->fresh()->password);
+    }
+
+    public function test_activation_placeholder_never_verifies_and_login_is_refused_cleanly(): void
+    {
+        $placeholder = User::ACTIVATION_REQUIRED_PASSWORD;
+        $this->assertSame('bcrypt', Hash::info($placeholder)['algoName']);
+        $this->assertSame(60, strlen($placeholder));
+        foreach (['', 'password', 'admin', $placeholder, $this->synthetic(), 'EuroAssistV2ActivationRequired'] as $candidate) {
+            $this->assertFalse(password_verify($candidate, $placeholder));
+            $this->assertFalse(Hash::check($candidate, $placeholder));
+        }
+
+        Hash::driver('bcrypt')->setRounds(4); // the placeholder must not depend on BCRYPT_ROUNDS
+        $this->legacyUser(1, ['email' => 'admin@legacy.example.test', 'role' => 'super_admin']);
+        $this->artisan('legacy:import-users')->assertSuccessful();
+
+        $this->post(route('login.store'), ['email' => 'admin@legacy.example.test', 'password' => 'password'])
+            ->assertRedirect()->assertSessionHasErrors('email');
+        $this->assertGuest();
     }
 }

@@ -31,11 +31,11 @@ Point the domain's **document root to `providers/public`**. Everything else in `
 | Included | Not included (by design) |
 |---|---|
 | Application code, production `vendor/`, built CSS/JS, Cairo font, official logos | `.env` or any real password, key or token |
-| `public/.htaccess` (Apache / Plesk Linux) and `public/web.config` (IIS / Plesk Windows) | User accounts, password hashes, sessions, API tokens |
+| `public/.htaccess` (Apache / Plesk Linux) and `public/web.config` (IIS / Plesk Windows) | Any usable password, password hashes, sessions, API tokens |
 | SQL file with 2,185 migrated providers, 3 featured providers, 30 types and full migration provenance | Uploaded logos/files from the old site (decision D8 pending) |
 | Installation, verification, backup and rollback guides | Node.js (not needed on the server) |
 
-Administrator accounts are created on the server after the import (`php artisan users:provision`).
+The legacy administrator `admin@euro-assist.com` is included as an identity with Admin role but **no usable password**; it is activated on the server after the import (`php artisan users:set-password admin@euro-assist.com`, hidden prompt).
 
 ## Ten steps (details in INSTALL_GUIDE.md)
 
@@ -46,7 +46,7 @@ Administrator accounts are created on the server after the import (`php artisan 
    its `public` subfolder (`providers-v2/public`); enable Plesk's HTTP to HTTPS 301 redirect.
 5. Create `providers/.env` from `production.env.example`; run `php artisan key:generate --force`.
 6. Import the SQL into the empty database (DATABASE_IMPORT.md); run `php artisan migrate --force` (expects "Nothing to migrate").
-7. Create the first Admin: `php artisan users:provision <email> --role=admin` (hidden password prompt).
+7. Activate the existing Admin: `php artisan users:set-password admin@euro-assist.com` (interactive, hidden prompt, King's authorization).
 8. Cache configuration, add the every-minute scheduled task, check HTTPS.
 9. Run VERIFY_AND_SMOKE_TEST.md and give King the results.
 10. Production only after King's written approval **and** a fresh data sync (FRESH_DATA_SYNC.md). The old site stays untouched and is the rollback.

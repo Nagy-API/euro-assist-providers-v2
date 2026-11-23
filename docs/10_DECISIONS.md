@@ -207,7 +207,7 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 
 ## ADR-016 — Preserve legitimate legacy staff identities; password policy is an explicit owner decision
 
-**Date:** 2026-11-22 | **Status:** Proposed — implementation ready and tested; the password policy awaits King's decision. Supersedes, for staff identities only, ADR-015's "no accounts in the release SQL".
+**Date:** 2026-11-22 | **Status:** Accepted 2026-11-23 — King chose the **activation** policy (identity and Admin role preserved; historical hash not transferred; live site untouched). Supersedes, for staff identities only, ADR-015's "no accounts in the release SQL".
 
 **Context:** V2 replaces an operational system whose administrator `admin@euro-assist.com` must keep access. The frozen snapshot holds exactly one account (role `super_admin`, bcrypt cost 12). The release dataset had excluded all accounts. Evidence: `docs/19_LEGACY_ACCOUNTS.md`.
 
@@ -217,3 +217,4 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 - The legacy hash is read only under `preserve-hash` (`LegacySource::accounts(true)`); `users` is not on the generic source allow-list.
 
 **Consequences:** a revised release (data SQL + ZIP) is required to ship the identity. The fresh-data sync must re-run the import and report the account count. Setting a migrated account's password is an authorized cutover step, never done silently.
+- Amendment (2026-11-23): an account awaiting activation stores the fixed placeholder `User::ACTIVATION_REQUIRED_PASSWORD` (a syntactically valid bcrypt cost-12 string that can never verify; it is not derived from any password) instead of a random hash, so the release SQL guard can refuse every other hash and the Users screen can show "Activation pending".

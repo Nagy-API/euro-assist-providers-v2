@@ -69,7 +69,12 @@ SQL check: same e-mail, name and verification date as legacy, role `admin`, acti
 remember token empty, audit metadata without secrets → activation with a throwaway password (same operations as
 `users:set-password`) → HTTP: wrong password refused, new password signs in, Admin pages 200, account listed in Users.
 
-## Release impact
+## Decision (2026-11-23)
+
+King chose the **activation** policy. `2.0.0-rc.2` ships `admin@euro-assist.com` (Admin) with the activation
+placeholder `User::ACTIVATION_REQUIRED_PASSWORD` (never verifies), no historical hash, and `users:set-password`.
+
+## Release impact (rc.1, superseded)
 
 A revised release is required to carry the identity: the data SQL would include one `users` row for
 `admin@euro-assist.com` with an unusable random password (activation policy) — or the legacy hash (preserve-hash) — and
