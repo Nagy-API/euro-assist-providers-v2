@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
@@ -49,7 +50,10 @@ class SetUserPassword extends Command
             return self::FAILURE;
         }
 
-        $user->password = $plain;
+        // Always hash explicitly: the `hashed` cast stores a value that already LOOKS like a hash
+        // verbatim, so a typed bcrypt-shaped string (or the activation placeholder) would otherwise
+        // become the stored hash itself (review R5).
+        $user->password = Hash::make($plain);
         $user->save();
         $user->revokeAllAccess();
         $audit->record('user.password_set_by_operator', $user, 'success', [], null);

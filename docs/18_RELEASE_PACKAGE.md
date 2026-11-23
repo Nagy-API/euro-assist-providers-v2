@@ -45,6 +45,31 @@ Dump: `mariadb-dump --single-transaction --skip-add-drop-table --skip-routines -
 the release DB's own least-privilege account; the MariaDB "sandbox" first line is replaced by a provenance header so
 MySQL clients accept the file. No `DROP`, `CREATE DATABASE` or `USE` statements.
 
+## 2b. Release dataset rc.3 (`euro_assist_v2_release_rc3`, 2026-11-23, ADR-017/018)
+
+Same pipeline into a new empty database, then: `legacy:import-users` (activation) → `legacy:apply-review-manifest
+<private manifest> --expect-sha256=f356c3ab… --actor=admin@euro-assist.com --report=<outside repo>` →
+`legacy:import-media <legacy archive root> --actor=admin@euro-assist.com` → `legacy:reconcile --expect-baseline` →
+cleanup (`.work/migration-review-20261123/cleanup-rc3.sql`: removes builder/QA accounts, sessions, tokens, transient rows,
+non-migration audit events, IPs; keeps `admin@euro-assist.com` and the migration audit trail). Private evidence:
+`.work/migration-review-20261123/` (pipeline log, manifest/media reports, integrity and fidelity results, undo rehearsal).
+
+| Check (rc.3) | Result |
+|---|---|
+| Source rows accounted | 2,197 / 2,197 (2,195 mapped, 2 held "Eye Center" rows, 0 rejected) |
+| Live providers / merge shells / real deleted | 1,402 / 790 / 0 |
+| Providers with both languages / one language | 790 / 612 |
+| Pairs applied / held for review | 790 / 104 (plus 110 manifest holds and 186 rows outside unique links, all unchanged) |
+| Provisional type rows / approved aliases / row decisions | 0 / 972 rows (4 labels) / 7 (5 optics, 2 map links) |
+| Open pair suggestions | 195 |
+| Field fidelity 13 fields × 2,192 source rows | 0 differences except the 2 intentionally repaired map links |
+| Integrity (shared maps, translations, locales, discarded values, orphans, open suggestions on paired rows) | all 0 |
+| Media | 5 provider photos, 3 featured logos, 30 type icons (8 distinct V1 icons); 0 missing references |
+| Undo of all 790 pairs on a disposable copy | full re-split, 0 fidelity differences |
+
+The builder takes `--media-dir <folder with provider-photos/, type-icons/, featured-logos/>` and refuses unless the
+files are exactly the media the data SQL references. The data-SQL guard is an allowlist parser (review R6).
+
 ## 3. Building the ZIP
 
 ```bash

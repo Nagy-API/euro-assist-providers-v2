@@ -41,9 +41,9 @@
                         <td class="px-3 py-3">
                             <p class="font-medium text-slate-900" dir="auto"><bdi>{{ $item->name($locale) }}</bdi></p>
                             <p class="text-xs text-slate-600">
-                                @if (filled($item->name_en))<span lang="en" dir="ltr">EN: {{ $item->name_en }}</span>@endif
+                                @if (filled($item->name_en))<span class="whitespace-nowrap">EN: <bdi lang="en" dir="ltr">{{ $item->name_en }}</bdi></span>@endif
                                 @if (filled($item->name_en) && filled($item->name_ar)) · @endif
-                                @if (filled($item->name_ar))<span lang="ar" dir="rtl">AR: {{ $item->name_ar }}</span>@endif
+                                @if (filled($item->name_ar))<span class="whitespace-nowrap">AR: <bdi lang="ar" dir="rtl">{{ $item->name_ar }}</bdi></span>@endif
                             </p>
                         </td>
                         <td class="hidden px-3 py-3 sm:table-cell" dir="auto">{{ $item->type?->label($locale) ?? '—' }}</td>
@@ -86,8 +86,7 @@
                             <x-ui.checkbox name="removeLogo" :label="__('ui.featured.remove_logo')" wire:model="removeLogo" />
                         </div>
                     @endif
-                    <input id="f-logo" type="file" wire:model="logo" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-describedby="logo-hint @error('logo') logo-error @enderror"
-                           class="block w-full text-sm text-slate-800 file:me-3 file:min-h-10 file:cursor-pointer file:rounded-lg file:border file:border-brand-200 file:bg-brand-50 file:px-4 file:text-sm file:font-bold file:text-brand-800 hover:file:bg-brand-100">
+                    <x-ui.file-input id="f-logo" wire:model="logo" icon="photo" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-describedby="logo-hint" />
                     <p id="logo-hint" class="mt-1 text-xs text-slate-600">{{ __('ui.featured.logo_hint', ['kb' => $maxKb]) }}</p>
                     <div wire:loading wire:target="logo" class="mt-1"><x-ui.loading /></div>
                     @error('logo')<p id="logo-error" class="mt-1 text-sm font-medium text-red-800" role="alert">{{ $message }}</p>@enderror

@@ -34,6 +34,13 @@ class AuthenticationTest extends TestCase
         $this->get('/login')->assertOk()->assertSee('name="_token"', false)->assertSee('noindex', false);
     }
 
+    public function test_guest_pages_load_livewire_so_alpine_controls_work(): void
+    {
+        // Livewire 4 starts Alpine. Without its script the password visibility toggle (x-data) was inert.
+        // One page per request cycle: Livewire renders its script tag once per (test) application.
+        $this->get('/login')->assertOk()->assertSee('data-update-uri', false)->assertSee('x-on:click="show = !show"', false);
+    }
+
     public function test_valid_login_regenerates_the_session_and_records_audit_and_last_login(): void
     {
         $user = User::factory()->editor()->create();

@@ -14,6 +14,7 @@
     <title>{{ $plainTitle !== null ? $plainTitle.' · ' : '' }}{{ config('app.name') }}</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="min-h-full bg-paper font-sans text-slate-900 antialiased">
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-brand-800 focus:shadow-lg">{{ __('ui.common.skip_to_content') }}</a>
@@ -65,5 +66,8 @@
             </div>
         </main>
     </div>
+    {{-- Livewire 4 bundles and starts Alpine. Guest pages have no Livewire component, so without this
+         Alpine never started and x-data controls (the password visibility toggle) were inert. --}}
+    @livewireScripts
 </body>
 </html>

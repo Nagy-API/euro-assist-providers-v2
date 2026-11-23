@@ -307,6 +307,10 @@ class ProviderService
     public function restore(User $actor, Provider $provider): void
     {
         $this->authorize($actor, Permission::ProvidersRestore);
+        if ($provider->merged_into_id !== null) {
+            // A merge shell is re-split only by undoing its pair in the migration review (ADR-017).
+            throw ValidationException::withMessages(['provider' => 'This record was merged into another provider; undo the pair in the migration review instead.']);
+        }
         $provider->restore();
         $this->audit->record('provider.restored', $provider, 'success', [], $actor);
     }
@@ -331,7 +335,7 @@ class ProviderService
     {
         $this->authorize($actor, Permission::ProvidersBulkDelete);
         $ids = $this->validatedIds($ids);
-        $count = DB::transaction(fn () => Provider::onlyTrashed()->whereIn('id', $ids)->get()->each->restore()->count());
+        $count = DB::transaction(fn () => Provider::onlyTrashed()->whereNull('merged_into_id')->whereIn('id', $ids)->get()->each->restore()->count());
         $this->audit->record('provider.bulk_restored', ['provider', null], 'success', ['count' => $count, 'ids' => array_slice($ids, 0, 50)], $actor);
 
         return $count;

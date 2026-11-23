@@ -218,3 +218,35 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 
 **Consequences:** a revised release (data SQL + ZIP) is required to ship the identity. The fresh-data sync must re-run the import and report the account count. Setting a migrated account's password is an authorized cutover step, never done silently.
 - Amendment (2026-11-23): an account awaiting activation stores the fixed placeholder `User::ACTIVATION_REQUIRED_PASSWORD` (a syntactically valid bcrypt cost-12 string that can never verify; it is not derived from any password) instead of a random hash, so the release SQL guard can refuse every other hash and the Users screen can show "Activation pending".
+
+## ADR-017 — Apply an owner-reviewed migration manifest only after re-verification on V2; merge shells; per-row decisions
+
+**Date:** 2026-11-23 | **Status:** Accepted (King's instruction 2026-11-23: "apply only the matches that pass the final verification, leave doubtful cases unmerged").
+
+**Context:** An external, read-only review of the frozen `Providers.sql` (SHA-256 `19a71fe3…1814`) produced a decision manifest (private, not in Git): 894 strict EN/AR pair proposals, 110 held pairs, 4 type aliases (972 rows), 7 "Eye Center" rows (5 optics proposals, 2 holds) and 2 malformed map links. Its own validator passed. The manifest itself says the same Google Maps link and the coordinates parsed from it are ONE piece of evidence, and that it must be re-verified on V2.
+
+**Decision:**
+- New command `legacy:apply-review-manifest` (`ReviewManifestApplier`, local-only like every `legacy:*` command). It refuses a manifest from another snapshot, a wrong `--expect-sha256`, a non-Admin actor, and a report path inside the repository. Every proposal is re-checked on V2; failing ones are left untouched and reported with reason codes (ids and codes only, never values).
+- Pair checks: unchanged source rows (canonical row fingerprint identical to the reviewer's tool), byte-identical map link with the manifest fingerprint, both rows mapped and unpaired, providers unedited since migration (revision 1) and still equal to the normalized source, one translation each, **no canonical conflict at all** (type, phone, e-mail, website, map, coordinates, logo, active), map link and pin used by no third record (including held rows), and **independent branch evidence**: corroborated city correspondence (≥2 reviewed pairs, dominant both ways), district positively corroborated (stable correspondence, a refinement of it, or a transliteration match of consonant skeletons), compatible address numbers, no competing open suggestion based on the same location.
+- Merges go only through `PairReviewService::approve` with a per-pair reason (reversible with `undo`). The merged-away Arabic provider becomes a **merge shell**: soft-deleted with `providers.merged_into_id`; shells are excluded from deleted counts, the deleted filter, restore (policy) and exports; opening one redirects to the merged provider; `undo` clears the marker.
+- Type aliases are approved in `legacy_type_mappings` only if the target type exists, the source count still matches, and the Arabic counterparts of reviewed pairs classify the same branches with the target type (no contradiction). Rows keep their raw label; reason becomes `type_alias_approved`.
+- Per-row decisions (`legacy_row_decisions`: type key or repaired map link for ONE staged row, with the SHA-256 of the replaced raw value, reason, manifest hash, actor) are consumed by `LegacyApplier`; the raw staging payload never changes.
+- The read-only legacy connection now uses session time zone `+00:00`: without it MariaDB converted the dump's UTC TIMESTAMPs to the server's Africa/Cairo time, so staged raw `created_at/updated_at` differed from the source (found by the row fingerprints; business fields were unaffected).
+- Legacy staff user id mapping (review R5): documented exception — the only legacy account is identified by e-mail (unique), the numeric legacy id is not referenced anywhere in V2.
+
+**Result on the isolated rebuild (`euro_assist_v2_release_rc3`):** 790 pairs applied, 104 held (98 district not corroborated, 3 city not corroborated, 1 city missing, 3 disjoint address numbers), 4 aliases approved (972 rows), 7 row decisions (5 optics + 2 map links), 2 Eye Center rows still held and visible. Undo of all 790 rehearsed on a separate copy with full re-split and 0 fidelity differences.
+
+**Consequences:** the 104 held pairs, the 110 manifest holds, the 186 rows outside unique links and the 2 Eye Center rows stay as separate, visible records for human review; their count is shown on the Admin migration status. The fresh-data sync must re-run the pipeline and this command against the new snapshot only with a manifest made from that snapshot.
+
+## ADR-018 — Legacy media and provider photos
+
+**Date:** 2026-11-23 | **Status:** Accepted (owner issue #43; supersedes the "media deferred" part of D8).
+
+**Decision:**
+- `providers.logo_path` stays the raw legacy reference (fidelity contract). V2 shows `providers.photo_path` (private disk, `provider-photos/<uuid>.<ext>`), `featured_providers.logo_path` and the new `provider_types.icon_path` (`type-icons/…`).
+- `legacy:import-media <archive>` reads only `<archive>/uploads/logos/` by plain file name (no traversal, no other folder, no symlink, never a URL fetch), validates the decoded image type/dimensions/size and re-encodes through the existing image store; never overwrites an existing picture; missing/invalid files are reported, never replaced. Each photo/logo gets its own stored copy (removing one never removes another); type icons may share one.
+- V1 parity: V1 showed a per-type fallback icon (8 dedicated icons, `clinics.png` for every other type). These become the type icons; a row that only references its own type icon gets no photo. Display order: own photo → type icon → neutral placeholder.
+- Provider photo upload/replace/remove on the provider page for users who may update the provider (upload entry points authorized too); JPEG/PNG/WebP ≤ 2048 KB (V1 limit), served only through `providers.photo` / `types.icon` to users with `providers.view`.
+- The release builder takes `--media-dir` and refuses unless the media files are exactly the set referenced by the data SQL (uuid names, magic bytes, three folders, no links); files are placed in `providers/storage/app/private/`.
+
+**Consequences:** the 40 legacy references are accounted for: 27 own-type icon references (shown via the type icon), 5 Arabic references of merged pairs (the English row's picture is used), 5 provider photos and 3 featured logos copied; 0 missing. The API does not expose photos (unchanged contract). A photo change bumps the provider revision (an edit form open at the same time reports a conflict). Production needs PHP `gd` with JPEG/PNG/WebP (without it uploads are stored validated but not re-encoded). Known follow-ups (accepted, review R6): `legacy:rollback` does not delete media files copied by `legacy:import-media` or uploaded later (orphan files only, no data exposure); the picker keeps the last chosen file name after a save.

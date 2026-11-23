@@ -130,7 +130,7 @@ class ExportGenerator
         if ($job->scope === ExportJob::SCOPE_SELECTED) {
             $query->whereIn('id', (array) $job->selected_ids);
             if ($isAdmin) {
-                $query->withTrashed();
+                $query->withTrashed()->whereNull('merged_into_id'); // never export merge shells (ADR-017)
             }
         } elseif ($job->scope === ExportJob::SCOPE_FILTERED) {
             ExportFilters::apply($query, (array) $job->filters, $isAdmin);

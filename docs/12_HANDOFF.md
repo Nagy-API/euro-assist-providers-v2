@@ -1,6 +1,6 @@
 # Handoff: open this document in every new chat
 
-**Date:** 2026-11-22. Read AGENTS, README, `docs/01_CURRENT_STATUS.md`, ADRs (`docs/10_DECISIONS.md`, esp. 011–014) and the work log first; verify Git/PRs yourself.
+**Date:** 2026-11-23. Read AGENTS, README, `docs/01_CURRENT_STATUS.md`, ADRs (`docs/10_DECISIONS.md`, esp. 011–014) and the work log first; verify Git/PRs yourself.
 
 ## Current true state
 
@@ -51,6 +51,14 @@ Pint, PHPStan, PHPUnit on PHP 8.3 and 8.4, `phpunit.mysql.xml` on MariaDB (docs0
 * Verify a built ZIP exactly as `docs/18_RELEASE_PACKAGE.md` §4 (scripts used: ZIP audit, SQL restore into `euro_assist_v2_install_rehearsal`, HTTP role matrix — recreate them from that section; they are not in the repository).
 * Release DB `euro_assist_v2_release` (account `v2_release` in the private `connections.json`) is the source of the SQL. Rebuild it only from a snapshot through the pipeline, never by copying `euro_assist_v2_local`.
 * IT guides: `deploy/it-package/`. Gates: `docs/01_CURRENT_STATUS.md`.
+
+## Release candidate 2.0.0-rc.3 (2026-11-23)
+
+* Dataset: `euro_assist_v2_release_rc3`, rebuilt with `..\.work\migration-review-20261123uild-rc3.ps1` (pipeline → import-users → `legacy:apply-review-manifest` → `legacy:import-media` → reconcile), then `cleanup-rc3.sql`. The private runner `run.ps1` allows only the rc3 databases.
+* Build: `python scripts/release/build_release.py --version 2.0.0-rc.3 --out ..\.workelease-20261123-rc3\out --data-sql <rc3 SQL> --media-dir <rc3 media folder> --php ..\.tools\php-8.3.37\php.exe --composer ..\.tools\composer.phar`.
+* Open human-review items (non-blocking, visible on the Admin migration strip): 2 Eye Center rows, 104 held pairs, 195 open suggestions (incl. the manifest's 110 holds and rows outside unique links).
+* A batch staged BEFORE the time-zone fix fails every manifest fingerprint (`source_row_changed`): re-stage instead of reusing it.
+* Follow-ups accepted in review R6: rollback leaves media files; stale picker file name; `gd` with WebP required in production.
 
 ## Exactly what to do next
 

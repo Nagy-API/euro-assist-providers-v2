@@ -103,6 +103,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
+            // The frozen dump stores TIMESTAMP values in UTC (`SET time_zone = "+00:00"`). Without an
+            // explicit session zone the server converts them to its SYSTEM zone (a DST-varying local
+            // offset), so staged raw timestamps would no longer equal the source (found 2026-11-23).
+            'timezone' => '+00:00',
             'options' => extension_loaded('pdo_mysql') ? [
                 Mysql::ATTR_INIT_COMMAND => 'SET SESSION TRANSACTION READ ONLY',
             ] : [],

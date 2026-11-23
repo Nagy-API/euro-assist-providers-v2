@@ -68,9 +68,9 @@ final class ExportFilters
         }
         if ($isAdmin) {
             if (($filters['trashed'] ?? null) === 'with') {
-                $query->withTrashed();
+                $query->withTrashed()->whereNull('merged_into_id');
             } elseif (($filters['trashed'] ?? null) === 'only') {
-                $query->onlyTrashed();
+                $query->onlyTrashed()->whereNull('merged_into_id');
             }
         }
     }

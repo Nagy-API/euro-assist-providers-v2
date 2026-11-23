@@ -69,7 +69,8 @@ class DashboardStats
             'total' => $total,
             'active' => (int) $row->active,
             'inactive' => $total - (int) $row->active,
-            'deleted' => $includeDeleted ? Provider::onlyTrashed()->count() : null,
+            // Merge shells (an approved bilingual pair, ADR-017) are not deleted providers.
+            'deleted' => $includeDeleted ? Provider::onlyTrashed()->whereNull('merged_into_id')->count() : null,
             'missing_city' => (int) $row->missing_city,
             'missing_phone' => (int) $row->missing_phone,
             'translations' => [

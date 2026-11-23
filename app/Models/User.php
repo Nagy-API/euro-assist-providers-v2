@@ -34,7 +34,7 @@ class User extends Authenticatable
 
     public function requiresActivation(): bool
     {
-        return $this->getAttributes()['password'] === self::ACTIVATION_REQUIRED_PASSWORD;
+        return ($this->getAttributes()['password'] ?? null) === self::ACTIVATION_REQUIRED_PASSWORD;
     }
 
     /**

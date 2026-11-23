@@ -30,6 +30,8 @@ class AccessControlTest extends UiTestCase
             'types.index' => ['/types', $adminOnly],
             'featured.index' => ['/featured', $all],
             'featured.logo' => ['/featured/{featured}/logo', $all],
+            'providers.photo' => ['/providers/{provider}/photo', $all],
+            'types.icon' => ['/types/{type}/icon', $all],
             'users.index' => ['/users', $adminOnly],
             'audit.index' => ['/audit', $adminOnly],
             'settings.status' => ['/settings/status', $adminOnly],
@@ -41,11 +43,15 @@ class AccessControlTest extends UiTestCase
     public function test_route_permission_matrix(string $uri, array $expected): void
     {
         Storage::fake('local');
-        $provider = $this->provider();
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+        $type = $this->type('Icon Type', 'نوع', ['icon_path' => 'type-icons/7f1c1b8e-0a47-4c5e-9a53-2f0f0f0f0f0f.png']);
+        $provider = $this->provider(['photo_path' => 'provider-photos/8f1c1b8e-0a47-4c5e-9a53-2f0f0f0f0f0f.png'], type: $type);
         $featured = FeaturedProvider::factory()->create(['logo_path' => 'featured-logos/6f1c1b8e-0a47-4c5e-9a53-2f0f0f0f0f0f.png']);
-        Storage::disk('local')->put($featured->logo_path, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='));
+        foreach ([$featured->logo_path, $provider->photo_path, $type->icon_path] as $path) {
+            Storage::disk('local')->put((string) $path, $png);
+        }
 
-        $uri = str_replace(['{provider}', '{featured}'], [(string) $provider->id, (string) $featured->id], $uri);
+        $uri = str_replace(['{provider}', '{featured}', '{type}'], [(string) $provider->id, (string) $featured->id, (string) $type->id], $uri);
 
         $this->get($uri)->assertRedirect(route('login'));
 

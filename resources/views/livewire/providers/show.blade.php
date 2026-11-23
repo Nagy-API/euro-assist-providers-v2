@@ -36,6 +36,8 @@
         <x-ui.translation-badges :provider="$provider" />
     </div>
 
+    <livewire:providers.photo :provider="$provider" :key="'photo-'.$provider->id" />
+
     @if ($provider->trashed())
         <x-ui.alert tone="warning" class="mb-6">{{ __('ui.providers.is_deleted_notice', ['date' => $provider->deleted_at?->format('Y-m-d H:i')]) }}</x-ui.alert>
     @endif

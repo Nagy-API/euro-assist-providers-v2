@@ -192,6 +192,29 @@ class UserImportTest extends LegacyTestCase
         $this->assertSame($hash, $user->fresh()->password);
     }
 
+    public function test_set_password_always_hashes_even_a_hash_shaped_entry(): void
+    {
+        $user = User::factory()->create(['email' => 'hashlike@legacy.example.test']);
+        $entry = User::ACTIVATION_REQUIRED_PASSWORD; // 60 chars, letters and digits: passes the policy
+
+        $this->artisan('users:set-password', ['email' => 'hashlike@legacy.example.test'])
+            ->expectsQuestion('New password (min 12 characters, hidden)', $entry)
+            ->expectsQuestion('Repeat the new password (hidden)', $entry)
+            ->assertSuccessful();
+
+        $stored = $user->fresh()->getAttributes()['password'];
+        $this->assertNotSame($entry, $stored, 'a hash-shaped entry must not become the stored hash');
+        $this->assertTrue(Hash::check($entry, $stored));
+        $this->assertFalse($user->fresh()->requiresActivation());
+    }
+
+    public function test_requires_activation_is_null_safe_without_the_password_column(): void
+    {
+        $user = User::factory()->create();
+
+        $this->assertFalse(User::query()->select('id')->findOrFail($user->id)->requiresActivation());
+    }
+
     public function test_activation_placeholder_never_verifies_and_login_is_refused_cleanly(): void
     {
         $placeholder = User::ACTIVATION_REQUIRED_PASSWORD;

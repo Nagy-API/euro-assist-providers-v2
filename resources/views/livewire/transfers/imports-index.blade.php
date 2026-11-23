@@ -36,10 +36,8 @@
 
             <div class="space-y-2">
                 <label for="import-file" class="block text-sm font-semibold text-slate-900">{{ __('transfers.imports.file') }}</label>
-                <input id="import-file" type="file" name="file" required
-                       accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                       aria-describedby="import-file-hint"
-                       class="block w-full text-sm text-slate-900 file:me-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-bold file:text-brand-800 hover:file:bg-brand-100">
+                <x-ui.file-input id="import-file" name="file" required aria-describedby="import-file-hint"
+                                 accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
                 <p id="import-file-hint" class="text-sm text-slate-700">{{ __('transfers.imports.file_hint', ['mb' => $maxMb, 'rows' => $maxRows]) }}</p>
                 @error('file')
                     <p class="text-sm font-medium text-red-700" role="alert">{{ $message }}</p>

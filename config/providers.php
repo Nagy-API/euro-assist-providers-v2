@@ -69,6 +69,14 @@ return [
         'max_logo_kb' => 1024,
     ],
 
+    // Provider photos and per-type fallback icons (ADR-018). Same private disk as featured logos.
+    'media' => [
+        'photo_directory' => 'provider-photos',
+        'type_icon_directory' => 'type-icons',
+        // V1 accepted JPG/PNG up to 2048 KB for provider logos; V2 keeps that ceiling.
+        'max_photo_kb' => 2048,
+    ],
+
     /*
     | API. Public read exposure of provider data is OFF by default until the owner approves it
     | (D7). When off, the read endpoints require an authenticated session/token with providers.view.

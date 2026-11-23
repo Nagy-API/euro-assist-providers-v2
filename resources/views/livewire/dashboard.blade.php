@@ -36,9 +36,9 @@
 
     {{-- Overview: ring + linked figures, overlapping the hero. --}}
     <section aria-labelledby="records-heading" class="relative z-10 -mt-24 mx-0 animate-enter sm:mx-4 lg:-mt-28 lg:mx-6">
-        <div class="ea-card flex flex-col gap-5 rounded-3xl p-5 shadow-lg sm:p-6 lg:flex-row lg:items-center">
+        <div class="ea-card flex flex-col gap-5 rounded-3xl p-5 shadow-lg sm:p-6 xl:flex-row xl:items-center">
             <h2 id="records-heading" class="sr-only">{{ __('ui.dashboard.records_heading') }}</h2>
-            <div class="relative hidden size-32 shrink-0 lg:block" aria-hidden="true">
+            <div class="relative hidden size-32 shrink-0 xl:block" aria-hidden="true">
                 <svg viewBox="0 0 120 120" class="size-32 -rotate-90">
                     <circle cx="60" cy="60" r="52" fill="none" stroke="var(--color-slate-100)" stroke-width="12" />
                     <circle cx="60" cy="60" r="52" fill="none" stroke="var(--color-brand-600)" stroke-width="12" stroke-linecap="round"
@@ -49,10 +49,10 @@
                     <span class="text-xs font-semibold text-slate-600">{{ __('ui.dashboard.active_share') }}</span>
                 </div>
             </div>
-            <dl class="grid min-w-0 flex-1 grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200 {{ count($figures) === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }}">
+            <dl class="grid min-w-0 flex-1 grid-cols-2 gap-px overflow-hidden rounded-2xl bg-slate-200 {{ count($figures) === 4 ? 'md:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4' : 'md:grid-cols-3' }}">
                 @foreach ($figures as $fig)
                     <div class="flex flex-col gap-1 bg-white p-4 lg:px-5">
-                        <dt class="flex items-center gap-1 text-xs font-bold tracking-wide text-slate-600 uppercase">
+                        <dt class="flex min-h-8 items-start gap-1 text-sm leading-snug font-bold text-slate-600">
                             {{ __('ui.dashboard.'.$fig['key']) }}
                             <x-ui.help :text="__('ui.dashboard.help.'.$fig['key'])" />
                         </dt>
@@ -61,7 +61,7 @@
                             <div class="h-1.5 overflow-hidden rounded-full bg-slate-100" aria-hidden="true"><div class="h-full rounded-full {{ $fig['bar'] }}" style="width: {{ min(100, round($fig['value'] / max(1, $counters['total']) * 100)) }}%"></div></div>
                         @endif
                         @if ($fig['href'])
-                            <dd><a href="{{ $fig['href'] }}" class="group inline-flex items-center gap-1 text-sm font-semibold text-brand-700 hover:text-brand-800">{{ __('ui.dashboard.view_list') }}<x-ui.icon name="chevron-right" class="size-3.5 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" flip /></a></dd>
+                            <dd class="mt-auto"><a href="{{ $fig['href'] }}" class="group inline-flex items-center gap-1 text-sm font-semibold whitespace-nowrap text-brand-700 hover:text-brand-800">{{ __('ui.dashboard.view_list') }}<x-ui.icon name="chevron-right" class="size-3.5 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" flip /></a></dd>
                         @endif
                     </div>
                 @endforeach
@@ -97,7 +97,7 @@
             @endforeach
         </dl>
         @if ($provenance['unpaired'] > 0)
-            <p class="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">{{ __('ui.dashboard.meaning.note', ['count' => number_format($provenance['unpaired'])]) }}</p>
+            <p class="mt-4 flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"><x-ui.icon name="info" class="mt-0.5 size-4 text-slate-500" />{{ __('ui.dashboard.meaning.note', ['count' => number_format($provenance['unpaired'])]) }}</p>
         @endif
     </section>
 
@@ -182,21 +182,22 @@
     </div>
 
     @if ($legacy !== null)
-        <section aria-labelledby="legacy-heading" class="animate-enter rounded-2xl border border-amber-300 bg-amber-50 p-5 sm:p-6">
-            <h2 id="legacy-heading" class="flex items-center gap-2 text-base font-extrabold text-amber-950"><x-ui.icon name="exclamation" class="size-5 text-amber-700" />{{ __('ui.dashboard.legacy.title') }}</h2>
-            <p class="mt-1 text-sm text-amber-950">{{ __('ui.dashboard.legacy.intro') }}</p>
-            <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {{-- Admin-only, compact and neutral (owner decision 2026-11-23): the open migration items stay
+             discoverable and are never shown as 0 when they are not, without dominating the page. --}}
+        <section aria-labelledby="legacy-heading" class="ea-card flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 text-sm">
+            <h2 id="legacy-heading" class="flex items-center gap-2 font-bold text-slate-800"><x-ui.icon name="clipboard" class="size-4 text-slate-500" />{{ __('ui.dashboard.legacy.title') }}</h2>
+            <dl class="flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-700">
                 @foreach (['unpaired', 'suggestions', 'held', 'provisional'] as $key)
-                    <div class="rounded-xl bg-white p-3 shadow-xs">
-                        <dt class="text-sm text-slate-700">{{ __('ui.dashboard.legacy.'.$key) }}</dt>
-                        <dd class="mt-1 text-xl font-extrabold text-slate-900"><span class="ltr-text">{{ number_format($legacy[$key]) }}</span></dd>
+                    <div class="flex items-baseline gap-1.5">
+                        <dt>{{ __('ui.dashboard.legacy.'.$key) }}</dt>
+                        <dd class="font-extrabold text-slate-900"><span class="ltr-text">{{ number_format($legacy[$key]) }}</span></dd>
                     </div>
                 @endforeach
             </dl>
             @if ($reviewRoute)
-                <a href="{{ route('migration.review.index') }}" class="mt-4 inline-flex items-center gap-1 text-sm font-bold text-brand-700 hover:text-brand-800">{{ __('ui.dashboard.legacy.open_review') }}<x-ui.icon name="chevron-right" class="size-4" flip /></a>
+                <a href="{{ route('migration.review.index') }}" class="ms-auto inline-flex min-h-8 items-center gap-1 font-bold text-brand-700 hover:text-brand-800">{{ __('ui.dashboard.legacy.open_review') }}<x-ui.icon name="chevron-right" class="size-4" flip /></a>
             @else
-                <p class="mt-4 text-sm text-amber-950">{{ __('ui.dashboard.legacy.review_local_only') }}</p>
+                <p class="ms-auto text-xs text-slate-600">{{ __('ui.dashboard.legacy.review_local_only') }}</p>
             @endif
         </section>
     @endif

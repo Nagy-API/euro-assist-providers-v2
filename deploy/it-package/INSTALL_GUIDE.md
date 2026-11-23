@@ -27,7 +27,7 @@ MySQL vs MariaDB version, whether IIS URL Rewrite is installed, the PHP CLI path
 | Item | Required | Notes |
 |---|---|---|
 | PHP | **8.3 or 8.4** (CLI and web handler) | Tested 8.3.37 and 8.4.28. PHP 8.2 (old site) is **not** enough. |
-| PHP extensions | `pdo_mysql`, `mbstring`, `intl`, `zip`, `fileinfo`, `xml`/`dom`/`xmlreader`, `openssl`, `ctype`, `tokenizer`, `curl` | `php -m` lists them. |
+| PHP extensions | `pdo_mysql`, `mbstring`, `intl`, `zip`, `fileinfo`, `xml`/`dom`/`xmlreader`, `openssl`, `ctype`, `tokenizer`, `curl`, `gd` (with JPEG, PNG and WebP support: uploaded pictures are re-encoded to strip hidden content) | `php -m` lists them; `php -r "var_dump(gd_info());"` shows JPEG/PNG/WebP Support = true. |
 | PHP settings | `memory_limit` ≥ 256M, `upload_max_filesize` ≥ 12M, `post_max_size` ≥ 12M | Import files are limited to 10 MB. |
 | Database | MySQL 8.0+ or MariaDB 10.6+, utf8mb4 | Tested on MariaDB 11.4.14. MySQL 8 must be confirmed on staging. |
 | Web server | IIS with **URL Rewrite** module, or Apache/nginx (Plesk Linux) | `public/web.config` / `public/.htaccess` are included. |
@@ -73,6 +73,7 @@ check from Git Bash/WSL.
     in Plesk) **Modify** rights on `providers-v2\storage` and `providers-v2\bootstrap\cache`.
   * Linux: owner = subscription system user; `chmod -R ug+rwX storage bootstrap/cache`.
 * Do **not** create the `public/storage` link (`storage:link`); all files are private by design.
+* The package already contains the migrated pictures in `providers-v2\storagepp\private\` (`provider-photos`, `type-icons`, `featured-logos`; listed in `MANIFEST.json`). Keep that folder when copying; the application serves them only to signed-in staff.
 * IIS: keep `public/web.config`, which uses the URL Rewrite module. If IIS reports a duplicate rule, a parent
   configuration already defines one — remove the parent rule, not ours. Apache/nginx: keep `public/.htaccess`.
 

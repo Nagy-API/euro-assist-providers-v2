@@ -139,14 +139,19 @@
                             </td>
                         @endif
                         <td class="max-w-xs px-3 py-3">
-                            <a href="{{ route('providers.show', $provider) }}" class="font-bold text-slate-900 transition-colors hover:text-brand-700 hover:underline"><bdi dir="auto">{{ $tr?->name ?? '—' }}</bdi></a>
-                            <div class="mt-1 flex flex-wrap items-center gap-1">
-                                <x-ui.translation-badges :provider="$provider" />
-                                @if ($fallback)
-                                    <x-ui.badge tone="amber" :title="__('ui.locale.fallback_hint', ['language' => __('ui.locale.'.$tr->locale)])">{{ __('ui.locale.shown_'.$tr->locale) }}</x-ui.badge>
-                                @endif
+                            <div class="flex items-start gap-3">
+                                <span class="hidden sm:block"><x-ui.provider-image :provider="$provider" size="sm" /></span>
+                                <div class="min-w-0">
+                                    <a href="{{ route('providers.show', $provider) }}" class="font-bold text-slate-900 transition-colors hover:text-brand-700 hover:underline"><bdi dir="auto">{{ $tr?->name ?? '—' }}</bdi></a>
+                                    <div class="mt-1 flex flex-wrap items-center gap-1">
+                                        <x-ui.translation-badges :provider="$provider" />
+                                        @if ($fallback)
+                                            <x-ui.badge tone="amber" :title="__('ui.locale.fallback_hint', ['language' => __('ui.locale.'.$tr->locale)])">{{ __('ui.locale.shown_'.$tr->locale) }}</x-ui.badge>
+                                        @endif
+                                    </div>
+                                    <p class="mt-1 text-xs text-slate-600 md:hidden"><bdi dir="auto">{{ $typeLabel ?? '—' }}</bdi> · <bdi dir="auto">{{ $tr?->city ?: '—' }}</bdi></p>
+                                </div>
                             </div>
-                            <p class="mt-1 text-xs text-slate-600 md:hidden"><bdi dir="auto">{{ $typeLabel ?? '—' }}</bdi> · <bdi dir="auto">{{ $tr?->city ?: '—' }}</bdi></p>
                         </td>
                         <td class="hidden px-3 py-3 text-slate-700 md:table-cell"><bdi dir="auto">{{ $typeLabel ?? '—' }}</bdi></td>
                         <td class="hidden px-3 py-3 text-slate-700 md:table-cell"><bdi dir="auto">{{ $tr?->city ?: '—' }}</bdi></td>

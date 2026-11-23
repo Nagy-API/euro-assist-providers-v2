@@ -126,6 +126,15 @@ class DashboardTest extends UiTestCase
         $this->assertSame(['unpaired' => 0, 'suggestions' => 0, 'held' => 0, 'provisional' => 0], app(DashboardStats::class)->legacyBacklog());
     }
 
+    public function test_migration_status_is_a_compact_neutral_strip_not_a_warning_banner(): void
+    {
+        $html = Livewire::actingAs($this->admin())->test(Dashboard::class)->html();
+
+        $this->assertMatchesRegularExpression('/<section aria-labelledby="legacy-heading" class="ea-card [^"]*"/', $html);
+        $this->assertStringNotContainsString('aria-labelledby="legacy-heading" class="animate-enter rounded-2xl border border-amber-300', $html);
+        $this->assertStringNotContainsString(__('ui.dashboard.legacy.intro'), $html);
+    }
+
     public function test_every_role_sees_what_the_record_count_means(): void
     {
         foreach (['admin', 'editor', 'viewer'] as $role) {
