@@ -77,5 +77,5 @@ placeholder `User::ACTIVATION_REQUIRED_PASSWORD` (never verifies), no historical
 ## Release impact (rc.1, superseded)
 
 A revised release is required to carry the identity: the data SQL would include one `users` row for
-`admin@euro-assist.com` with an unusable random password (activation policy) — or the legacy hash (preserve-hash) — and
+`admin@euro-assist.com` with the activation placeholder (activation policy) — or the legacy hash (preserve-hash) — and
 the ZIP would include `users:set-password` and updated guides. The current `2.0.0-rc.1` ZIP is unchanged until King decides.

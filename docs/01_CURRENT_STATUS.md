@@ -25,6 +25,8 @@
 | Owner cutover authorization | NOT GIVEN | written approval from King |
 
 **Verdict:** `2.0.0-rc.2` is the candidate for an **isolated Plesk staging** installation once King authorizes it (rc.1 is superseded).
+Package: `..\.work\release-20261123-rc2\out\EuroAssist_Providers_V2_2.0.0-rc.2.zip`, built from `5f98513`, 13,368,951 bytes,
+SHA-256 `a48788e636620f3cd46347ad356029aaf1ae48a518655d3b4f50ac5a5f9e7147`. Independent review R5: PASS_WITH_NOTES (follow-ups in the work log, to fix before the production build).
 Production: **NO-GO** until the BLOCKED/UNVERIFIED/NOT DONE/UNKNOWN rows above are closed.
 
 ## Local databases (isolated MariaDB 127.0.0.1:33316)

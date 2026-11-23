@@ -213,7 +213,7 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 
 **Decision:**
 - `legacy:import-users` (local-only, SELECT-only source, idempotent) imports legacy identities: e-mail, name, verification date; roles `super_admin`/`admin` → Admin, `editor` → Editor, `viewer` → Viewer, others held; existing V2 e-mails are never touched; remember tokens never copied.
-- Password policy `activation` (default, recommended): an unusable random password; the account is activated by `users:set-password` (hidden prompt) or the reset e-mail. Policy `preserve-hash`: the legacy bcrypt hash is copied unchanged only if the V2 hasher accepts it; chosen only by explicit owner decision.
+- Password policy `activation` (default, recommended): the fixed placeholder `User::ACTIVATION_REQUIRED_PASSWORD` (never verifies; see Amendment); the account is activated by `users:set-password` (hidden prompt) or the reset e-mail. Policy `preserve-hash`: the legacy bcrypt hash is copied unchanged only if the V2 hasher accepts it; chosen only by explicit owner decision.
 - The legacy hash is read only under `preserve-hash` (`LegacySource::accounts(true)`); `users` is not on the generic source allow-list.
 
 **Consequences:** a revised release (data SQL + ZIP) is required to ship the identity. The fresh-data sync must re-run the import and report the account count. Setting a migrated account's password is an authorized cutover step, never done silently.
