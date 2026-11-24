@@ -70,6 +70,9 @@ non-migration audit events, IPs; keeps `admin@euro-assist.com` and the migration
 The builder takes `--media-dir <folder with provider-photos/, type-icons/, featured-logos/>` and refuses unless the
 files are exactly the media the data SQL references. The data-SQL guard is an allowlist parser (review R6).
 
+> **2.0.0-rc.4 (2026-11-24)** is the same dataset and application as rc.3 with corrected IT documentation: the rc.3 SQL and media were copied
+> byte-for-byte into `release-20261124-rc4/` and packaged with `--data-sql ...DATA_2.0.0-rc.4.sql --media-dir ...`.
+
 ## 3. Building the ZIP
 
 ```bash

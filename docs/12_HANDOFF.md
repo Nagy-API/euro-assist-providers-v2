@@ -57,7 +57,9 @@ Pint, PHPStan, PHPUnit on PHP 8.3 and 8.4, `phpunit.mysql.xml` on MariaDB (docs0
 * Dataset: `euro_assist_v2_release_rc3`, rebuilt with `..\.work\migration-review-20261123\build-rc3.ps1` (pipeline → import-users → `legacy:apply-review-manifest` → `legacy:import-media` → reconcile), then `cleanup-rc3.sql`. The private runner `run.ps1` allows only the rc3 databases.
 * Build: `python scripts/release/build_release.py --version 2.0.0-rc.3 --out ..\.work
 elease-20261123-rc3\out --data-sql <rc3 SQL> --media-dir <rc3 media folder> --php ..\.tools\php-8.3.37\php.exe --composer ..\.tools\composer.phar`.
-* Built package: `..\.workelease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb`; verified and install-rehearsed locally (work log 2026-11-24). Send IT the ZIP and, separately, its SHA-256.
+* **Current delivery package: 2.0.0-rc.4** (`../.work/release-20261124-rc4/out/`, handoff folder `../.work/IT-handoff-rc4/`, SHA-256 `05650fa73591eb69895ad68f2f5196ede46f91ff322935c8d677128e3a61eee1`; documentation-only change over rc.3). The text below about rc.3 describes the same application and data.
+* Built package (rc.3, superseded): `..\.work
+elease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb`; verified and install-rehearsed locally (work log 2026-11-24). Send IT the ZIP and, separately, its SHA-256.
 * Open human-review items (non-blocking, visible on the Admin migration strip): 2 Eye Center rows, 104 held pairs, 195 open suggestions (incl. the manifest's 110 holds and rows outside unique links).
 * A batch staged BEFORE the time-zone fix fails every manifest fingerprint (`source_row_changed`): re-stage instead of reusing it.
 * Follow-ups accepted in review R6: rollback leaves media files; stale picker file name; `gd` with WebP required in production.
