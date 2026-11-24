@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Euro Assist Providers V2 - READ-ONLY production preflight (works on ANY installed version, no Laravel boot,
  * no `ops:check` needed). It never writes, never runs migrations, never prints secrets (no keys, passwords,
@@ -13,7 +14,7 @@
  */
 declare(strict_types=1);
 
-$app = rtrim((string) ($argv[1] ?? ''), "\\/");
+$app = rtrim((string) ($argv[1] ?? ''), '\\/');
 if ($app === '' || ! is_file($app.'/artisan')) {
     fwrite(STDERR, "Usage: php preflight.php <application folder that contains 'artisan'>\n");
     exit(2);
