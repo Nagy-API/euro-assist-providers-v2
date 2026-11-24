@@ -17,6 +17,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 /**
  * @property Role|null $role
  * @property bool $is_active
+ * @property bool $must_change_password
  * @property Carbon|null $last_login_at
  */
 class User extends Authenticatable
@@ -59,6 +60,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => Role::class,
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 

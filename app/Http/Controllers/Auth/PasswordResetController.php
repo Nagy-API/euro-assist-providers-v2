@@ -49,7 +49,7 @@ class PasswordResetController extends Controller
                 'password_confirmation' => $request->input('password_confirmation'), 'token' => $data['token']],
             function ($user, string $password) {
                 abort_unless($user->is_active, 403);
-                $user->forceFill(['password' => Hash::make($password)])->save();
+                $user->forceFill(['password' => Hash::make($password), 'must_change_password' => false])->save();
                 // A password reset must end every other open session and every API token.
                 $user->revokeAllAccess();
                 event(new PasswordReset($user));

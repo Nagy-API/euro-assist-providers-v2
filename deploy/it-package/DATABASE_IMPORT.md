@@ -26,8 +26,8 @@ Expected values for this release. "Live" means not deleted. A **merged** English
 | Rows still on a provisional type mapping | 0 |
 | Owner row decisions (`legacy_row_decisions`: 5 "Eye Center" rows mapped to Optics, 2 malformed map links repaired) | 7 |
 | Migration audit events (no user, no IP) | 2,999 |
-| Staff accounts: `admin@euro-assist.com` (Admin, identity from the old system, **activation required**, no usable password) | 1 |
-| Password hashes other than the activation placeholder, sessions, API tokens, reset tokens, queue jobs | **0 (none)** |
+| Staff accounts: `admin@euro-assist.com` (Admin, identity from the old system) with a **temporary password** (only its bcrypt hash is stored) and `must_change_password = 1` | 1 |
+| Password hashes other than that one temporary hash, sessions, API tokens, reset tokens, queue jobs | **0 (none)** |
 
 Pictures are **not** in the SQL file: the database stores only their names. The 16 image files are in
 `providers/storage/app/private/` of the package (see `INSTALL_GUIDE.md`, section 5). Without them, pictures are missing.
@@ -81,10 +81,11 @@ SELECT COUNT(*) FROM legacy_pair_suggestions WHERE status = 'suggested';  -- 195
 SELECT COUNT(*) FROM legacy_row_decisions;                                -- 7
 SELECT COUNT(*) FROM legacy_type_mappings WHERE status = 'provisional';   -- 0
 SELECT COUNT(*) FROM audit_events;                                        -- 2999
-SELECT email, role, is_active FROM users;       -- 1 row: admin@euro-assist.com, admin, 1 (activation pending)
+SELECT email, role, is_active, must_change_password FROM users;   -- 1 row: admin@euro-assist.com, admin, 1, 1
+SELECT COUNT(*) FROM migrations;                                   -- 14
 SELECT name FROM provider_translations WHERE locale = 'ar' LIMIT 3;       -- Arabic must display correctly, not ????
 ```
-Then on the server: `php artisan migrate --force` must print **Nothing to migrate**.
+Then on the server: `php artisan migrate --force` must print **Nothing to migrate**. Do **not** print or query the password hash.
 
 If a number differs, stop and send the query and its result to King; do not continue the installation.
 If the Arabic text shows as `????` or mojibake, the import used the wrong character set: drop the **V2** database

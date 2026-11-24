@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\Permission;
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -36,8 +37,9 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiters();
 
         // Livewire update requests bypass route middleware unless it is persistent: make sure a
-        // deactivated account loses access to Livewire actions too.
-        Livewire::addPersistentMiddleware([EnsureUserIsActive::class]);
+        // deactivated account, or one that must still replace a temporary password, loses access to
+        // Livewire actions too.
+        Livewire::addPersistentMiddleware([EnsureUserIsActive::class, EnsurePasswordIsChanged::class]);
     }
 
     /**

@@ -33,6 +33,9 @@ So a fresh sync is *not* just "export the database again".
       `legacy:map-types --from-legacy` → `legacy:apply --actor=<temporary local admin> --accept-provisional-types` →
       `legacy:suggest-pairs` → `legacy:reconcile --expect-baseline` →
       `legacy:import-users` (activation policy: identities and roles only, never the old passwords; report the account count to King);
+      the pre-activation of `admin@euro-assist.com` (ADR-019) is **repeated for every new build**: a NEW temporary password is generated, only its
+      bcrypt hash (cost 12) and `must_change_password = 1` are stored, the plaintext goes to a protected file outside the package and outside Git,
+      and `build_release.py` is run with `--temp-admin-email admin@euro-assist.com` (without that option it refuses any password hash);
    3. **re-applies the reviewed decisions.** The current manifest is *not* valid for the new data (it is bound to the old
       snapshot and the command refuses it). The independent reviewer repeats the review on the NEW snapshot and delivers a new
       manifest in the same schema (`schema_version` 1.0) with its SHA-256. Then:

@@ -96,24 +96,33 @@ php artisan migrate --force               # expected: "Nothing to migrate."
 ```
 Do **not** run `db:seed` on an imported database: the 30 provider types are already in the SQL file.
 
-## 8. Activate the existing administrator `admin@euro-assist.com`
+## 8. First sign-in of the existing administrator `admin@euro-assist.com`
 
-The SQL file carries the legacy administrator's identity (`admin@euro-assist.com`, role Admin) **without any usable
-password** (ADR-016, activation policy). Nobody can sign in with it until it is activated. Do not create a second
-administrator with a different e-mail. With King's authorization, the account holder (or IT in their presence) runs,
-in an **interactive** console (RDP/SSH, not a piped or scheduled command):
+The SQL file carries the legacy administrator's identity (`admin@euro-assist.com`, role Admin) **with a temporary password**
+(ADR-019). Only the password's bcrypt hash is stored in the database; the temporary password itself is **not** in the ZIP and was
+never committed anywhere: King sends it to you in a separate message. The account is flagged "must change password".
+
+1. Open `https://<host>/login` and sign in with `admin@euro-assist.com` and the temporary password.
+2. The application opens the page **"Replace your temporary password"** and allows nothing else (every other page and every
+   action redirects or is refused) until you enter the temporary password once more and choose a new one
+   (12+ characters, letters and numbers, different from the temporary one; typed twice). Sign-out stays available.
+3. The new password is known only to its holder. The temporary password stops working at that moment; every other session
+   of the account is ended. Do not write the new password into tickets or chat.
+4. Then create the other staff accounts from **Users** (Admin / Editor / Viewer); they receive a password-set e-mail once SMTP
+   is configured. Users shows a "Temporary password" badge on the account until the change is done.
+
+Do this **right after the import and before the site is reachable by anyone else**: until the password is replaced, whoever has
+the temporary password can sign in. If the temporary password is lost or the change page cannot be used, an authorized person
+runs, in an **interactive** console (RDP/SSH, not a piped or scheduled command), with King's authorization:
 
 ```bash
 php artisan users:set-password admin@euro-assist.com
 ```
-In production it first asks *"This is PRODUCTION. Set a new password for this account (owner-authorized)?"* — answer
-`yes`. The new password is then typed **twice, hidden** (min. 12 characters, letters and numbers). It is never shown,
-stored in a file or logged; the action is recorded in the Audit log. Then sign in and create the other staff accounts
-from **Users** (Admin / Editor / Viewer); they receive a password-set e-mail once SMTP is configured.
+(In production it first asks for an explicit confirmation; the new password is typed twice, hidden, never shown, stored in a file
+or logged; the action is recorded in the Audit log and the "must change" flag is cleared.)
 
-The old system's password is **not** transferred and the live site's account is not changed. Users → the account shows
-"Activation pending" until this step is done. `php artisan users:provision` remains available only for an additional,
-separate account if King asks for one.
+Do not create a second administrator with a different e-mail. The old system's password is **not** transferred and the live
+site's account is not changed. `php artisan users:provision` remains available only for an additional, separate account if King asks.
 
 ## 9. Production caches, queue and scheduler
 

@@ -4,6 +4,8 @@ This log describes **delivered application behavior**, not planned features. Kee
 
 ## Unreleased
 
+- 2026-11-24 (release candidate 2.0.0-rc.5, not deployed): the Admin account `admin@euro-assist.com` ships ready to sign in with a temporary password (sent separately; only its hash is in the database). The first sign-in forces a password change before anything else can be used; the Users screen shows a "Temporary password" badge until then.
+
 - 2026-11-23 (release candidate 2.0.0-rc.3, not deployed): verified English/Arabic pairs of the same branch are merged into one provider with both languages (790 of the owner's 894 proposals passed V2 re-verification; 104 doubtful pairs stay separate for review); the 4 plural type labels are approved; 5 "Eye Center" rows mapped to Optics and 2 broken map links repaired (2 Eye Center rows still held for review). Legacy pictures are back: provider photos, featured logos and the old per-type default pictures; staff can upload, replace or remove a provider photo. Dashboard shows a small Admin-only "Migration review" strip instead of the large yellow banner. Login password eye toggle works again. Arabic screens: translated file pickers, shorter import wording, cleaner dashboard tiles, no "V2" jargon.
 
 - 2026-11-23 (release candidate 2.0.0-rc.2, not deployed): the legacy administrator `admin@euro-assist.com` is preserved with the Admin role and must be activated with `php artisan users:set-password` (hidden prompt); the old password is not transferred. Users screen shows "Activation pending". New `legacy:import-users` for the fresh-data sync.

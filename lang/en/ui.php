@@ -346,6 +346,8 @@ return [
     ],
 
     'users' => [
+        'password_change_required' => 'Temporary password',
+        'password_change_hint' => 'This account must replace its temporary password at the next sign-in before it can do anything else.',
         'activation_pending' => 'Activation pending',
         'activation_pending_hint' => 'Migrated account: no password is set yet. Activate it with users:set-password or a password-reset link.',
         'subtitle' => 'Invite people and manage their role and access.',

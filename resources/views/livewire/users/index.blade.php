@@ -37,6 +37,9 @@
                         <td class="px-3 py-3"><x-ui.role-badge :role="$user->role" /></td>
                         <td class="px-3 py-3">
                             <x-ui.status-badge :active="$user->is_active" />
+                            @if ($user->must_change_password)
+                                <x-ui.badge tone="amber" class="mt-1" :title="__('ui.users.password_change_hint')">{{ __('ui.users.password_change_required') }}</x-ui.badge>
+                            @endif
                             @if ($user->requiresActivation())
                                 <x-ui.badge tone="amber" class="mt-1" :title="__('ui.users.activation_pending_hint')">{{ __('ui.users.activation_pending') }}</x-ui.badge>
                             @endif

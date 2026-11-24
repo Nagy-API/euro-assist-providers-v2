@@ -31,12 +31,12 @@ Point the domain's **document root to `providers/public`**. Everything else in `
 | Included | Not included (by design) |
 |---|---|
 | Application code, production `vendor/`, built CSS/JS, Cairo font, official logos | `.env` or any real password, key or token |
-| `public/.htaccess` (Apache / Plesk Linux) and `public/web.config` (IIS / Plesk Windows) | Any usable password, password hashes, sessions, API tokens |
+| `public/.htaccess` (Apache / Plesk Linux) and `public/web.config` (IIS / Plesk Windows) | Any password, key or token other than the ONE temporary bcrypt hash of the Admin account described below; sessions, API tokens |
 | SQL file with **1,402 provider records** (790 of them are English+Arabic pairs merged after verification, 612 single-language), 3 featured providers, 30 provider types and full migration provenance | Files of the old `uploads` folder that no migrated record refers to |
 | **16 migrated pictures** (5 provider photos, 3 featured logos, 8 default type pictures) under `providers/storage/app/private/` | Node.js (not needed on the server) |
 | Installation, verification, backup and rollback guides | |
 
-The legacy administrator `admin@euro-assist.com` is included as an identity with Admin role but **no usable password**; it is activated on the server after the import (`php artisan users:set-password admin@euro-assist.com`, hidden prompt).
+The legacy administrator `admin@euro-assist.com` (Admin role) is included **ready to sign in with a TEMPORARY password**. Only its bcrypt hash is in the SQL; King sends you the temporary password **separately** (never in the ZIP, never in the same message). The first sign-in forces the holder to replace it: until then nothing else in the application can be used (ADR-019).
 
 ## Ten steps (details in INSTALL_GUIDE.md)
 
@@ -47,7 +47,7 @@ The legacy administrator `admin@euro-assist.com` is included as an identity with
    its `public` subfolder (`providers-v2/public`); enable Plesk's HTTP to HTTPS 301 redirect.
 5. Create `providers/.env` from `production.env.example`; run `php artisan key:generate --force`.
 6. Import the SQL into the empty database and compare the counts (DATABASE_IMPORT.md); run `php artisan migrate --force` (expects "Nothing to migrate").
-7. Activate the existing Admin: `php artisan users:set-password admin@euro-assist.com` (interactive, hidden prompt, King's authorization).
+7. Sign in as `admin@euro-assist.com` with the temporary password King sent you, **immediately after the import** and over HTTPS; the page asks for a new password (12+ characters, letters and numbers). Do this before anyone else can reach the site.
 8. Cache configuration, add the every-minute scheduled task, check HTTPS.
 9. Run VERIFY_AND_SMOKE_TEST.md and give King the results.
 10. Production only after King's written approval **and** a fresh data sync (FRESH_DATA_SYNC.md). The old site stays untouched and is the rollback.

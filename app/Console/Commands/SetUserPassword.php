@@ -54,6 +54,7 @@ class SetUserPassword extends Command
         // verbatim, so a typed bcrypt-shaped string (or the activation placeholder) would otherwise
         // become the stored hash itself (review R5).
         $user->password = Hash::make($plain);
+        $user->must_change_password = false; // the operator just set a password chosen by its holder
         $user->save();
         $user->revokeAllAccess();
         $audit->record('user.password_set_by_operator', $user, 'success', [], null);

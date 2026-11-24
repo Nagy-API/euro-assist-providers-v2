@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Support\ApiErrorRenderer;
 use App\Http\Middleware\ApiIpRateLimit;
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
@@ -37,7 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // The per-IP API ceiling must run before any authentication middleware (priority sorting
         // would otherwise move authentication first and invalid tokens would never be counted).
         $middleware->prependToPriorityList(before: AuthenticatesRequests::class, prepend: ApiIpRateLimit::class);
-        $middleware->alias(['active' => EnsureUserIsActive::class]);
+        $middleware->alias(['active' => EnsureUserIsActive::class, 'password.fresh' => EnsurePasswordIsChanged::class]);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));
     })

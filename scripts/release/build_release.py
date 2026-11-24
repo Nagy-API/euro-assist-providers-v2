@@ -245,9 +245,16 @@ def _column_names(body: str) -> list[str]:
     return names
 
 
-def check_data_sql(path: Path) -> None:
+BCRYPT_HASH = r'\$2y\$(?:1[2-9]|2\d|3[01])\$[./A-Za-z0-9]{53}'  # cost 12-31 (valid bcrypt costs are 4-31)
+
+
+def check_data_sql(path: Path, temp_admin_email: str | None = None) -> None:
     """ALLOWLIST check of a data dump (review R6): every statement must be one of the shapes a plain
     mariadb-dump/mysqldump of the release database produces, otherwise the dump is refused.
+
+    `temp_admin_email` (ADR-019, explicit owner opt-in) additionally allows EXACTLY ONE bcrypt hash
+    (`$2y$`, cost 12+): the password of the users row with that e-mail, which must carry
+    must_change_password = 1 and no remember token. Any other hash, anywhere, is still refused.
 
     Allowed: known session SETs (also as /*!NNNNN ... */ version comments), /*!40000 ALTER TABLE `t`
     DISABLE|ENABLE KEYS */, CREATE TABLE `t` (...) ENGINE=..., LOCK TABLES `t` WRITE, UNLOCK TABLES and
@@ -270,8 +277,17 @@ def check_data_sql(path: Path) -> None:
     insert = re.compile(rf'(?is)INSERT\s+INTO\s+({ident})\s*(\((?:\s*`[A-Za-z0-9_]+`\s*,?)+\))?\s*VALUES\s*(\(.*)')
 
     without_placeholder = text.replace(ACTIVATION_PLACEHOLDER, '')
+    allowed_hash: str | None = None
+    if temp_admin_email:
+        found = re.findall(BCRYPT_HASH, without_placeholder)
+        if len(found) > 1 or (found and without_placeholder.count(found[0]) != 1):
+            sys.exit('Refusing the data SQL: more than one temporary password hash.')
+        if found:
+            allowed_hash = found[0]
+            without_placeholder = without_placeholder.replace(allowed_hash, '')
     if re.search(r'\$2[abxy]\$', without_placeholder) or re.search(r'(?i)\$argon2', text):
         sys.exit('Refusing the data SQL: it contains a password hash other than the activation placeholder.')
+    allowed_hash_used = False
 
     users_cols: list[str] | None = None
     for stmt in _split_statements(text):
@@ -313,17 +329,28 @@ def check_data_sql(path: Path) -> None:
                     continue
                 if re.search(r'(?i)\$argon2', value):
                     sys.exit('Refusing the data SQL: it contains an argon2 password hash.')
-                if re.search(r'\$2[abxy]\$', value) and value != ACTIVATION_PLACEHOLDER:
+                if re.search(r'\$2[abxy]\$', value) and value != ACTIVATION_PLACEHOLDER and not (table == 'users' and value == allowed_hash):
                     sys.exit('Refusing the data SQL: it contains a usable password hash (only the activation placeholder is allowed).')
             if table == 'users':
                 layout = cols or users_cols
                 if not layout or 'password' not in layout or len(layout) != len(row):
                     sys.exit('Refusing the data SQL: users rows without a known column layout.')
                 values = dict(zip(layout, row))
-                if values.get('password') != ACTIVATION_PLACEHOLDER:
+                password = values.get('password')
+                if password == allowed_hash and allowed_hash is not None:
+                    if (values.get('email') or '').lower() != (temp_admin_email or '').lower() or values.get('must_change_password') != '1':
+                        sys.exit('Refusing the data SQL: the temporary hash must belong to the named account and require a password change.')
+                    if allowed_hash_used:
+                        sys.exit('Refusing the data SQL: more than one users row with a temporary hash.')
+                    allowed_hash_used = True
+                elif password != ACTIVATION_PLACEHOLDER:
                     sys.exit('Refusing the data SQL: a users row has a password other than the activation placeholder.')
                 if values.get('remember_token') is not None:
                     sys.exit('Refusing the data SQL: a users row has a remember token.')
+    if allowed_hash is not None and not allowed_hash_used:
+        sys.exit('Refusing the data SQL: a password hash appears outside the temporary users row.')
+    if temp_admin_email and allowed_hash is None:
+        sys.exit('Refusing the data SQL: --temp-admin-email was given but the SQL has no temporary hash.')
 
 
 MEDIA_DIRS = ('provider-photos', 'type-icons', 'featured-logos')
@@ -389,6 +416,7 @@ def main() -> int:
     ap.add_argument('--php', default='php')
     ap.add_argument('--composer', required=True, help='path to composer.phar')
     ap.add_argument('--npm', default='npm')
+    ap.add_argument('--temp-admin-email', help='ADR-019 opt-in: the data SQL may contain ONE temporary bcrypt hash, for this account (must require a password change)')
     ap.add_argument('--media-dir', type=Path, help='private folder with provider-photos/, type-icons/, featured-logos/ (ADR-018)')
     args = ap.parse_args()
     args.npm = shutil.which(args.npm) or args.npm  # resolves npm.cmd on Windows
@@ -446,7 +474,7 @@ def main() -> int:
             shutil.copy2(item, target)
     data_rel = None
     if args.data_sql:
-        check_data_sql(args.data_sql)
+        check_data_sql(args.data_sql, args.temp_admin_email)
         (root / 'database').mkdir(exist_ok=True)
         shutil.copy2(args.data_sql, root / 'database' / args.data_sql.name)
         data_rel = f'database/{args.data_sql.name}'

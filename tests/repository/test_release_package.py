@@ -169,7 +169,7 @@ class ReleasePackageTest(unittest.TestCase):
         for doc in docs:
             text = read(doc)
             self.assertEqual([c for c in text if ord(c) < 32 and c not in (chr(9), chr(10), chr(13))], [], f"control character in {doc.name}")
-            for stale in ("2,185", "334 ", "2,188", "RELEASE_VALIDATION", "D8 pending", "billing", "not migrated", "rc.2"):
+            for stale in ("2,185", "334 ", "2,188", "RELEASE_VALIDATION", "D8 pending", "billing", "not migrated", "rc.2", "Activation pending", "no usable password"):
                 self.assertNotIn(stale, text, f"stale text {stale!r} in {doc.name}")
         for doc in sorted((ROOT / "docs").glob("*.md")) + [ROOT / "README.md", ROOT / "AGENTS.md"]:
             bad = [c for c in read(doc) if ord(c) < 32 and c not in (chr(9), chr(10), chr(13))]
@@ -177,11 +177,56 @@ class ReleasePackageTest(unittest.TestCase):
         imp = read(PKG / "DATABASE_IMPORT.md")
         for fact in ("1,402", "790", "2,192", "2,999", "-- 195", "-- 2192", "-- 1402", "-- 5"):
             self.assertIn(fact, imp)
+        self.assertIn("must_change_password", imp)
+        self.assertIn("ADR-019", read(PKG / "INSTALL_GUIDE.md"))
+        self.assertIn("--temp-admin-email", read(PKG / "FRESH_DATA_SYNC.md"))
         self.assertIn("1,402", read(PKG / "VERIFY_AND_SMOKE_TEST.md"))
         fresh = read(PKG / "FRESH_DATA_SYNC.md")
         for needed in ("legacy:apply-review-manifest", "legacy:import-media", "--media-dir", "uploads/logos"):
             self.assertIn(needed, fresh)
         self.assertIn("storage/app/private", read(PKG / "BACKUP_AND_ROLLBACK.md"))
+
+    def test_temporary_admin_hash_is_allowed_only_by_explicit_opt_in_and_only_once(self):
+        """ADR-019: exactly one bcrypt hash, for the named account, flagged must_change_password."""
+        spec = importlib.util.spec_from_file_location("builder", BUILDER)
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        table = ("CREATE TABLE `users` (\n  `id` bigint NOT NULL,\n  `email` varchar(255),\n  `password` varchar(255),\n"
+                 "  `must_change_password` tinyint(1) NOT NULL DEFAULT 0,\n  `remember_token` varchar(100),\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB;\n"
+                 "CREATE TABLE `providers` (`id` int, `name` text) ENGINE=InnoDB;\n")
+        h1 = "$2y$12$" + "A" * 53
+        h2 = "$2y$12$" + "B" * 53
+        mail = "admin@example.test"
+
+        def sql(*rows, extra=""):
+            return table + "INSERT INTO `users` VALUES " + ",".join(rows) + ";\n" + extra
+
+        good = sql(f"(1,'{mail}','{h1}',1,NULL)")
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "t.sql"
+
+            def run(text, opt=mail):
+                f.write_text(text, encoding="utf-8")
+                builder.check_data_sql(f, opt)
+
+            run(good)
+            run(sql(f"(1,'{mail}','{h1}',1,NULL)", f"(2,'x@example.test','{builder.ACTIVATION_PLACEHOLDER}',0,NULL)"))
+            refused = {
+                "no opt-in": (good, None),
+                "flag 0": (sql(f"(1,'{mail}','{h1}',0,NULL)"), mail),
+                "other account": (sql(f"(1,'other@example.test','{h1}',1,NULL)"), mail),
+                "two hashes": (sql(f"(1,'{mail}','{h1}',1,NULL)", f"(2,'{mail}','{h2}',1,NULL)"), mail),
+                "hash in another table": (good + f"INSERT INTO `providers` VALUES (1,'{h1}');\n", mail),
+                "hash repeated in a comment": (good + f"-- {h1}\n", mail),
+                "remember token": (sql(f"(1,'{mail}','{h1}',1,'tok')"), mail),
+                "cost 04": (sql(f"(1,'{mail}','$2y$04$" + "A" * 53 + "',1,NULL)"), mail),
+                "2a prefix": (sql(f"(1,'{mail}','$2a$12$" + "A" * 53 + "',1,NULL)"), mail),
+                "opt-in without any hash": (sql(f"(1,'{mail}','{builder.ACTIVATION_PLACEHOLDER}',0,NULL)"), mail),
+                "plain text password": (sql(f"(1,'{mail}','plain',1,NULL)"), mail),
+            }
+            for label, (text, opt) in refused.items():
+                with self.assertRaises(SystemExit, msg=label):
+                    run(text, opt)
 
     def test_media_folder_guard(self):
         spec = importlib.util.spec_from_file_location("builder", BUILDER)
