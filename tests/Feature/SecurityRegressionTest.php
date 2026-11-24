@@ -51,7 +51,7 @@ class SecurityRegressionTest extends TestCase
 
         (new AppServiceProvider($this->app))->boot();
 
-        $link = url('/reset-password/abc');
+        $link = url('/login');
         $this->assertStringStartsWith('https://providers.example.test/', $link);
 
         URL::forceRootUrl(null);
@@ -184,32 +184,27 @@ class SecurityRegressionTest extends TestCase
     }
 
     // M-2 -------------------------------------------------------------------------------
-    public function test_password_reset_ends_other_sessions(): void
+    public function test_admin_password_reset_ends_other_sessions(): void
     {
         config(['session.driver' => 'database']);
+        $admin = User::factory()->admin()->create();
         $user = User::factory()->create();
         DB::table('sessions')->insert(['id' => 'other-device', 'user_id' => $user->id, 'payload' => '', 'last_activity' => time()]);
 
-        $this->post('/reset-password', [
-            'token' => Password::createToken($user), 'email' => $user->email,
-            'password' => 'Another-Strong-1234', 'password_confirmation' => 'Another-Strong-1234',
-        ])->assertRedirect('/login');
+        app(UserService::class)->resetPassword($admin, $user, ['password' => 'Another-Strong-1234', 'password_confirmation' => 'Another-Strong-1234']);
 
         $this->assertDatabaseMissing('sessions', ['id' => 'other-device']);
     }
 
     // Review R2 / L2: credentials changes close every way in, API tokens included ------------
-    public function test_password_reset_and_deactivation_revoke_api_tokens(): void
+    public function test_admin_password_reset_and_deactivation_revoke_api_tokens(): void
     {
         $admin = User::factory()->admin()->create();
         $user = User::factory()->viewer()->create();
         $principal = fn () => ApiPrincipal::query()->findOrFail($user->id);
 
         $principal()->createToken('t1', ['providers:read']);
-        $this->post('/reset-password', [
-            'token' => Password::createToken($user), 'email' => $user->email,
-            'password' => 'Another-Strong-1234', 'password_confirmation' => 'Another-Strong-1234',
-        ])->assertRedirect('/login');
+        app(UserService::class)->resetPassword($admin, $user, ['password' => 'Another-Strong-1234', 'password_confirmation' => 'Another-Strong-1234']);
         $this->assertSame(0, $principal()->tokens()->count(), 'password reset must revoke API tokens');
 
         $plain = $principal()->createToken('t2', ['providers:read'])->plainTextToken;
@@ -249,13 +244,13 @@ class SecurityRegressionTest extends TestCase
         app(UserService::class)->changeRole($admin, $stale, Role::Viewer);
     }
 
-    public function test_invite_with_mixed_case_duplicate_is_a_validation_error(): void
+    public function test_create_with_mixed_case_duplicate_is_a_validation_error(): void
     {
         $admin = User::factory()->admin()->create();
         User::factory()->create(['email' => 'person@example.test']);
 
         $this->expectException(ValidationException::class);
-        app(UserService::class)->invite($admin, ['name' => 'P', 'email' => 'Person@Example.TEST', 'role' => 'viewer']);
+        app(UserService::class)->create($admin, ['name' => 'P', 'email' => 'Person@Example.TEST', 'role' => 'viewer', 'password' => 'Correct-Horse-9999', 'password_confirmation' => 'Correct-Horse-9999']);
     }
 
     // M-4 -------------------------------------------------------------------------------

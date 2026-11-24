@@ -122,36 +122,21 @@ class AuthenticationTest extends TestCase
         $this->actingAs(User::factory()->create())->get('/login')->assertRedirect('/dashboard');
     }
 
-    public function test_password_reset_flow_works_and_does_not_reveal_unknown_accounts(): void
+    public function test_email_based_recovery_routes_do_not_exist_and_login_has_no_forgot_link(): void
     {
-        Notification::fake();
-        $user = User::factory()->create();
+        $this->get('/forgot-password')->assertNotFound();
+        $this->post('/forgot-password', ['email' => 'a@example.test'])->assertNotFound();
+        $this->get('/reset-password/abc')->assertNotFound();
+        $this->post('/reset-password', ['token' => 'x', 'email' => 'a@example.test'])->assertNotFound();
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.request'));
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.reset'));
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.email'));
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.update'));
 
-        $known = $this->post('/forgot-password', ['email' => $user->email]);
-        $unknown = $this->post('/forgot-password', ['email' => 'ghost@example.test']);
-        $this->assertSame(session('status'), session('status'));
-        $known->assertSessionHas('status');
-        $unknown->assertSessionHas('status');
-        Notification::assertSentTo($user, ResetPassword::class);
-        Notification::assertCount(1);
-
-        $token = Password::createToken($user);
-        $this->post('/reset-password', [
-            'token' => $token, 'email' => $user->email,
-            'password' => 'Correct-Horse-9999', 'password_confirmation' => 'Correct-Horse-9999',
-        ])->assertRedirect('/login');
-
-        $this->assertTrue(\Hash::check('Correct-Horse-9999', $user->fresh()->password));
-    }
-
-    public function test_weak_passwords_are_rejected_on_reset(): void
-    {
-        $user = User::factory()->create();
-        $token = Password::createToken($user);
-
-        $this->post('/reset-password', [
-            'token' => $token, 'email' => $user->email, 'password' => 'short1', 'password_confirmation' => 'short1',
-        ])->assertSessionHasErrors('password');
+        $this->withoutVite();
+        $this->get('/login')->assertOk()->assertDontSee('forgot', false);
+        app()->setLocale('ar');
+        $this->get('/login')->assertOk()->assertDontSee('نسيت', false);
     }
 
     public function test_locale_switch_is_validated_and_persisted(): void

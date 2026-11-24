@@ -15,7 +15,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#d10000">
     <title>{{ $pageTitle }}</title>
-    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <x-layouts.favicon />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
@@ -65,7 +65,7 @@
                         <span class="ea-avatar size-9 text-sm ring-2 ring-white/25" aria-hidden="true">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
                         <div class="min-w-0 flex-1 leading-tight">
                             <p class="truncate text-sm font-bold text-white" dir="auto">{{ $user->name }}</p>
-                            <p class="truncate text-xs text-slate-400">{{ $user->role->label() }}</p>
+                            <p class="truncate text-xs text-slate-400">{{ $user->role?->label() }}</p>
                         </div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -122,8 +122,12 @@
                             <div class="px-3 py-2">
                                 <p class="truncate text-sm font-bold text-slate-900" dir="auto">{{ $user->name }}</p>
                                 <p class="truncate text-xs text-slate-600"><bdi dir="ltr">{{ $user->email }}</bdi></p>
-                                <p class="mt-2"><x-ui.role-badge :role="$user->role" /></p>
+                                <p class="mt-2">@if ($user->role)<x-ui.role-badge :role="$user->role" />@endif</p>
                             </div>
+                            <a href="{{ route('password.change') }}" class="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-sm font-semibold text-slate-800 hover:bg-brand-50 hover:text-brand-800">
+                                <x-ui.icon name="shield" class="size-4" />
+                                {{ __('auth.account_menu') }}
+                            </a>
                             <form method="POST" action="{{ route('logout') }}" class="border-t border-slate-100 pt-1">
                                 @csrf
                                 <button type="submit" class="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-start text-sm font-semibold text-slate-800 hover:bg-brand-50 hover:text-brand-800">

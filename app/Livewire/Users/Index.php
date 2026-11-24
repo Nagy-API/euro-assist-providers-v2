@@ -16,7 +16,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * User administration (Admin, users.manage): invite, change role, activate/deactivate.
+ * User administration (Admin, users.manage): create with a password, reset a password, change role,
+ * activate/deactivate. No e-mail is involved anywhere (ADR-020).
  * Accounts are never deleted. All mutations go through UserService, which enforces the
  * last-administrator rule, locks rows, revokes sessions on deactivation and writes audit events.
  */
@@ -28,7 +29,7 @@ class Index extends Component
     #[Url(as: 'q', except: '')]
     public string $search = '';
 
-    /** invite|manage|null */
+    /** create|manage|reset|null */
     public ?string $dialog = null;
 
     #[Locked]
@@ -39,6 +40,12 @@ class Index extends Component
     public string $email = '';
 
     public string $role = 'viewer';
+
+    public string $password = '';
+
+    public string $password_confirmation = '';
+
+    public bool $mustChange = true;
 
     public string $manageRole = 'viewer';
 
@@ -59,21 +66,26 @@ class Index extends Component
         $this->resetPage();
     }
 
-    public function openInvite(): void
+    public function openCreate(): void
     {
         $this->authorize('create', User::class);
-        $this->reset(['name', 'email']);
+        $this->reset(['name', 'email', 'password', 'password_confirmation']);
         $this->role = Role::Viewer->value;
+        $this->mustChange = true;
         $this->resetErrorBag();
-        $this->dialog = 'invite';
+        $this->dialog = 'create';
     }
 
-    public function invite(UserService $users): void
+    public function create(UserService $users): void
     {
         $this->authorize('create', User::class);
 
         try {
-            $user = $users->invite(auth()->user(), ['name' => $this->name, 'email' => $this->email, 'role' => $this->role]);
+            $user = $users->create(auth()->user(), [
+                'name' => $this->name, 'email' => $this->email, 'role' => $this->role,
+                'password' => $this->password, 'password_confirmation' => $this->password_confirmation,
+                'must_change_password' => $this->mustChange,
+            ]);
         } catch (ValidationException $e) {
             $this->setErrorBag($e->validator->errors());
 
@@ -81,7 +93,39 @@ class Index extends Component
         }
 
         $this->closeDialog();
-        $this->notify(__('ui.users.invited', ['email' => $user->email]));
+        $this->notify(__('ui.users.created', ['email' => $user->email]));
+    }
+
+    public function openReset(int $id): void
+    {
+        $target = User::query()->findOrFail($id);
+        $this->authorize('update', $target);
+
+        $this->reset(['password', 'password_confirmation']);
+        $this->mustChange = true;
+        $this->targetId = $target->getKey();
+        $this->resetErrorBag();
+        $this->dialog = 'reset';
+    }
+
+    public function resetPassword(UserService $users): void
+    {
+        $target = User::query()->findOrFail((int) $this->targetId);
+        $this->authorize('update', $target);
+
+        try {
+            $users->resetPassword(auth()->user(), $target, [
+                'password' => $this->password, 'password_confirmation' => $this->password_confirmation,
+                'must_change_password' => $this->mustChange,
+            ]);
+        } catch (ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
+
+            return;
+        }
+
+        $this->closeDialog();
+        $this->notify(__('ui.users.password_reset_done', ['name' => $target->name]));
     }
 
     public function openManage(int $id): void
@@ -90,7 +134,7 @@ class Index extends Component
         $this->authorize('update', $target);
 
         $this->targetId = $target->getKey();
-        $this->manageRole = $target->role->value;
+        $this->manageRole = ($target->role ?? Role::Viewer)->value;
         $this->manageActive = (bool) $target->is_active;
         $this->resetErrorBag();
         $this->dialog = 'manage';
@@ -140,6 +184,8 @@ class Index extends Component
     {
         $this->dialog = null;
         $this->targetId = null;
+        // Never keep a typed password in component state once the dialog is gone.
+        $this->reset(['password', 'password_confirmation']);
         $this->resetErrorBag();
     }
 

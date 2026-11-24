@@ -14,12 +14,11 @@
                 <x-ui.icon name="eye" class="size-5" />
             </button>
         </div>
-        <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <label class="inline-flex items-center gap-2 text-sm text-slate-800">
                 <input id="remember" type="checkbox" name="remember" value="1" class="size-5 rounded border-slate-500">
                 {{ __('auth.remember') }}
             </label>
-            <a class="inline-block py-1 text-sm font-semibold text-brand-700 underline-offset-4 hover:underline" href="{{ route('password.request') }}">{{ __('auth.forgot') }}</a>
         </div>
         <x-ui.button type="submit" class="min-h-12 w-full bg-[image:var(--ea-hero)] text-base">
             {{ __('auth.sign_in') }}

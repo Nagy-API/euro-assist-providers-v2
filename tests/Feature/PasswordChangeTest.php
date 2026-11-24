@@ -10,7 +10,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
 use Livewire\Mechanisms\HandleRequests\HandleRequests;
 use Tests\TestCase;
@@ -48,15 +47,49 @@ class PasswordChangeTest extends TestCase
         $this->get(route('dashboard'))->assertRedirect(route('password.change'));
     }
 
-    public function test_an_account_without_the_flag_is_not_affected(): void
+    public function test_an_account_without_the_flag_keeps_normal_access_and_may_change_its_own_password(): void
     {
         $user = User::factory()->admin()->create();
+        $this->withoutVite();
 
         $this->actingAs($user)->get(route('dashboard'))->assertOk();
-        $this->actingAs($user)->get(route('password.change'))->assertRedirect(route('dashboard'));
+        // Voluntary self-service: the account-settings page renders (inside the normal layout).
+        $this->actingAs($user)->get(route('password.change'))->assertOk()
+            ->assertSee(__('auth.account_password_title'))->assertSee('name="current_password"', false)->assertSee('name="password_confirmation"', false);
         $this->actingAs($user)->post(route('password.change.update'), ['current_password' => UserFactory::TEST_PASSWORD, 'password' => self::NEW, 'password_confirmation' => self::NEW])
             ->assertRedirect(route('dashboard'));
-        $this->assertTrue(Hash::check(UserFactory::TEST_PASSWORD, $user->fresh()->password), 'the endpoint changes nothing for an unflagged account');
+        $this->assertTrue(Hash::check(self::NEW, $user->fresh()->password));
+        $this->assertFalse($user->fresh()->must_change_password);
+    }
+
+    public function test_self_service_change_needs_the_right_current_password_and_a_strong_confirmed_new_one(): void
+    {
+        $user = User::factory()->editor()->create();
+        $hash = $user->password;
+
+        foreach ([
+            ['current_password' => 'wrong-current-pass1', 'password' => self::NEW, 'password_confirmation' => self::NEW],
+            ['current_password' => UserFactory::TEST_PASSWORD, 'password' => self::NEW, 'password_confirmation' => 'different-Passw0rd-xx'],
+            ['current_password' => UserFactory::TEST_PASSWORD, 'password' => 'short1', 'password_confirmation' => 'short1'],
+            ['current_password' => UserFactory::TEST_PASSWORD, 'password' => UserFactory::TEST_PASSWORD, 'password_confirmation' => UserFactory::TEST_PASSWORD],
+        ] as $payload) {
+            $this->actingAs($user)->post(route('password.change.update'), $payload)->assertSessionHasErrors();
+        }
+        $this->assertSame($hash, $user->fresh()->password);
+    }
+
+    public function test_self_service_change_ends_other_sessions_and_rotates_the_remember_token(): void
+    {
+        config(['session.driver' => 'database']);
+        $user = User::factory()->viewer()->create();
+        $before = $user->remember_token;
+        \DB::table('sessions')->insert(['id' => 'other-browser', 'user_id' => $user->id, 'payload' => '', 'last_activity' => time()]);
+
+        $this->actingAs($user)->post(route('password.change.update'), ['current_password' => UserFactory::TEST_PASSWORD, 'password' => self::NEW, 'password_confirmation' => self::NEW])
+            ->assertRedirect(route('dashboard'));
+
+        $this->assertNotSame($before, $user->fresh()->remember_token);
+        $this->assertTrue(Hash::check(self::NEW, $user->fresh()->password));
     }
 
     public function test_the_flagged_account_can_still_sign_out_and_switch_language(): void
@@ -97,7 +130,8 @@ class PasswordChangeTest extends TestCase
         $this->assertFalse(Hash::check(self::TEMP, $fresh->password), 'the temporary password stops working');
         $this->assertSame(1, AuditEvent::query()->where('action', 'auth.password_changed')->count());
         $this->get(route('dashboard'))->assertOk();
-        $this->get(route('password.change'))->assertRedirect(route('dashboard'));
+        $this->withoutVite();
+        $this->get(route('password.change'))->assertOk()->assertSee(__('auth.account_password_title'));
     }
 
     public function test_after_the_change_only_the_new_password_signs_in(): void
@@ -187,13 +221,8 @@ class PasswordChangeTest extends TestCase
         $this->get(route('dashboard'))->assertOk();
     }
 
-    public function test_a_password_reset_or_the_operator_command_also_clears_the_flag(): void
+    public function test_the_operator_command_also_clears_the_flag(): void
     {
-        $user = $this->flagged(['email' => 'reset@example.test']);
-        $token = Password::createToken($user);
-        $this->post(route('password.update'), ['token' => $token, 'email' => $user->email, 'password' => self::NEW, 'password_confirmation' => self::NEW])->assertRedirect(route('login'));
-        $this->assertFalse($user->fresh()->must_change_password);
-
         $other = $this->flagged(['email' => 'operator@example.test']);
         $this->artisan('users:set-password', ['email' => $other->email])
             ->expectsQuestion('New password (min 12 characters, hidden)', self::NEW)

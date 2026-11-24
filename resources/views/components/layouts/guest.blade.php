@@ -12,7 +12,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#d10000">
     <title>{{ $plainTitle !== null ? $plainTitle.' · ' : '' }}{{ config('app.name') }}</title>
-    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <x-layouts.favicon />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>

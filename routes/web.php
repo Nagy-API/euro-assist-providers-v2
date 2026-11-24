@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordChangeController;
-use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\LocaleController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -15,10 +14,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store'])->middleware('throttle:login')->name('login.store');
 
-    Route::get('/forgot-password', [PasswordResetController::class, 'requestForm'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendLink'])->middleware('throttle:6,1')->name('password.email');
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'resetForm'])->name('password.reset');
-    Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1')->name('password.update');
+    // No e-mail based password recovery, invitation or verification routes exist (ADR-020): accounts
+    // are created and reset by an administrator, and users change their own password when signed in.
 });
 
 Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')->name('logout');
@@ -28,7 +25,7 @@ Route::post('/logout', [LoginController::class, 'destroy'])->middleware('auth')-
 | area and MUST authorize every action server-side (policies/gates), never only in the UI.
 */
 Route::middleware(['auth', 'active', 'password.fresh'])->group(function () {
-    // The only screens an account with a temporary password may use (ADR-019).
+    // Self-service password change; the only screen an account with a temporary password may use (ADR-019/020).
     Route::get('/account/password', [PasswordChangeController::class, 'show'])->name('password.change');
     Route::post('/account/password', [PasswordChangeController::class, 'update'])->middleware('throttle:6,1')->name('password.change.update');
 

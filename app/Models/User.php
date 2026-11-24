@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\UserRole;
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Http\Controllers\Api\Support\ApiPrincipal;
@@ -58,7 +59,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
-            'role' => Role::class,
+            'role' => UserRole::class,
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
         ];
