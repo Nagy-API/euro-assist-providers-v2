@@ -22,6 +22,17 @@ abstract class TestCase extends BaseTestCase
         config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
     }
 
+    /**
+     * Pages are rendered with the Vite helper stubbed: the PHP test jobs have no frontend build
+     * (public/build is not committed), and the build itself is verified by the CI `assets` job.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->withoutVite();
+    }
+
     protected function guardTestDatabase(Application $app): void
     {
         $driver = (string) $app['config']->get('database.default');
