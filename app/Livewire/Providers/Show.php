@@ -28,6 +28,13 @@ class Show extends Component
     public function mount(Provider $provider): void
     {
         $this->authorize('view', $provider);
+        if ($provider->merged_into_id !== null) {
+            // A merge shell has no content of its own: show the provider it was merged into.
+            $this->providerId = (int) $provider->merged_into_id;
+            $this->redirectRoute('providers.show', $provider->merged_into_id);
+
+            return;
+        }
         $this->guardTrashed($provider);
         $this->providerId = $provider->getKey();
     }

@@ -1,7 +1,7 @@
 <div>
     <x-ui.page-header :title="__('ui.nav.audit')" :subtitle="__('ui.audit.subtitle')" />
 
-    <form wire:submit.prevent class="mb-4 rounded-lg border border-slate-200 bg-white p-4" role="search" aria-label="{{ __('ui.providers.filters') }}">
+    <form wire:submit.prevent class="mb-4 ea-card p-5" role="search" aria-label="{{ __('ui.providers.filters') }}">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <x-ui.field name="action" id="aud-action" type="select" :label="__('ui.audit.action')" wire:model.live="action">
                 <option value="">{{ __('ui.common.all') }}</option>
@@ -26,7 +26,7 @@
     <div wire:loading.delay.short class="mb-2"><x-ui.loading /></div>
 
     @if ($events->isEmpty())
-        <div class="rounded-lg border border-slate-200 bg-white"><x-ui.empty-state :title="__('ui.audit.none')" icon="clipboard">{{ $hasFilters ? __('ui.providers.no_results_hint') : '' }}</x-ui.empty-state></div>
+        <div class="ea-card"><x-ui.empty-state :title="__('ui.audit.none')" icon="clipboard">{{ $hasFilters ? __('ui.providers.no_results_hint') : '' }}</x-ui.empty-state></div>
     @else
         <x-ui.table :caption="__('ui.nav.audit')">
             <thead>

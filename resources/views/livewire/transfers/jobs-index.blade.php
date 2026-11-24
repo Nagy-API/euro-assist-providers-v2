@@ -5,9 +5,9 @@
     </header>
 
     @if ($jobs->isEmpty())
-        <p class="rounded-md border border-dashed border-slate-300 p-4 text-sm text-slate-700">{{ __('transfers.jobs.empty') }}</p>
+        <p class="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-700">{{ __('transfers.jobs.empty') }}</p>
     @else
-        <div class="relative overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <div class="relative overflow-x-auto ea-card">
             <table class="min-w-full text-start text-sm">
                 <thead class="bg-slate-50 text-slate-700">
                     <tr>
@@ -41,9 +41,9 @@
                             <td class="px-3 py-2"><time datetime="{{ \Illuminate\Support\Carbon::parse($job->created_at)->toIso8601String() }}">{{ \Illuminate\Support\Carbon::parse($job->created_at)->format('Y-m-d H:i') }}</time></td>
                             <td class="px-3 py-2 text-end">
                                 @if ($job->kind === 'import')
-                                    <a href="{{ route('imports.show', $job->uuid) }}" class="font-medium text-teal-800 underline underline-offset-2">{{ __('transfers.jobs.open') }}</a>
+                                    <a href="{{ route('imports.show', $job->uuid) }}" class="font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600">{{ __('transfers.jobs.open') }}</a>
                                 @elseif ($job->status === 'completed')
-                                    <a href="{{ route('exports.download', $job->uuid) }}" class="font-medium text-teal-800 underline underline-offset-2">{{ __('transfers.exports.download') }}</a>
+                                    <a href="{{ route('exports.download', $job->uuid) }}" class="font-semibold text-brand-700 underline decoration-brand-200 underline-offset-4 hover:decoration-brand-600">{{ __('transfers.exports.download') }}</a>
                                 @endif
                             </td>
                         </tr>

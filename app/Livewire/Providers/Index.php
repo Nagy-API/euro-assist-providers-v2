@@ -418,8 +418,9 @@ class Index extends Component
         $query = Provider::query()->select('providers.*')->with(['translations', 'type.translations']);
 
         match ($this->trashedValue()) {
-            'with' => $query->withTrashed(),
-            'only' => $query->onlyTrashed(),
+            // Merge shells of approved bilingual pairs are never listed as deleted providers (ADR-017).
+            'with' => $query->withTrashed()->whereNull('providers.merged_into_id'),
+            'only' => $query->onlyTrashed()->whereNull('providers.merged_into_id'),
             default => null,
         };
 

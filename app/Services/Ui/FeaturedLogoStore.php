@@ -84,6 +84,32 @@ class FeaturedLogoStore
         return $relative;
     }
 
+    /**
+     * Validate a local image FILE (not an upload) exactly like an upload and store a sanitized copy.
+     * Used by the legacy media import, which reads only the frozen archive (ADR-018).
+     *
+     * @return string the stored path relative to the disk
+     *
+     * @throws ValidationException when the file is not an acceptable image
+     */
+    public function storeFile(string $path, string $errorKey = 'logo'): string
+    {
+        $info = is_file($path) && ! is_link($path) ? @getimagesize($path) : false;
+        if ($info === false || ! isset(self::TYPES[$info[2]])) {
+            throw ValidationException::withMessages([$errorKey => __('ui.featured.logo_invalid')]);
+        }
+        if ($info[0] < 1 || $info[1] < 1 || $info[0] > self::MAX_DIMENSION || $info[1] > self::MAX_DIMENSION) {
+            throw ValidationException::withMessages([$errorKey => __('ui.featured.logo_dimensions', ['max' => self::MAX_DIMENSION])]);
+        }
+
+        $bytes = (string) file_get_contents($path);
+        $bytes = $this->reencode($bytes, $info[2]) ?? $bytes;
+        $relative = $this->directory().'/'.Str::uuid().'.'.self::TYPES[$info[2]][0];
+        Storage::disk($this->disk())->put($relative, $bytes, 'private');
+
+        return $relative;
+    }
+
     /** Remove a stored logo. Ignores anything that is not a path this store would have produced. */
     public function delete(?string $relative): void
     {

@@ -9,8 +9,8 @@
 
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
         @foreach ($groups as $group => $items)
-            <section class="rounded-lg border border-slate-200 bg-white" aria-labelledby="g-{{ $group }}">
-                <h2 id="g-{{ $group }}" class="border-b border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900">{{ __('ui.settings.groups.'.$group) }}</h2>
+            <section class="ea-card" aria-labelledby="g-{{ $group }}">
+                <h2 id="g-{{ $group }}" class="border-b border-slate-200 bg-slate-50/70 px-5 py-3.5 text-sm font-extrabold text-slate-900">{{ __('ui.settings.groups.'.$group) }}</h2>
                 <dl class="divide-y divide-slate-100 text-sm">
                     @foreach ($items as $key => $value)
                         <div class="grid grid-cols-2 gap-3 px-4 py-2.5">

@@ -125,4 +125,43 @@ class DashboardTest extends UiTestCase
 
         $this->assertSame(['unpaired' => 0, 'suggestions' => 0, 'held' => 0, 'provisional' => 0], app(DashboardStats::class)->legacyBacklog());
     }
+
+    public function test_migration_status_is_a_compact_neutral_strip_not_a_warning_banner(): void
+    {
+        $html = Livewire::actingAs($this->admin())->test(Dashboard::class)->html();
+
+        $this->assertMatchesRegularExpression('/<section aria-labelledby="legacy-heading" class="ea-card [^"]*"/', $html);
+        $this->assertStringNotContainsString('aria-labelledby="legacy-heading" class="animate-enter rounded-2xl border border-amber-300', $html);
+        $this->assertStringNotContainsString(__('ui.dashboard.legacy.intro'), $html);
+    }
+
+    public function test_every_role_sees_what_the_record_count_means(): void
+    {
+        foreach (['admin', 'editor', 'viewer'] as $role) {
+            Livewire::actingAs($this->{$role}())->test(Dashboard::class)
+                ->assertSee(__('ui.dashboard.meaning.title'))
+                ->assertSee(__('ui.dashboard.meaning.source_rows'))
+                ->assertSee(__('ui.dashboard.meaning.unpaired'));
+        }
+
+        $this->assertSame(
+            ['source_rows' => 0, 'imported' => 0, 'unpaired' => 0, 'reviewed_pairs' => 0],
+            app(DashboardStats::class)->provenance()
+        );
+    }
+
+    public function test_dashboard_query_count_includes_provenance_and_stays_constant_for_viewers(): void
+    {
+        $viewer = $this->viewer();
+        $this->provider(type: $this->type());
+        DB::enableQueryLog();
+        Livewire::actingAs($viewer)->test(Dashboard::class);
+        $small = count(DB::getQueryLog());
+        foreach (range(1, 20) as $_) {
+            $this->provider(type: $this->type());
+        }
+        DB::flushQueryLog();
+        Livewire::actingAs($viewer)->test(Dashboard::class);
+        $this->assertSame($small, count(DB::getQueryLog()));
+    }
 }

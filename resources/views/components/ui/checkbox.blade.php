@@ -7,7 +7,7 @@
 <div {{ $attributes->only('class') }}>
     <div class="flex items-start gap-2">
         <input id="{{ $id }}" name="{{ $name }}" type="checkbox" @if($describedBy) aria-describedby="{{ $describedBy }}" @endif
-               {{ $attributes->except('class')->merge(['class' => 'mt-0.5 size-5 shrink-0 rounded border-slate-500 text-teal-700']) }}>
+               {{ $attributes->except('class')->merge(['class' => 'mt-0.5 size-5 shrink-0 rounded border-slate-500 accent-brand-600']) }}>
         <label for="{{ $id }}" class="text-sm text-slate-800">{{ $label }}</label>
     </div>
     @if ($hint)<p id="{{ $id }}-hint" class="ms-7 mt-0.5 text-xs text-slate-600">{{ $hint }}</p>@endif

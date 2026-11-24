@@ -87,6 +87,24 @@ class LegacySource
             ->map(fn ($row) => (array) $row)->all();
     }
 
+    /**
+     * Legacy staff accounts (identity columns only). The password hash column is read ONLY when
+     * $withPasswordHash is true (the explicit preserve-hash policy); remember tokens are never read.
+     * `users` is deliberately not in TABLES, so chunks()/all() can never return credential columns.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function accounts(bool $withPasswordHash = false): array
+    {
+        $columns = ['id', 'name', 'email', 'role', 'email_verified_at', 'created_at'];
+        if ($withPasswordHash) {
+            $columns[] = 'password';
+        }
+
+        return $this->connection()->table('users')->orderBy('id')->get($columns)
+            ->map(fn ($row) => (array) $row)->all();
+    }
+
     private function table(string $table): string
     {
         if (! in_array($table, self::TABLES, true)) {

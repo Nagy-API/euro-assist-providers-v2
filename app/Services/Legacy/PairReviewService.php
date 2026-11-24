@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Gate;
 class PairReviewService
 {
     /** Canonical columns compared on approval (English provider wins; the rest is kept as evidence). */
-    private const CANONICAL_FIELDS = ['provider_type_id', 'phone', 'email', 'website', 'map_url', 'latitude', 'longitude', 'logo_path', 'is_active'];
+    private const CANONICAL_FIELDS = ['provider_type_id', 'phone', 'email', 'website', 'map_url', 'latitude', 'longitude', 'logo_path', 'photo_path', 'is_active'];
 
     public function __construct(private readonly AuditLogger $audit) {}
 
@@ -77,6 +77,7 @@ class PairReviewService
             }
 
             $moved->forceFill(['provider_id' => $en->id])->save();
+            $ar->forceFill(['merged_into_id' => $en->id])->save(); // a merge shell, not a deleted provider
             $ar->delete();
             $enRev = $this->bump($en, $left->migration_batch_id);
             $arRev = $this->bump($ar, $left->migration_batch_id);
@@ -160,6 +161,7 @@ class PairReviewService
             }
 
             $translation->forceFill(['provider_id' => $ar->id])->save();
+            $ar->forceFill(['merged_into_id' => null])->save();
             $ar->restore();
             $this->bump($en, $left->migration_batch_id);
             $this->bump($ar->refresh(), $left->migration_batch_id);

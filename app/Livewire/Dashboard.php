@@ -30,8 +30,13 @@ class Dashboard extends Component
             'recent' => $stats->recentlyUpdated(),
             'canEdit' => Gate::allows('providers.update'),
             'locale' => app()->getLocale(),
-            // Legacy review backlog: Admin (migration.review) only, and only where the review route exists.
-            'legacy' => Gate::allows('migration.review') && Route::has('migration.review.index') ? $stats->legacyBacklog() : null,
+            // Legacy review backlog: Admin (migration.review) only. The review screen itself exists only
+            // in local environments (ADR-014); elsewhere the backlog is shown without a link.
+            'legacy' => Gate::allows('migration.review') ? $stats->legacyBacklog() : null,
+            'reviewRoute' => Route::has('migration.review.index'),
+            // Counts only, for every role: explains what the record total does and does not mean.
+            'provenance' => $stats->provenance(),
+            'user' => auth()->user(),
         ])->title(__('ui.nav.dashboard'));
     }
 }

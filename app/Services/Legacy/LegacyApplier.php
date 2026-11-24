@@ -5,8 +5,10 @@ namespace App\Services\Legacy;
 use App\Models\FeaturedProvider;
 use App\Models\LegacyIdMap;
 use App\Models\LegacyMigrationBatch;
+use App\Models\LegacyRowDecision;
 use App\Models\LegacyStagingRow;
 use App\Models\Provider;
+use App\Models\ProviderType;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\ProviderService;
@@ -142,7 +144,31 @@ class LegacyApplier
             return [LegacyStagingRow::STATE_REJECTED, 'missing_name', null];
         }
 
-        $type = $mapper->resolve($n['type_raw']);
+        // Owner row decisions (ADR-017) override one normalized value of this row only; the raw
+        // payload is untouched, so the original value stays recoverable from staging.
+        $decisions = LegacyRowDecision::query()
+            ->where('migration_batch_id', $row->migration_batch_id)
+            ->where('source_table', $row->source_table)
+            ->where('source_id', $row->source_id)
+            ->pluck('value', 'field');
+        $decided = [];
+
+        if (isset($decisions[LegacyRowDecision::FIELD_MAP_URL])) {
+            $n['map_url'] = (string) $decisions[LegacyRowDecision::FIELD_MAP_URL];
+            [$n['latitude'], $n['longitude'], $n['coordinate_status']] = $this->normalizer->coordinates($n['map_url']);
+            $decided[] = LegacyRowDecision::FIELD_MAP_URL;
+        }
+
+        if (isset($decisions[LegacyRowDecision::FIELD_TYPE_KEY])) {
+            $typeId = ProviderType::query()->where('key', (string) $decisions[LegacyRowDecision::FIELD_TYPE_KEY])->value('id');
+            if ($typeId === null) {
+                return [LegacyStagingRow::STATE_NEEDS_REVIEW, 'row_decision_unknown_type', null];
+            }
+            $type = ['type' => (int) $typeId, 'status' => TypeMapper::APPROVED];
+            $decided[] = LegacyRowDecision::FIELD_TYPE_KEY;
+        } else {
+            $type = $mapper->resolve($n['type_raw']);
+        }
         if (! in_array($type['status'], [TypeMapper::APPROVED, TypeMapper::PROVISIONAL], true)) {
             return [LegacyStagingRow::STATE_NEEDS_REVIEW, 'type_'.$type['status'], null];
         }
@@ -172,8 +198,13 @@ class LegacyApplier
             return [LegacyStagingRow::STATE_NEEDS_REVIEW, mb_substr('validation_failed:'.implode(',', $fields), 0, 190), null];
         }
 
-        // A mapped row that relied on a provisional type mapping stays traceable (reason code).
-        return [LegacyStagingRow::STATE_MAPPED, $type['status'] === TypeMapper::PROVISIONAL ? 'provisional_type' : null, $input];
+        // A mapped row that relied on a provisional type mapping or an owner row decision stays
+        // traceable through its reason code.
+        sort($decided);
+        $reason = $type['status'] === TypeMapper::PROVISIONAL ? 'provisional_type'
+            : ($decided !== [] ? 'row_decision:'.implode(',', $decided) : null);
+
+        return [LegacyStagingRow::STATE_MAPPED, $reason, $input];
     }
 
     /**

@@ -2,6 +2,8 @@
 
 return [
     'common' => [
+        'choose_file' => 'Choose a file',
+        'no_file_chosen' => 'No file chosen',
         'actions' => 'Actions',
         'all' => 'All',
         'back' => 'Back',
@@ -52,6 +54,8 @@ return [
         'coverage' => 'Available translations',
         'available' => 'available',
         'missing' => 'missing',
+        'short_ar' => 'عربي',
+        'short_en' => 'English',
         'no_translation' => 'There is no translation in this language. Nothing is translated automatically.',
     ],
 
@@ -63,7 +67,13 @@ return [
         'goto' => 'Go to page :page',
     ],
 
+    'brand' => [
+        'product' => 'Providers System',
+        'staff_only' => 'Authorized staff only',
+    ],
+
     'nav' => [
+        'breadcrumb' => 'Breadcrumb',
         'label' => 'Main navigation',
         'section_main' => 'Overview',
         'section_providers' => 'Providers',
@@ -84,13 +94,29 @@ return [
     ],
 
     'dashboard' => [
+        'greeting' => 'Welcome, :name',
+        'hero_subtitle' => 'Where the Euro Assist providers network stands right now.',
+        'active_share' => 'active',
+        'meaning' => [
+            'title' => 'What these numbers mean',
+            'records' => 'Provider records',
+            'records_hint' => 'Every stored provider record (one per branch and language until pairing), including recoverable deleted ones.',
+            'source_rows' => 'Imported legacy source rows',
+            'source_rows_hint' => 'Rows read from the old system (English, Arabic and featured tables). Held rows are counted here but not imported.',
+            'unpaired' => 'Unpaired bilingual records',
+            'unpaired_hint' => 'Imported records whose English and Arabic versions have not been confirmed as the same branch yet.',
+            'reviewed' => 'Reviewed English/Arabic pairs',
+            'reviewed_hint' => 'Pair suggestions an administrator has approved or rejected. Nothing is merged automatically.',
+            'note' => 'The record total is NOT the number of unique real-world branches: :count imported records still wait for English/Arabic pairing, so one branch may appear once in Arabic and once in English.',
+        ],
         'legacy' => [
-            'title' => 'Legacy migration review backlog',
+            'title' => 'Migration review',
             'intro' => 'Migrated legacy rows stay separate (unpaired) until an administrator reviews each suggested English/Arabic pair. Nothing was merged automatically.',
-            'unpaired' => 'Unpaired migrated providers',
-            'suggestions' => 'Pair suggestions to review',
-            'held' => 'Source rows held for review',
-            'provisional' => 'Rows on a provisional type mapping',
+            'unpaired' => 'Unpaired',
+            'suggestions' => 'Pairs to review',
+            'held' => 'Held rows',
+            'provisional' => 'Provisional types',
+            'review_local_only' => 'Reviewed in the local migration workspace only; open items are kept and listed in the reconciliation report.',
             'open_review' => 'Open the migration review',
         ],
         'title' => 'Dashboard',
@@ -127,7 +153,7 @@ return [
             'per_type' => 'Non-deleted records grouped by provider type. The largest types are listed; the rest are summed as "Other types".',
             'coverage' => 'Counts non-deleted records by which languages have a stored translation. Missing languages are never generated.',
             'quality' => 'Missing city: no translation has a city. Missing phone: the phone field is empty. Non-deleted records only.',
-            'featured' => 'Brand-level featured entries (a V2 option). They are independent of provider records.',
+            'featured' => 'Brand-level featured entries (a new option). They are independent of provider records.',
             'recent' => 'The ten non-deleted records changed most recently.',
         ],
     ],
@@ -136,6 +162,7 @@ return [
         'title' => 'Providers',
         'subtitle' => 'Search, review and maintain provider records.',
         'details' => 'Provider details',
+        'more_filters' => 'More filters',
         'filters' => 'Filters',
         'search_hint' => 'Name, address, city, district, specialization, phone or email. Characters like % and _ are matched literally.',
         'exact_match' => 'Exact match (suggestions as you type)',
@@ -217,6 +244,7 @@ return [
     ],
 
     'form' => [
+        'editing_language' => 'You are editing the :language text',
         'create_title' => 'Add provider',
         'create_subtitle' => 'Fill in at least one language. A language you leave empty is simply not stored.',
         'edit_title' => 'Edit provider',
@@ -268,11 +296,30 @@ return [
         'updated' => 'Type updated.',
     ],
 
+    'media' => [
+        'photo' => 'Provider photo',
+        'photo_alt' => 'Provider photo',
+        'type_icon_alt' => 'Default picture for this provider type',
+        'has_photo' => 'This provider has its own photo.',
+        'using_type_icon' => 'No photo yet: the default picture for this type is shown.',
+        'no_photo' => 'No photo yet.',
+        'choose' => 'Choose a picture',
+        'replace' => 'Replace picture',
+        'no_file' => 'No file chosen',
+        'hint' => 'JPG, PNG or WebP, up to :kb KB. The picture is checked and stored privately.',
+        'save' => 'Save picture',
+        'saved' => 'Picture saved.',
+        'remove' => 'Remove picture',
+        'removed' => 'Picture removed.',
+        'remove_title' => 'Remove this picture?',
+        'remove_body' => 'The provider will show the default picture for its type. You can upload a new picture at any time.',
+    ],
+
     'featured' => [
         'subtitle' => 'Brands highlighted by the organization.',
         'read_only' => 'You can view the featured list but not change it.',
-        'v2_option' => 'V2 option',
-        'v2_hint' => 'New in V2: this is not a rule carried over from the legacy site.',
+        'v2_option' => 'New option',
+        'v2_hint' => 'New in this system: it is not a rule carried over from the old site.',
         'add' => 'Add featured provider',
         'edit' => 'Edit featured provider',
         'none' => 'No featured providers yet.',
@@ -299,6 +346,8 @@ return [
     ],
 
     'users' => [
+        'activation_pending' => 'Activation pending',
+        'activation_pending_hint' => 'Migrated account: no password is set yet. Activate it with users:set-password or a password-reset link.',
         'subtitle' => 'Invite people and manage their role and access.',
         'search_hint' => 'Search by name or email.',
         'no_delete_note' => 'Accounts are never deleted: deactivate an account to remove access while keeping the history.',

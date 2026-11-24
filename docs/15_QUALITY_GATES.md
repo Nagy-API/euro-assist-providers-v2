@@ -33,3 +33,22 @@
 - Security considerations:
 - Known limitations:
 - Updated docs:
+
+## Manual CI while hosted GitHub Actions is blocked (billing)
+
+Run on the final commit, from the repository root, and paste the results into the PR (versions, counts, exit codes):
+
+```text
+php8.3 vendor/bin/phpunit                                  # SQLite
+php8.4 vendor/bin/phpunit                                  # SQLite
+php8.3 vendor/bin/phpunit -c phpunit.mysql.xml             # MariaDB, euro_assist_v2_test only (DB_PORT/DB_USERNAME/DB_PASSWORD from private config)
+php vendor/bin/pint --test
+php -d memory_limit=1G vendor/bin/phpstan analyse --no-progress
+composer validate --strict && composer audit --locked
+npm audit && npm run build
+python -m unittest discover -s tests/repository -t .
+python scripts/check_repo_hygiene.py
+gitleaks git --no-banner .                                 # full history
+git diff --cached --check                                  # before each commit
+```
+Release candidates additionally require the package verification in `docs/18_RELEASE_PACKAGE.md` §4 on the built ZIP.

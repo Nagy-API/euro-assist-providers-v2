@@ -48,6 +48,31 @@ abstract class LegacyCommand extends Command
         return User::query()->where('email', mb_strtolower($email))->first();
     }
 
+    /**
+     * A report lists source ids: it must be a NEW plain file outside the repository. Links, existing
+     * files and folders reached through an alias of the repository are refused (review R6).
+     */
+    protected function assertReportPath(string $report): void
+    {
+        if ($report === '') {
+            return;
+        }
+        if (file_exists($report) || is_link($report)) {
+            throw new LegacyException('The report file already exists or is a link; choose a new file name.');
+        }
+        $dir = realpath(dirname($report));
+        $base = realpath(base_path());
+        if ($dir === false || $base === false || is_link(dirname($report))) {
+            throw new LegacyException('The report folder does not exist or is a link.');
+        }
+        $inside = str_starts_with(strtolower($dir.DIRECTORY_SEPARATOR), strtolower($base.DIRECTORY_SEPARATOR));
+        // Same folder reached through another name (subst drive, junction, UNC): compare by inode/marker.
+        $probe = $dir.DIRECTORY_SEPARATOR.'artisan';
+        if ($inside || (is_file($probe) && @fileinode($probe) === @fileinode(base_path('artisan')) && fileinode($probe) !== 0)) {
+            throw new LegacyException('The report must be written outside the repository (it lists source ids).');
+        }
+    }
+
     /** @param array<string, int|string> $counts */
     protected function printCounts(string $title, array $counts): void
     {

@@ -35,7 +35,8 @@ class ProviderPolicy
 
     public function restore(User $user, Provider $provider): bool
     {
-        return $user->hasPermission(Permission::ProvidersRestore);
+        // A merge shell is re-split only by undoing its pair in the migration review (ADR-017).
+        return $provider->merged_into_id === null && $user->hasPermission(Permission::ProvidersRestore);
     }
 
     public function forceDelete(User $user, Provider $provider): bool

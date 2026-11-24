@@ -69,7 +69,8 @@ class DashboardStats
             'total' => $total,
             'active' => (int) $row->active,
             'inactive' => $total - (int) $row->active,
-            'deleted' => $includeDeleted ? Provider::onlyTrashed()->count() : null,
+            // Merge shells (an approved bilingual pair, ADR-017) are not deleted providers.
+            'deleted' => $includeDeleted ? Provider::onlyTrashed()->whereNull('merged_into_id')->count() : null,
             'missing_city' => (int) $row->missing_city,
             'missing_phone' => (int) $row->missing_phone,
             'translations' => [
@@ -143,6 +144,28 @@ class DashboardStats
             'suggestions' => LegacyPairSuggestion::query()->where('status', LegacyPairSuggestion::STATUS_SUGGESTED)->count(),
             'held' => LegacyStagingRow::query()->whereIn('state', [LegacyStagingRow::STATE_NEEDS_REVIEW, LegacyStagingRow::STATE_REJECTED])->count(),
             'provisional' => LegacyStagingRow::query()->where('state', LegacyStagingRow::STATE_MAPPED)->where('reason', 'provisional_type')->count(),
+        ];
+    }
+
+    /**
+     * Where the canonical records came from, so the dashboard never presents the record count as a
+     * count of unique real-world branches (counts only; readable by every role).
+     *
+     *  - source_rows: legacy source rows staged by the migration (English + Arabic + featured).
+     *  - imported: canonical providers created from a legacy row (a mapping with a provider).
+     *  - unpaired: imported providers still waiting for an English/Arabic pairing decision. Each
+     *    language of the same branch is a separate record until an administrator pairs them.
+     *  - reviewed_pairs: pair suggestions an administrator approved or rejected.
+     *
+     * @return array{source_rows: int, imported: int, unpaired: int, reviewed_pairs: int}
+     */
+    public function provenance(): array
+    {
+        return [
+            'source_rows' => LegacyStagingRow::query()->count(),
+            'imported' => LegacyIdMap::query()->whereNotNull('provider_id')->count(),
+            'unpaired' => LegacyIdMap::query()->where('status', LegacyIdMap::STATUS_UNPAIRED)->whereNotNull('provider_id')->count(),
+            'reviewed_pairs' => LegacyPairSuggestion::query()->whereIn('status', [LegacyPairSuggestion::STATUS_APPROVED, LegacyPairSuggestion::STATUS_REJECTED])->count(),
         ];
     }
 }

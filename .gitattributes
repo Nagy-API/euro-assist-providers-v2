@@ -10,3 +10,8 @@
 *.css text eol=lf
 *.sh text eol=lf
 artisan text eol=lf
+
+# Third-party license text kept verbatim (contains trailing spaces).
+resources/fonts/Cairo-OFL.txt -whitespace
+*.ttf binary
+*.png binary

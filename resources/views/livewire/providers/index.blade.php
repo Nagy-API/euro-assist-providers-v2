@@ -22,9 +22,15 @@
     </x-ui.page-header>
 
     {{-- Filters --}}
-    <form wire:submit.prevent class="mb-4 rounded-lg border border-slate-200 bg-white p-4" role="search" aria-label="{{ __('ui.providers.filters') }}">
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <x-ui.field name="search" id="flt-search" :label="__('ui.common.search')" wire:model.live.debounce.400ms="search" :hint="__('ui.providers.search_hint')" maxlength="100" autocomplete="off" class="sm:col-span-2" />
+    <form wire:submit.prevent class="mb-5 ea-card animate-enter p-5" role="search" aria-label="{{ __('ui.providers.filters') }}">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" x-data="{ more: {{ $hasFilters ? 'true' : 'false' }} }">
+            <x-ui.field name="search" id="flt-search" :label="__('ui.common.search')" wire:model.live.debounce.400ms="search" :hint="__('ui.providers.search_hint')" maxlength="100" autocomplete="off" type="search" class="sm:col-span-2" />
+            {{-- Phones: the secondary filters fold away so the results are visible without scrolling. --}}
+            <button type="button" class="inline-flex min-h-10 items-center justify-between gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 text-sm font-semibold text-slate-800 sm:hidden" x-on:click="more = !more" x-bind:aria-expanded="more.toString()" aria-controls="more-filters">
+                <span class="inline-flex items-center gap-2"><x-ui.icon name="tag" class="size-4" />{{ __('ui.providers.more_filters') }}</span>
+                <x-ui.icon name="chevron-down" class="size-4 transition-transform" x-bind:class="more && 'rotate-180'" />
+            </button>
+            <div id="more-filters" class="contents max-sm:hidden" x-bind:class="more && 'max-sm:!contents'">
             <x-ui.field name="type" id="flt-type" type="select" :label="__('ui.providers.type')" wire:model.live="type">
                 <option value="">{{ __('ui.common.all') }}</option>
                 @foreach ($types as $t)
@@ -50,6 +56,7 @@
                     <option value="{{ $n }}" @selected($n === $perPageCurrent)>{{ $n }}</option>
                 @endforeach
             </x-ui.field>
+            </div>
         </div>
         <datalist id="city-options">@foreach ($cities as $c)<option value="{{ $c }}"></option>@endforeach</datalist>
         <datalist id="district-options">@foreach ($districts as $d)<option value="{{ $d }}"></option>@endforeach</datalist>
@@ -60,8 +67,8 @@
 
     {{-- Bulk bar --}}
     @if ($selectedCount > 0)
-        <div class="mb-4 flex flex-col gap-3 rounded-lg border border-teal-300 bg-teal-50 p-3 sm:flex-row sm:items-center sm:justify-between" role="region" aria-label="{{ __('ui.providers.bulk_bar') }}">
-            <p class="text-sm font-semibold text-teal-950">{{ __('ui.providers.selected_count', ['count' => $selectedCount]) }}</p>
+        <div class="mb-4 flex flex-col gap-3 animate-enter rounded-xl border border-brand-200 bg-brand-50 p-3 shadow-xs sm:flex-row sm:items-center sm:justify-between" role="region" aria-label="{{ __('ui.providers.bulk_bar') }}">
+            <p class="text-sm font-semibold text-brand-950">{{ __('ui.providers.selected_count', ['count' => $selectedCount]) }}</p>
             <div class="flex flex-wrap gap-2">
                 @if ($canBulkWrite)
                     <x-ui.button size="sm" variant="secondary" icon="pencil" wire:click="openBulk">{{ __('ui.providers.bulk_update') }}</x-ui.button>
@@ -85,7 +92,7 @@
     </div>
 
     @if ($providers->isEmpty())
-        <div class="rounded-lg border border-slate-200 bg-white">
+        <div class="ea-card">
             @if ($hasFilters)
                 <x-ui.empty-state :title="__('ui.providers.no_results')" icon="search">
                     {{ __('ui.providers.no_results_hint') }}
@@ -101,12 +108,12 @@
             @endif
         </div>
     @else
-        <x-ui.table :caption="__('ui.providers.title')">
+        <x-ui.table :caption="__('ui.providers.title')" wire:loading.class.delay="opacity-60" wire:target="search,type,city,district,status,trashed,perPage,sortBy,gotoPage,nextPage,previousPage,clearFilters" class="transition-opacity">
             <thead>
                 <tr>
                     @if ($showCheckboxes)
                         <th scope="col" class="w-10 bg-slate-50 px-3 py-2.5">
-                            <input type="checkbox" wire:model.live="selectPage" class="size-5 rounded border-slate-500 text-teal-700" aria-label="{{ __('ui.providers.select_page') }}">
+                            <input type="checkbox" wire:model.live="selectPage" class="size-5 rounded border-slate-500 text-brand-700" aria-label="{{ __('ui.providers.select_page') }}">
                         </th>
                     @endif
                     <x-ui.th sort="name" :current="$sortCurrent" :dir="$dirCurrent">{{ __('ui.providers.name') }}</x-ui.th>
@@ -125,24 +132,29 @@
                         $fallback = $tr !== null && $tr->locale !== $locale;
                         $typeLabel = $provider->type?->label($locale);
                     @endphp
-                    <tr wire:key="provider-{{ $provider->id }}" class="{{ $provider->trashed() ? 'bg-red-50/40' : '' }} align-top">
+                    <tr wire:key="provider-{{ $provider->id }}" class="{{ $provider->trashed() ? 'bg-red-50/50' : '' }} align-top transition-colors hover:bg-slate-50">
                         @if ($showCheckboxes)
                             <td class="px-3 py-3">
-                                <input type="checkbox" wire:model.live="selected" value="{{ $provider->id }}" class="size-5 rounded border-slate-500 text-teal-700" aria-label="{{ __('ui.providers.select_row', ['name' => $tr?->name ?? '#'.$provider->id]) }}">
+                                <input type="checkbox" wire:model.live="selected" value="{{ $provider->id }}" class="size-5 rounded border-slate-500 text-brand-700" aria-label="{{ __('ui.providers.select_row', ['name' => $tr?->name ?? '#'.$provider->id]) }}">
                             </td>
                         @endif
                         <td class="max-w-xs px-3 py-3">
-                            <a href="{{ route('providers.show', $provider) }}" class="font-medium text-teal-900 underline underline-offset-2" dir="auto"><bdi>{{ $tr?->name ?? '—' }}</bdi></a>
-                            <div class="mt-1 flex flex-wrap items-center gap-1">
-                                <x-ui.translation-badges :provider="$provider" />
-                                @if ($fallback)
-                                    <x-ui.badge tone="amber" :title="__('ui.locale.fallback_hint', ['language' => __('ui.locale.'.$tr->locale)])">{{ __('ui.locale.shown_'.$tr->locale) }}</x-ui.badge>
-                                @endif
+                            <div class="flex items-start gap-3">
+                                <span class="hidden sm:block"><x-ui.provider-image :provider="$provider" size="sm" /></span>
+                                <div class="min-w-0">
+                                    <a href="{{ route('providers.show', $provider) }}" class="font-bold text-slate-900 transition-colors hover:text-brand-700 hover:underline"><bdi dir="auto">{{ $tr?->name ?? '—' }}</bdi></a>
+                                    <div class="mt-1 flex flex-wrap items-center gap-1">
+                                        <x-ui.translation-badges :provider="$provider" />
+                                        @if ($fallback)
+                                            <x-ui.badge tone="amber" :title="__('ui.locale.fallback_hint', ['language' => __('ui.locale.'.$tr->locale)])">{{ __('ui.locale.shown_'.$tr->locale) }}</x-ui.badge>
+                                        @endif
+                                    </div>
+                                    <p class="mt-1 text-xs text-slate-600 md:hidden"><bdi dir="auto">{{ $typeLabel ?? '—' }}</bdi> · <bdi dir="auto">{{ $tr?->city ?: '—' }}</bdi></p>
+                                </div>
                             </div>
-                            <p class="mt-1 text-xs text-slate-600 md:hidden" dir="auto">{{ $typeLabel ?? '—' }} · {{ $tr?->city ?: '—' }}</p>
                         </td>
-                        <td class="hidden px-3 py-3 md:table-cell" dir="auto">{{ $typeLabel ?? '—' }}</td>
-                        <td class="hidden px-3 py-3 md:table-cell" dir="auto">{{ $tr?->city ?: '—' }}</td>
+                        <td class="hidden px-3 py-3 text-slate-700 md:table-cell"><bdi dir="auto">{{ $typeLabel ?? '—' }}</bdi></td>
+                        <td class="hidden px-3 py-3 text-slate-700 md:table-cell"><bdi dir="auto">{{ $tr?->city ?: '—' }}</bdi></td>
                         <td class="hidden px-3 py-3 whitespace-nowrap lg:table-cell">
                             @if (filled($provider->phone))<span class="ltr-text">{{ $provider->phone }}</span>@else<span aria-label="{{ __('ui.common.not_set') }}">—</span>@endif
                         </td>
