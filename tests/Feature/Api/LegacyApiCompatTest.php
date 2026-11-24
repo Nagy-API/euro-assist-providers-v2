@@ -18,7 +18,7 @@ class LegacyApiCompatTest extends ApiTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['providers.legacy_api.enabled' => true, 'providers.legacy_api.rate_limit_per_minute' => 1000]);
+        config(['providers.legacy_api.server_cache_seconds' => 0, 'providers.legacy_api.enabled' => true, 'providers.legacy_api.rate_limit_per_minute' => 1000]);
         $this->seedContractDataset();
     }
 
@@ -226,5 +226,17 @@ class LegacyApiCompatTest extends ApiTestCase
     {
         $this->pub('/api/v2/providers')->assertStatus(401);
         $this->pub('/api/v2/featured-providers')->assertStatus(401);
+    }
+
+    public function test_whole_table_reads_are_cached_server_side_and_long_filters_are_capped(): void
+    {
+        config(['providers.legacy_api.server_cache_seconds' => 60]);
+        $this->assertCount(2, $this->pub('/api/arabic-providers')->json());
+        \DB::table('providers')->update(['is_active' => false]);
+        $this->assertCount(2, $this->pub('/api/arabic-providers')->json(), 'served from the 60 s cache');
+        config(['providers.legacy_api.server_cache_seconds' => 0]);
+        $this->assertCount(0, $this->pub('/api/arabic-providers')->json());
+
+        $this->pub('/api/arabic-providers?search='.str_repeat('a', 5000))->assertOk();
     }
 }

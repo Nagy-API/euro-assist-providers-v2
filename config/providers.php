@@ -113,5 +113,7 @@ return [
         // never collide with an id the old system issued (legacy ids are below this value).
         'unmapped_id_offset' => 1000000,
         'cache_seconds' => (int) env('LEGACY_API_CACHE_SECONDS', 60),
+        // Server-side cache of the whole-table reads (list, all-latlng, dropdown projections).
+        'server_cache_seconds' => (int) env('LEGACY_API_SERVER_CACHE_SECONDS', 60),
     ],
 ];

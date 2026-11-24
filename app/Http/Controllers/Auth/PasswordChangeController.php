@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Api\Support\ApiPrincipal;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
 use App\Services\UserService;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * Self-service password change (account settings) and the forced replacement of a temporary
@@ -52,6 +54,10 @@ class PasswordChangeController extends Controller
         ])->save();
         // Ends every other session and "remember me" cookie of this account; keeps this one.
         Auth::guard('web')->logoutOtherDevices($data['password']);
+        // A suspected compromise is the usual reason to change a password: personal API tokens end too.
+        PersonalAccessToken::query()
+            ->where('tokenable_type', (new ApiPrincipal)->getMorphClass())
+            ->where('tokenable_id', $user->getKey())->delete();
         $request->session()->regenerate();
         $this->audit->record('auth.password_changed', $user, 'success', [], $user);
 

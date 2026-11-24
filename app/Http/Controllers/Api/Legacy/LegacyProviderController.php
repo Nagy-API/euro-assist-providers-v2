@@ -8,6 +8,7 @@ use App\Services\LegacyApi\LegacyProviderReader;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -26,15 +27,16 @@ class LegacyProviderController extends Controller
         // Dropdown projection used by the public website: ?fields=city | type | district.
         $fields = $request->query('fields');
         if (is_string($fields) && in_array($fields, LegacyProviderReader::FIELD_PROJECTIONS, true)) {
-            return $this->json($this->reader->distinct($fields, $locale));
+            return $this->json($this->cached('f:'.$locale.':'.$fields, fn () => $this->reader->distinct($fields, $locale)));
         }
 
+        $input = $this->bounded($request->query());
         $query = $this->reader->query($locale);
-        $this->reader->applyListFilters($query, $request->query());
+        $this->reader->applyListFilters($query, $input);
 
         $paginate = $request->filled('page') || $request->filled('per_page') || $request->boolean('paginate', false);
         if (! $paginate) {
-            return $this->json($query->get()->map(fn (Provider $p) => $this->reader->present($p, $locale))->all());
+            return $this->json($this->cached('l:'.$locale.':'.md5((string) json_encode($input)), fn () => $query->get()->map(fn (Provider $p) => $this->reader->present($p, $locale))->all()));
         }
 
         return $this->paginated($query, $this->perPage($request), $locale);
@@ -62,7 +64,7 @@ class LegacyProviderController extends Controller
         }
 
         $query = $this->reader->query($locale);
-        $this->reader->applyColumnFilters($query, $request->query());
+        $this->reader->applyColumnFilters($query, $this->bounded($request->query()));
         $this->reader->applyFullSearch($query, mb_substr($term, 0, 200));
 
         return $this->paginated($query, $this->perPage($request), $locale);
@@ -82,12 +84,12 @@ class LegacyProviderController extends Controller
     public function allLatLng(Request $request): JsonResponse
     {
         $locale = $this->locale($request);
-        $rows = $this->reader->query($locale)->get()->map(fn (Provider $p) => [
+        $rows = $this->cached('ll:'.$locale, fn () => $this->reader->query($locale)->get()->map(fn (Provider $p) => [
             'name' => $p->getAttribute('t_name'),
             'type' => $p->type?->label($locale),
             'latitude' => $p->latitude === null ? null : (float) $p->latitude,
             'longitude' => $p->longitude === null ? null : (float) $p->longitude,
-        ])->all();
+        ])->all());
 
         return $this->json(['data' => $rows]);
     }
@@ -105,6 +107,39 @@ class LegacyProviderController extends Controller
     private function locale(Request $request): string
     {
         return $request->route('locale') === 'ar' ? 'ar' : 'en';
+    }
+
+    /**
+     * Free-text filters are capped (the leading-wildcard LIKE cannot use an index).
+     *
+     * @param  array<string, mixed>  $in
+     * @return array<string, mixed>
+     */
+    private function bounded(array $in): array
+    {
+        foreach (['search', 'searchName', 'city', 'district', 'type'] as $k) {
+            if (isset($in[$k]) && is_string($in[$k])) {
+                $in[$k] = mb_substr($in[$k], 0, 200);
+            }
+        }
+
+        return $in;
+    }
+
+    /**
+     * Short server-side cache for the unpaginated/whole-table reads (bounds load from repeated scans).
+     *
+     * @param  callable(): array<array-key, mixed>  $build
+     * @return array<array-key, mixed>
+     */
+    private function cached(string $key, callable $build): array
+    {
+        $ttl = (int) config('providers.legacy_api.server_cache_seconds', 60);
+
+        /** @var array<array-key, mixed> $value */
+        $value = $ttl > 0 ? Cache::remember('legacy-api:'.$key, $ttl, fn (): array => $build()) : $build();
+
+        return $value;
     }
 
     private function perPage(Request $request): int

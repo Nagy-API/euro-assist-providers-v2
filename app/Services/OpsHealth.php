@@ -65,6 +65,9 @@ class OpsHealth
             app()->configurationIsCached() ? 'cached (re-run config:cache after every .env change)' : 'not cached');
         $this->add('configuration', 'drivers', self::OK, sprintf('cache=%s session=%s queue=%s', config('cache.default'), config('session.driver'), config('queue.default')));
         $this->add('configuration', 'PHP', version_compare(PHP_VERSION, '8.3.0', '>=') ? self::OK : self::FAIL, PHP_VERSION.' ('.PHP_SAPI.')');
+        $proxies = trim((string) config('app.trusted_proxies'));
+        $this->add('configuration', 'trusted proxies', $proxies === '' ? self::WARN : self::OK,
+            $proxies === '' ? 'empty: behind a reverse proxy every visitor shares one client IP (one shared API rate-limit bucket); set TRUSTED_PROXIES to the proxy addresses' : 'set');
         $this->add('configuration', 'legacy API', self::OK, config('providers.legacy_api.enabled') ? 'enabled' : 'disabled');
     }
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\Api\Support\ApiPrincipal;
 use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Livewire\Users\Index as UsersIndex;
 use App\Models\AuditEvent;
@@ -248,5 +249,17 @@ class PasswordChangeTest extends TestCase
         $this->actingAs($user)->get(route('password.change'))->assertOk()->assertSee(__('auth.change_title'))->assertSee('name="current_password"', false);
         app()->setLocale('ar');
         $this->actingAs($user)->withSession(['locale' => 'ar'])->get(route('password.change'))->assertOk()->assertSee('dir="rtl"', false);
+    }
+
+    public function test_self_service_change_revokes_personal_api_tokens(): void
+    {
+        $user = User::factory()->viewer()->create();
+        $principal = ApiPrincipal::query()->findOrFail($user->id);
+        $principal->createToken('t', ['providers:read']);
+        $this->assertSame(1, $principal->tokens()->count());
+
+        $this->actingAs($user)->post(route('password.change.update'), ['current_password' => UserFactory::TEST_PASSWORD, 'password' => self::NEW, 'password_confirmation' => self::NEW]);
+
+        $this->assertSame(0, $principal->tokens()->count());
     }
 }

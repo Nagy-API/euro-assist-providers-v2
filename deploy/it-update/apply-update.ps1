@@ -24,7 +24,7 @@ $App = (Resolve-Path -LiteralPath $AppPath).Path
 if (-not (Test-Path -LiteralPath (Join-Path $App 'artisan'))) { throw "No 'artisan' file in $App - this is not the application folder." }
 if (-not (Test-Path -LiteralPath (Join-Path $App '.env')))   { Write-Warning ".env not found in $App - check you selected the live application folder." }
 if (-not (Test-Path -LiteralPath $Files))                    { throw "Missing 'files' folder next to this script." }
-if (Get-ChildItem -LiteralPath $Here -Recurse -Include *.sql -ErrorAction SilentlyContinue) { throw 'The package must not contain SQL files.' }
+if (@(Get-ChildItem -LiteralPath $Here -Recurse -File | Where-Object { $_.Extension -ieq '.sql' }).Count -gt 0) { throw 'The package must not contain SQL files.' }
 
 $protected = @('.env', 'storage', 'vendor', 'node_modules', '.git')
 function Test-Protected([string]$rel) {
