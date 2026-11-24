@@ -97,4 +97,21 @@ return [
     'legacy' => [
         'mapping_version' => 'v1',
     ],
+
+    /*
+    | Public, read-only, V1-compatible API under /api (ADR-021). The public medical-network website
+    | (providers.php) and mobile clients read it without credentials, exactly as they did on V1.
+    | GET only, approved public fields only, rate limited per IP. LEGACY_API_ENABLED=false switches
+    | every route off (404) without a deployment.
+    */
+    'legacy_api' => [
+        'enabled' => (bool) env('LEGACY_API_ENABLED', true),
+        'rate_limit_per_minute' => (int) env('LEGACY_API_RATE_LIMIT', 120),
+        // Hard bound for per_page (V1 had none). The unpaginated list is bounded by the data set itself.
+        'max_per_page' => 1000,
+        // A provider created in V2 has no legacy id; its public id is this offset + the V2 id, so it can
+        // never collide with an id the old system issued (legacy ids are below this value).
+        'unmapped_id_offset' => 1000000,
+        'cache_seconds' => (int) env('LEGACY_API_CACHE_SECONDS', 60),
+    ],
 ];

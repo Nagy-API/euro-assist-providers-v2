@@ -112,6 +112,9 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        // Public legacy-compatible API: anonymous, so keyed by client IP only.
+        RateLimiter::for('legacy-api', fn (Request $request) => Limit::perMinute(max(1, (int) config('providers.legacy_api.rate_limit_per_minute', 120)))->by('legacy:'.$request->ip()));
+
         RateLimiter::for('api-v2', function (Request $request) {
             return Limit::perMinute((int) config('providers.api.rate_limit_per_minute', 60))
                 ->by($request->user()?->getAuthIdentifier() ?? $request->ip());

@@ -32,4 +32,21 @@ final class Like
             }
         });
     }
+
+    /**
+     * Same as anyOf() for a plain query builder (sub-selects).
+     *
+     * @param  list<string>  $columns
+     */
+    public static function anyOfQuery(\Illuminate\Database\Query\Builder $query, array $columns, string $term): void
+    {
+        $pattern = self::pattern($term);
+        $grammar = $query->getGrammar();
+
+        $query->where(function ($q) use ($columns, $pattern, $grammar) {
+            foreach ($columns as $column) {
+                $q->orWhereRaw($grammar->wrap($column)." like ? escape '!'", [$pattern]);
+            }
+        });
+    }
 }

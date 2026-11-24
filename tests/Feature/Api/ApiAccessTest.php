@@ -158,7 +158,7 @@ class ApiAccessTest extends ApiTestCase
     {
         $token = $this->viewerToken();
 
-        foreach (['/api/v2/nothing', '/api/v2/providers/abc', '/api/v2/providers/999', '/api/v3/providers', '/api/providers'] as $uri) {
+        foreach (['/api/v2/nothing', '/api/v2/providers/abc', '/api/v2/providers/999', '/api/v3/providers', '/api/v2/legacy'] as $uri) {
             $this->api($uri, $token)->assertStatus(404)->assertExactJson(['error' => [
                 'code' => 'not_found', 'message' => 'The requested resource was not found.',
             ]]);
