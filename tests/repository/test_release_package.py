@@ -171,6 +171,9 @@ class ReleasePackageTest(unittest.TestCase):
             self.assertEqual([c for c in text if ord(c) < 32 and c not in (chr(9), chr(10), chr(13))], [], f"control character in {doc.name}")
             for stale in ("2,185", "334 ", "2,188", "RELEASE_VALIDATION", "D8 pending", "billing", "not migrated", "rc.2"):
                 self.assertNotIn(stale, text, f"stale text {stale!r} in {doc.name}")
+        for doc in sorted((ROOT / "docs").glob("*.md")) + [ROOT / "README.md", ROOT / "AGENTS.md"]:
+            bad = [c for c in read(doc) if ord(c) < 32 and c not in (chr(9), chr(10), chr(13))]
+            self.assertEqual(bad, [], f"control character in {doc.name}")
         imp = read(PKG / "DATABASE_IMPORT.md")
         for fact in ("1,402", "790", "2,192", "2,999", "-- 195", "-- 2192", "-- 1402", "-- 5"):
             self.assertIn(fact, imp)
