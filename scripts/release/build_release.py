@@ -40,6 +40,8 @@ DEV_ONLY = [
     'tests', '.github', 'scripts/uat', 'start-uat.ps1', 'stop-uat.ps1', 'reset-uat.ps1',
     'phpunit.xml', 'phpunit.mysql.xml', 'phpstan.neon', '.editorconfig',
     'database/seeders/SyntheticProvidersSeeder.php', 'node_modules', '.claude',
+    # Engineering records and tooling are not part of the production delivery (the IT guides ship at the package root).
+    'docs', 'AGENTS.md', 'scripts',
 ]
 FORBIDDEN_SUFFIXES = ('.sql', '.sqlite', '.db', '.bak', '.dump', '.env', '.pem', '.key', '.log', '.xlsx', '.csv')
 
@@ -430,7 +432,7 @@ def main() -> int:
     commit = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=REPO, capture_output=True, text=True, check=True).stdout.strip()
 
     import re
-    if not re.fullmatch(r'[0-9A-Za-z][0-9A-Za-z.\-]{0,40}', args.version):
+    if not re.fullmatch(r'[0-9A-Za-z][0-9A-Za-z._\-]{0,40}', args.version):
         sys.exit('Refusing: --version may contain only letters, digits, dots and hyphens.')
     name = f'EuroAssist_Providers_V2_{args.version}'
     stage = out / f'{name}.staging'
@@ -462,6 +464,9 @@ def main() -> int:
     for cached in ('config.php', 'routes-v7.php', 'events.php'):
         (app / 'bootstrap' / 'cache' / cached).unlink(missing_ok=True)
 
+    # Fingerprint of every code file: `php artisan ops:check` proves the installed files equal this release.
+    run([args.php, 'artisan', 'ops:manifest', args.version], app, dict(os.environ, APP_ENV='packaging'))
+
     print('[4/5] Adding IT documents and data')
     # IT documents come from the exported COMMIT (tracked files only), never from the working tree:
     # a gitignored file such as a filled-in .env next to them must not reach the ZIP.
@@ -472,6 +477,7 @@ def main() -> int:
             shutil.copytree(item, target)
         else:
             shutil.copy2(item, target)
+    rmtree(app / 'deploy')  # the IT documents now live at the package root
     data_rel = None
     if args.data_sql:
         check_data_sql(args.data_sql, args.temp_admin_email)

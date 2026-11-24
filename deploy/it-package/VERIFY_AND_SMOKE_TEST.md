@@ -1,6 +1,6 @@
 # Verification and smoke test
 
-Fill in the **Result** column and send the table to King. Use the staging host name. Do not use real staff on
+Fill in the **Result** column and send the table to King. Use the test host name first. Do not use real staff on
 production as the first test.
 
 | # | Check | How | Expected | Result |
@@ -19,7 +19,7 @@ production as the first test.
 | 12 | Create/edit | as Admin: add a test provider, edit it, delete it, restore it | each step succeeds; Audit log shows the events. Then delete the test provider again. | |
 | 13 | Export | Export → all providers (Arabic) → wait ≤ 1 minute | job "completed", the .xlsx downloads | |
 | 14 | Import dry run | Import → upload the exported file in **dry-run** mode | validation completes with **1,104 rows, 0 errors, 1,104 unchanged, 0 to create, 0 to update**; nothing applied | |
-| 15 | Queue/scheduler | Plesk scheduled task log | `schedule:run` runs every minute without errors | |
+| 15 | Queue/scheduler | Plesk scheduled task log, then `php artisan ops:check` | `schedule:run` runs every minute without errors; ops:check: scheduler heartbeat recent, pending jobs 0, exports queued > 5 min 0 | |
 | 16 | API (optional) | `php artisan api:token <admin email> --issued-by=<admin email> --name=smoke --expires-days=1` then `curl -H "Authorization: Bearer <token>" https://<host>/api/v2/providers?per_page=1`; afterwards `php artisan api:token-revoke <admin email> --issued-by=<admin email> --all` | JSON with one provider; 401 without token | |
 | 17 | Logs | `providers-v2/storage/logs/` | no `ERROR` lines after the test | |
 | 18 | Backup | run the backup in BACKUP_AND_ROLLBACK.md (database **and** `storage/app/private`) and restore it to a scratch database | counts identical | |
@@ -28,6 +28,10 @@ production as the first test.
 | 21 | Merged provider | open any provider with the Arabic **and** English badges both ticked (about 790 of them) | the page shows both language panels, one record, one phone, one map link | |
 | 22 | Migration status strip | Admin → Dashboard, below the figures | one compact line: Unpaired **612**, Pairs to review **195**, Held rows **2**, Provisional types **0**; no large yellow banner | |
 | 23 | Photo upload (optional) | as Editor/Admin: provider → "Choose a picture" → save → remove | the picture appears and is removed again; a Viewer sees no upload button | |
+| 24 | Self-check | `php artisan ops:check` | no FAIL; "files identical to the release" | |
+| 25 | Public API (no login) | open `/api/arabic-providers?fields=type`, `/api/providers?fields=type`, `/api/arabic-providers?fields=city`, `/api/top-providers` | 30 Arabic types, 8 English types, cities list, 3 featured providers with `logo_url`; every `logo_url` opens an image (200); provider `email` is always null | |
+| 26 | Private API and admin areas | `/api/v2/providers` without token; `/dashboard` signed out; `/migration/review` | 401; redirect to `/login`; not available | |
+| 27 | Users without e-mail | Users -> Add user (password twice); Manage -> Reset password; account menu -> Change password; login page | all work; no "Forgot password" anywhere; a reset signs the user out everywhere | |
 
 Commands for the API check are documented in `providers/README.md` (`/api/v2`). Revoke the smoke-test token
 afterwards.

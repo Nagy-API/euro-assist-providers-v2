@@ -1,8 +1,6 @@
 # Installation guide — Euro Assist Providers V2
 
-Audience: the hosting/IT team. Install on an **isolated staging** subdomain first. Production installation and
-the switch of the real domain require King's **written** approval. The old site and its database are never
-modified by any step below.
+Audience: the hosting/IT team. **The short procedure is `START_HERE_PLESK_INSTALL.md`; this guide is the detailed reference.** Install next to the existing installation (new folder, new empty database) on a test host name first; the switch of the production host name needs King's approval. The old installation and its database are never modified by any step below.
 
 Commands are shown for both platforms. In Plesk, use the **PHP 8.3 (or 8.4) CLI** that Plesk shows for the
 subscription — never an older system PHP. Below, `php` means that executable (on Windows Plesk typically
@@ -82,7 +80,7 @@ check from Git Bash/WSL.
 ```bash
 cd <path>/providers-v2
 # copy production.env.example from the extracted ZIP to <path>/providers-v2/.env, then
-# edit .env: APP_URL (https://…), DB_* values, TRUSTED_PROXIES, MAIL_* when SMTP is available
+# edit .env: APP_URL (https://…), DB_* values, TRUSTED_PROXIES
 php artisan key:generate --force          # once; keep a private copy of APP_KEY with the server records
 ```
 
@@ -108,8 +106,7 @@ never committed anywhere: King sends it to you in a separate message. The accoun
    (12+ characters, letters and numbers, different from the temporary one; typed twice). Sign-out stays available.
 3. The new password is known only to its holder. The temporary password stops working at that moment; every other session
    of the account is ended. Do not write the new password into tickets or chat.
-4. Then create the other staff accounts from **Users** (Admin / Editor / Viewer); they receive a password-set e-mail once SMTP
-   is configured. Users shows a "Temporary password" badge on the account until the change is done.
+4. Then create the other staff accounts from **Users** (Admin / Editor / Viewer); the administrator chooses each password (typed twice) and hands it over; no e-mail is sent. Users shows a "Temporary password" badge on the account until the change is done.
 
 Do this **right after the import and before the site is reachable by anyone else**: until the password is replaced, whoever has
 the temporary password can sign in. If the temporary password is lost or the change page cannot be used, an authorized person
@@ -147,12 +144,11 @@ is preferred; keep the scheduled task in either case (it also runs the daily cle
 
 Run every check in `VERIFY_AND_SMOKE_TEST.md` and send King the filled-in result table.
 
-## Production (only after written approval)
+## Production switch (only after King's approval)
 
-1. Fresh data: follow `FRESH_DATA_SYNC.md` (the SQL in this ZIP is a frozen snapshot).
-2. Back up the old site's files and database (`BACKUP_AND_ROLLBACK.md`), verify the backup.
-3. Install exactly as above on the production host name; import the **fresh** SQL.
-4. Smoke test, then switch DNS / the document root of the production host name.
-5. Keep the old site and database intact and stopped from writing; it is the rollback path.
+1. The business data is unchanged (King's confirmation): use the SQL in this ZIP, into a new empty database, as above.
+2. Back up the existing installation's files and database first (`BACKUP_AND_ROLLBACK.md`) and run `tools/preflight.php` on it.
+3. Switch the production host name's document root to the new folder, set `APP_URL`, rebuild the caches, move the scheduled task, re-run the verification.
+4. Keep the old folder and database untouched as the rollback.
 
-Named roles to agree **before** cutover: who approves (King), who executes (IT), who decides rollback (King).
+Named roles to agree **before** the switch: who approves (King), who executes (IT), who decides rollback (King).

@@ -53,3 +53,8 @@ verified backup file names and SHA-256 values, and the time V2 went live.
 New release folder next to the current one → copy `.env` → `php artisan down` on the current one → back up →
 switch the document root to the new folder's `public` → `php artisan migrate --force` → caches → `php artisan up`.
 Rollback = point the document root back and restore the pre-upgrade backup if a migration ran.
+
+## Replacing the existing installation (rc.6 FINAL)
+
+Before the switch: (1) export the current database and copy the current application folder with `storage/app/private`; (2) run `tools/preflight.php` on the current installation and keep its output;
+(3) install the new version in a **new folder with a new empty database** (`START_HERE_PLESK_INSTALL.md`). Rollback = point the document root and the scheduled task back to the old folder; the old files and database were not changed.
