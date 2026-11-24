@@ -24,7 +24,7 @@ enum Role: string
      */
     public static function adminValues(): array
     {
-        return [self::Admin->value, ...array_keys(array_filter(self::LEGACY_ALIASES, fn (self $r) => $r === self::Admin))];
+        return [self::Admin->value, 'super_admin'];
     }
 
     /** @return list<Permission> */

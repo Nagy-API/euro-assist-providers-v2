@@ -6,6 +6,7 @@ use App\Models\LegacyIdMap;
 use App\Models\LegacyMigrationBatch;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 /**
  * Contract of the public V1-compatible read API (ADR-021). Synthetic data only. Consumer contract taken from
@@ -156,7 +157,7 @@ class LegacyApiCompatTest extends ApiTestCase
 
     public function test_legacy_ids_are_preserved_through_legacy_id_maps(): void
     {
-        $batch = LegacyMigrationBatch::query()->create(['uuid' => (string) \Illuminate\Support\Str::uuid(), 'snapshot_sha256' => str_repeat('a', 64), 'mapping_version' => 'v1']);
+        $batch = LegacyMigrationBatch::query()->create(['uuid' => (string) Str::uuid(), 'snapshot_sha256' => str_repeat('a', 64), 'mapping_version' => 'v1']);
         foreach ([['providers', 777, 'en', 1], ['arabic_providers', 888, 'ar', 1]] as [$table, $sid, $loc, $pid]) {
             LegacyIdMap::query()->create(['source_table' => $table, 'source_id' => $sid, 'source_locale' => $loc, 'provider_id' => $pid,
                 'snapshot_sha256' => str_repeat('a', 64), 'migration_batch_id' => $batch->id]);

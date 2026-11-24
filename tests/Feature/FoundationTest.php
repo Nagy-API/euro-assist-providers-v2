@@ -82,10 +82,11 @@ class FoundationTest extends TestCase
                 && ! str_starts_with($route->uri(), 'storage')
                 && ! str_starts_with($route->uri(), 'build'))
             ->filter(fn ($route) => in_array('GET', $route->methods(), true)
-                && ! in_array($route->uri(), ['up', '/', 'login', 'forgot-password', 'reset-password/{token}'], true)
+                && ! in_array($route->uri(), ['up', '/', 'login'], true)
                 && ! in_array('auth', $this->middlewareOf($route), true)
                 && ! str_starts_with($route->uri(), 'api/v2')
-                && ! str_starts_with($route->uri(), 'invitation/'))
+                // Reviewed public read-only surface (ADR-021): named legacy.* GET routes only, all behind the kill switch + throttle.
+                && ! (str_starts_with((string) $route->getName(), 'legacy.') && in_array('throttle:legacy-api', $this->middlewareOf($route), true)))
             ->map(fn ($route) => $route->uri())
             ->values()
             ->all();

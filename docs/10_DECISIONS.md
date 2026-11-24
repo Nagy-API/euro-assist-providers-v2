@@ -264,3 +264,29 @@ Use `ADR-XXX`, date, status, context, decision, alternatives, consequences and r
 - The pre-activation is a build step on a copy of the release database (schema migrated, only that users row changed; business tables verified identical by `CHECKSUM TABLE`); it is not audited because the audit trail of the data set is part of the verified counts (2,999 events).
 
 **Consequences / risks:** between the import and the first sign-in, anyone who obtains the temporary password can sign in as Admin; IT is told to sign in immediately, over HTTPS, before the site is reachable by others, and to keep the password out of tickets and chat. The SQL (confidential anyway) now contains one password hash; with a 28-character random password offline cracking is not a practical risk. Every rebuild repeats the step with a NEW temporary password (FRESH_DATA_SYNC.md).
+
+## ADR-020 - Administrator-managed accounts without e-mail
+
+**Date:** 2026-11-25 | **Status:** Accepted (King's production feedback scope, issue #49).
+
+**Context:** Production has no reliable e-mail delivery. Invitations and "Forgot password" depended on it.
+
+**Decision:** No e-mail verification, invitation or recovery exists. `UserService::create` takes name, syntactically valid unique e-mail (mailbox need not exist; `email:rfc`, no DNS check), one of three roles, password + confirmation (min 12, letters and numbers) and an optional "must change at first sign-in" flag (default on). `UserService::resetPassword` (Admin, not for oneself) replaces the hash, sets the flag, and calls `User::revokeAllAccess()` (web sessions, remember tokens, API tokens); the audit event never contains the password. Self-service change is `GET/POST /account/password` (current password required, other devices signed out) and stays the only screen a flagged account can use. The `forgot-password` / `reset-password` routes, controller and views were deleted (404). Exactly three roles remain; `users.role = super_admin` (legacy) is read as Administrator by the `UserRole` cast (any other unknown value = no permissions, never promoted), counted by the last-administrator rule, and rewritten to `admin` by an idempotent data-only migration that audits the previous value. Existing users and password hashes are untouched. The session concurrency behaviour (`AuthenticateSession`, `logoutOtherDevices`) is unchanged.
+
+**Consequences:** administrators must hand passwords over out of band; a forgotten password needs an administrator. `ops:check` reports legacy/unknown roles.
+
+## ADR-021 - Public read-only V1-compatible API
+
+**Date:** 2026-11-25 | **Status:** Accepted (issue #46). Supersedes the "public read OFF until D7" default **for these paths only**; `/api/v2` stays token-only.
+
+**Decision:** see `docs/20_LEGACY_API_COMPAT.md`. GET-only routes under `/api` backed by V2 data, V1 shapes, ids preserved through `legacy_id_maps`, no write verbs, no JWT login, no speculative governorate, kill switch and per-IP rate limit.
+
+**Consequences:** provider business data (already public on V1) is public again; images are served publicly by id. Mobile compatibility is unverified (no app available).
+
+## ADR-022 - Queue/scheduler hardening and read-only deployment self-check
+
+**Date:** 2026-11-25 | **Status:** Accepted (issues #47, #48).
+
+**Decision:** (1) The scheduled worker uses `withoutOverlapping(5)`: the default lock lives 24 hours, so one killed worker could leave every job queued for a day. (2) `queue.connections.database.retry_after` 90 -> 3700 s (above the longest job): with 90 s a long export/import was redelivered to a second worker and failed. (3) The scheduler writes a heartbeat; the Export page warns when an export has been queued for more than 5 minutes. (4) `php artisan ops:check` (read-only, no secrets) reports environment/debug/config cache, database target and required tables, role values, route exposure (migration review in production = FAIL), scheduler heartbeat, stuck jobs and a SHA-256 comparison of the deployed code with `release-manifest.json` (`ops:manifest`, build-time).
+
+**Evidence classification:** *server configuration* = no/incorrect Plesk scheduled task, wrong PHP CLI, wrong user/permissions, wrong database (missing `cache` table makes `schedule:run` itself fail); *application defects* = the 24 h lock and the short `retry_after`. A queued export is never reported as completed.

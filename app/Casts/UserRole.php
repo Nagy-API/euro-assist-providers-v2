@@ -34,6 +34,7 @@ class UserRole implements CastsAttributes
         return Role::tryFrom($value) ?? (Role::LEGACY_ALIASES[$value] ?? null);
     }
 
+    /** @return array<string, string> */
     public function set(Model $model, string $key, mixed $value, array $attributes): array
     {
         $role = match (true) {

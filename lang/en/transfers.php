@@ -119,6 +119,7 @@ return [
     ],
 
     'exports' => [
+        'stuck_queue' => 'Some of your exports have been waiting for more than 5 minutes without being processed. A waiting export is not a finished export: the background worker on the server may not be running. Ask IT to check the scheduled task (docs: queue setup).',
         'title' => 'Export providers',
         'intro' => 'Request an .xlsx export. It is generated in the background and kept for a limited time. The file uses the same template as import, so an export can be edited and imported back.',
         'scope' => 'What to export',

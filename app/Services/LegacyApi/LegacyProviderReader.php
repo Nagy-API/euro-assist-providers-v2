@@ -9,6 +9,7 @@ use App\Rules\SafeHttpUrl;
 use App\Services\Media\ProviderPhotoStore;
 use App\Services\Media\TypeIconStore;
 use App\Services\Ui\FeaturedLogoStore;
+use App\Support\LegacyTypeStyle;
 use App\Support\Like;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -182,24 +183,24 @@ class LegacyProviderReader
         $type = $p->type;
         $row = [
             'id' => $this->publicId($p),
-            'name' => $p->t_name,
+            'name' => $p->getAttribute('t_name'),
             'type' => $type?->label($locale),
-            'address' => $p->t_address,
-            'city' => $p->t_city,
-            'district' => $p->t_district,
-            'discount_pct' => $p->t_discount,
-            'hours' => $p->t_hours,
+            'address' => $p->getAttribute('t_address'),
+            'city' => $p->getAttribute('t_city'),
+            'district' => $p->getAttribute('t_district'),
+            'discount_pct' => $p->getAttribute('t_discount'),
+            'hours' => $p->getAttribute('t_hours'),
             'phone' => $p->phone,
             'email' => $p->email,
             'website' => SafeHttpUrl::passes($p->website, allowBare: true) ? $p->website : null,
             'map_url' => SafeHttpUrl::passes($p->map_url, allowBare: true) ? $p->map_url : null,
             'logo_path' => $this->logoUrl($p),
             'logo_url' => $this->logoUrl($p),
-            'specialization' => $p->t_specialization,
-            'package' => $p->t_package,
+            'specialization' => $p->getAttribute('t_specialization'),
+            'package' => $p->getAttribute('t_package'),
         ];
         if ($locale === 'en') {
-            $row['is_translated'] = (int) ((int) $p->other_locales > 0);
+            $row['is_translated'] = (int) ((int) $p->getAttribute('other_locales') > 0);
         }
         $row['created_at'] = $p->created_at?->toJSON();
         $row['updated_at'] = $p->updated_at?->toJSON();
@@ -211,7 +212,7 @@ class LegacyProviderReader
 
     public function publicId(Provider $p): int
     {
-        return $p->legacy_lid !== null ? (int) $p->legacy_lid : self::offset() + (int) $p->id;
+        return $p->getAttribute('legacy_lid') !== null ? (int) $p->getAttribute('legacy_lid') : self::offset() + (int) $p->id;
     }
 
     /** Resolve a public id (legacy id, or offset + V2 id) to a presentable provider, or null. */
@@ -307,12 +308,12 @@ class LegacyProviderReader
             }
             $rows[] = [
                 'type' => $type->key,
-                'display_name' => \App\Support\LegacyTypeStyle::displayName($type->key),
+                'display_name' => LegacyTypeStyle::displayName($type->key),
                 'english_count' => $en,
                 'arabic_count' => $ar,
                 'max_count' => max($en, $ar),
-                'color' => \App\Support\LegacyTypeStyle::color($type->key),
-                'icon' => \App\Support\LegacyTypeStyle::icon($type->key),
+                'color' => LegacyTypeStyle::color($type->key),
+                'icon' => LegacyTypeStyle::icon($type->key),
             ];
         }
         usort($rows, fn (array $a, array $b) => $b['max_count'] <=> $a['max_count']);

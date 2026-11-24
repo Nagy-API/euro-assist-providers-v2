@@ -83,7 +83,7 @@ class LegacyProviderController extends Controller
     {
         $locale = $this->locale($request);
         $rows = $this->reader->query($locale)->get()->map(fn (Provider $p) => [
-            'name' => $p->t_name,
+            'name' => $p->getAttribute('t_name'),
             'type' => $p->type?->label($locale),
             'latitude' => $p->latitude === null ? null : (float) $p->latitude,
             'longitude' => $p->longitude === null ? null : (float) $p->longitude,

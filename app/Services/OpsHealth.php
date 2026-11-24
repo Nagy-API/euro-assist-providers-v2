@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\Role;
 use App\Models\ExportJob;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -28,7 +29,7 @@ class OpsHealth
     public const FAIL = 'fail';
 
     /** Directories whose files make up "the code" for the fingerprint. */
-    private const CODE_DIRS = ['app', 'bootstrap/app.php', 'config', 'database/migrations', 'database/seeders', 'lang', 'resources', 'routes', 'public/index.php'];
+    private const CODE_DIRS = ['app', 'bootstrap/app.php', 'config', 'database/migrations', 'database/seeders/DatabaseSeeder.php', 'lang', 'resources', 'routes', 'public/index.php'];
 
     /** @var list<array{group: string, name: string, status: string, detail: string}> */
     private array $checks = [];
@@ -136,7 +137,7 @@ class OpsHealth
 
         $pending = DB::table('jobs')->count();
         $oldest = DB::table('jobs')->min('created_at');
-        $oldestAge = $oldest ? (int) now()->diffInSeconds(\Illuminate\Support\Carbon::createFromTimestamp((int) $oldest), true) : 0;
+        $oldestAge = $oldest ? (int) now()->diffInSeconds(Carbon::createFromTimestamp((int) $oldest), true) : 0;
         $this->add('queue', 'pending jobs', $pending === 0 || $oldestAge < 300 ? self::OK : self::FAIL,
             "$pending pending".($pending ? ", oldest {$oldestAge}s".($oldestAge >= 300 ? ' (NOT being processed: no worker is draining the queue)' : '') : ''));
         $this->add('queue', 'failed jobs', DB::table('failed_jobs')->count() === 0 ? self::OK : self::WARN, (string) DB::table('failed_jobs')->count());

@@ -4,11 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Factories\UserFactory;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -128,10 +127,10 @@ class AuthenticationTest extends TestCase
         $this->post('/forgot-password', ['email' => 'a@example.test'])->assertNotFound();
         $this->get('/reset-password/abc')->assertNotFound();
         $this->post('/reset-password', ['token' => 'x', 'email' => 'a@example.test'])->assertNotFound();
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.request'));
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.reset'));
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.email'));
-        $this->assertFalse(\Illuminate\Support\Facades\Route::has('password.update'));
+        $this->assertFalse(Route::has('password.request'));
+        $this->assertFalse(Route::has('password.reset'));
+        $this->assertFalse(Route::has('password.email'));
+        $this->assertFalse(Route::has('password.update'));
 
         $this->withoutVite();
         $this->get('/login')->assertOk()->assertDontSee('forgot', false);

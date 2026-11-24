@@ -2,14 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Permission;
 use App\Enums\Role;
 use App\Livewire\Users\Index as UsersIndex;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\UserService;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -197,7 +200,7 @@ class UserManagementTest extends TestCase
         $this->assertSame(Role::Admin, $legacy->fresh()->role);
         $this->assertTrue($legacy->fresh()->isAdmin());
         $this->assertNull($odd->fresh()->role);
-        $this->assertFalse($odd->fresh()->hasPermission(\App\Enums\Permission::ProvidersView), 'unknown roles fail closed');
+        $this->assertFalse($odd->fresh()->hasPermission(Permission::ProvidersView), 'unknown roles fail closed');
 
         // The legacy admin counts as an administrator for the last-admin rule (no lock-out, no bypass).
         try {
@@ -234,8 +237,8 @@ class UserManagementTest extends TestCase
     public function test_no_email_invitation_or_verification_machinery_remains(): void
     {
         $this->assertFalse(method_exists(UserService::class, 'invite'));
-        $this->assertNotContains(\Illuminate\Contracts\Auth\MustVerifyEmail::class, class_implements(User::class));
-        foreach (\Illuminate\Support\Facades\Route::getRoutes()->getRoutes() as $route) {
+        $this->assertNotContains(MustVerifyEmail::class, class_implements(User::class));
+        foreach (Route::getRoutes()->getRoutes() as $route) {
             $this->assertDoesNotMatchRegularExpression('#forgot|reset-password|invitation|verify-email|email/verify#', $route->uri());
             $this->assertNotContains('verified', $route->gatherMiddleware());
         }
