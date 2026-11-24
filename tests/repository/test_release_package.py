@@ -161,6 +161,25 @@ class ReleasePackageTest(unittest.TestCase):
                 with self.assertRaises(SystemExit, msg=bad):
                     builder.check_data_sql(f)
 
+    def test_it_documents_are_clean_and_match_the_verified_release_data(self):
+        """The IT-facing documents shipped inside the ZIP: no control characters (a backslash-a once became a BEL in a path),
+        no counts or statements left over from an earlier candidate, and the verified rc.3 data figures present."""
+        docs = sorted(PKG.glob("*.md"))
+        self.assertGreaterEqual(len(docs), 7)
+        for doc in docs:
+            text = read(doc)
+            self.assertEqual([c for c in text if ord(c) < 32 and c not in (chr(9), chr(10), chr(13))], [], f"control character in {doc.name}")
+            for stale in ("2,185", "334 ", "2,188", "RELEASE_VALIDATION", "D8 pending", "billing", "not migrated", "rc.2"):
+                self.assertNotIn(stale, text, f"stale text {stale!r} in {doc.name}")
+        imp = read(PKG / "DATABASE_IMPORT.md")
+        for fact in ("1,402", "790", "2,192", "2,999", "-- 195", "-- 2192", "-- 1402", "-- 5"):
+            self.assertIn(fact, imp)
+        self.assertIn("1,402", read(PKG / "VERIFY_AND_SMOKE_TEST.md"))
+        fresh = read(PKG / "FRESH_DATA_SYNC.md")
+        for needed in ("legacy:apply-review-manifest", "legacy:import-media", "--media-dir", "uploads/logos"):
+            self.assertIn(needed, fresh)
+        self.assertIn("storage/app/private", read(PKG / "BACKUP_AND_ROLLBACK.md"))
+
     def test_media_folder_guard(self):
         spec = importlib.util.spec_from_file_location("builder", BUILDER)
         builder = importlib.util.module_from_spec(spec)

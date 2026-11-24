@@ -73,7 +73,7 @@ check from Git Bash/WSL.
     in Plesk) **Modify** rights on `providers-v2\storage` and `providers-v2\bootstrap\cache`.
   * Linux: owner = subscription system user; `chmod -R ug+rwX storage bootstrap/cache`.
 * Do **not** create the `public/storage` link (`storage:link`); all files are private by design.
-* The package already contains the migrated pictures in `providers-v2\storagepp\private\` (`provider-photos`, `type-icons`, `featured-logos`; listed in `MANIFEST.json`). Keep that folder when copying; the application serves them only to signed-in staff.
+* The package already contains the 16 migrated pictures (5 provider photos, 3 featured logos, 8 default type pictures) in `providers-v2/storage/app/private/` (sub-folders `provider-photos`, `type-icons`, `featured-logos`; every file is listed in `MANIFEST.json` and `SHA256SUMS.txt`). Keep that folder when copying: the database refers to these files by name, and the application serves them only to signed-in staff (there is no public URL).
 * IIS: keep `public/web.config`, which uses the URL Rewrite module. If IIS reports a duplicate rule, a parent
   configuration already defines one — remove the parent rule, not ours. Apache/nginx: keep `public/.htaccess`.
 
@@ -89,7 +89,7 @@ php artisan key:generate --force          # once; keep a private copy of APP_KEY
 ## 7. Import the data and finish the schema
 
 Follow `DATABASE_IMPORT.md` to load `database/EuroAssist_Providers_V2_DATA_<version>.sql` into the **empty**
-database. Then:
+database and compare the counts it lists. Then:
 
 ```bash
 php artisan migrate --force               # expected: "Nothing to migrate."

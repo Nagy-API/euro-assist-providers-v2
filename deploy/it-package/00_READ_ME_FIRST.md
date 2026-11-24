@@ -32,20 +32,21 @@ Point the domain's **document root to `providers/public`**. Everything else in `
 |---|---|
 | Application code, production `vendor/`, built CSS/JS, Cairo font, official logos | `.env` or any real password, key or token |
 | `public/.htaccess` (Apache / Plesk Linux) and `public/web.config` (IIS / Plesk Windows) | Any usable password, password hashes, sessions, API tokens |
-| SQL file with 2,185 migrated providers, 3 featured providers, 30 types and full migration provenance | Uploaded logos/files from the old site (decision D8 pending) |
-| Installation, verification, backup and rollback guides | Node.js (not needed on the server) |
+| SQL file with **1,402 provider records** (790 of them are English+Arabic pairs merged after verification, 612 single-language), 3 featured providers, 30 provider types and full migration provenance | Files of the old `uploads` folder that no migrated record refers to |
+| **16 migrated pictures** (5 provider photos, 3 featured logos, 8 default type pictures) under `providers/storage/app/private/` | Node.js (not needed on the server) |
+| Installation, verification, backup and rollback guides | |
 
 The legacy administrator `admin@euro-assist.com` is included as an identity with Admin role but **no usable password**; it is activated on the server after the import (`php artisan users:set-password admin@euro-assist.com`, hidden prompt).
 
 ## Ten steps (details in INSTALL_GUIDE.md)
 
 1. Verify the ZIP checksum against the value King sent you separately; then `SHA256SUMS.txt`.
-2. Confirm the host meets the requirements (PHP 8.3+, extensions, MySQL/MariaDB, scheduled task).
+2. Confirm the host meets the requirements (PHP 8.3+, extensions including `gd` with WebP, MySQL/MariaDB, scheduled task).
 3. Create a **staging** subdomain, a **new empty** database and a dedicated database user.
 4. Upload the contents of `providers/` to a folder outside the web root (e.g. `providers-v2`); set the document root to
    its `public` subfolder (`providers-v2/public`); enable Plesk's HTTP to HTTPS 301 redirect.
 5. Create `providers/.env` from `production.env.example`; run `php artisan key:generate --force`.
-6. Import the SQL into the empty database (DATABASE_IMPORT.md); run `php artisan migrate --force` (expects "Nothing to migrate").
+6. Import the SQL into the empty database and compare the counts (DATABASE_IMPORT.md); run `php artisan migrate --force` (expects "Nothing to migrate").
 7. Activate the existing Admin: `php artisan users:set-password admin@euro-assist.com` (interactive, hidden prompt, King's authorization).
 8. Cache configuration, add the every-minute scheduled task, check HTTPS.
 9. Run VERIFY_AND_SMOKE_TEST.md and give King the results.
@@ -53,8 +54,13 @@ The legacy administrator `admin@euro-assist.com` is included as an identity with
 
 ## Status of this release
 
-* Built and verified **locally** (Windows, PHP 8.3/8.4, MariaDB 11.4): extraction, checksum, SQL import, migrations,
-  account provisioning, login, roles, Excel import/export worker, API and backup/restore. See `RELEASE_VALIDATION.md`
-  delivered next to this ZIP.
+* Built and verified **locally** (Windows, PHP 8.3/8.4, MariaDB 11.4): extraction, checksums, SQL import, migrations,
+  account activation, login, roles, pictures, Excel import/export worker, API and backup/restore.
+  The same code also passes the automated checks on GitHub Actions (PHP 8.3 and 8.4, MariaDB, frontend build).
 * **Not yet verified on the company Plesk server.** Staging on the real host is the next required step.
-* The data is the frozen snapshot of the old system; it does not contain changes made in the old system afterwards.
+* References such as "ADR-014" point to the engineering team's decision records (`providers/docs/10_DECISIONS.md`).
+* The data is the frozen snapshot of the old system (SHA-256 in `DATABASE_IMPORT.md`) **plus** the owner-reviewed
+  merge decisions and the migrated pictures. It does not contain changes made in the old system afterwards;
+  `FRESH_DATA_SYNC.md` explains how to refresh it without losing those decisions.
+* Open review items (104 English/Arabic pairs not merged, 195 open pair suggestions, 2 held "Eye Center" rows) are listed in
+  `KNOWN_LIMITATIONS_AND_OPEN_DECISIONS.md`; none of them blocks a staging installation.
