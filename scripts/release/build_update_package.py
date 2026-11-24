@@ -50,6 +50,7 @@ def main() -> int:
     ap.add_argument('--baseline', required=True, help='commit of the delivered baseline (rc.5 code: ab96a23)')
     ap.add_argument('--php', required=True)
     ap.add_argument('--out', required=True)
+    ap.add_argument('--rc5-zip', required=True, help='the delivered EuroAssist_Providers_V2_2.0.0-rc.5.zip (baseline fingerprint for preflight.php)')
     ap.add_argument('--skip-build', action='store_true')
     a = ap.parse_args()
 
@@ -89,7 +90,20 @@ def main() -> int:
 
     sh([a.php, 'artisan', 'ops:manifest', a.version, f'--path={files / "release-manifest.json"}'])
 
-    for f in ('UPDATE_GUIDE.md', 'apply-update.ps1'):
+    # Baseline fingerprint of the DELIVERED rc.5 code (same entries and normalisation as OpsHealth::fingerprint).
+    code = ('app/', 'bootstrap/app.php', 'config/', 'database/migrations/', 'database/seeders/DatabaseSeeder.php', 'lang/', 'resources/', 'routes/', 'public/index.php')
+    base = {}
+    with zipfile.ZipFile(a.rc5_zip) as zin:
+        for n in zin.namelist():
+            rel = n.split('/providers/', 1)[1] if '/providers/' in n else ''
+            if rel and not n.endswith('/') and rel.startswith(code):
+                base[rel] = hashlib.sha256(zin.read(n).replace(b'
+', b'
+')).hexdigest()
+    (stage / 'rc5-baseline-fingerprint.json').write_text(json.dumps({'version': '2.0.0-rc.5', 'files': dict(sorted(base.items()))}, indent=0) + '
+', encoding='utf8')
+
+    for f in ('UPDATE_GUIDE.md', 'apply-update.ps1', 'preflight.php'):
         shutil.copy(REPO / 'deploy' / 'it-update' / f, stage / f)
     (stage / 'postman').mkdir()
     for f in (REPO / 'docs' / 'postman').glob('*.json'):

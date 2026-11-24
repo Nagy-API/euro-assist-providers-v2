@@ -16,20 +16,26 @@ Nothing in this package has been deployed by the author. Apply it only after Kin
 | Look | Euro Assist icon in the browser tab on every page; "Migration review" moved from the menu to *Advanced tools*. |
 | Database | **One data-only migration**: `2026_11_25_000100_normalize_legacy_super_admin_role` changes `users.role` from `super_admin` to `admin` (if any) and writes one audit row. No table or column is created or dropped. |
 
-## 0. Before anything — prove which application and database you have
+## 0. Preflight - prove what is running BEFORE touching anything (read-only)
 
-The first production report (`roles.super_admin`, the migration page visible, API routes that rc.5 does not contain) means the
-running code or configuration may differ from the delivered rc.5. Do not assume. From the application folder (the one that contains `artisan`),
-using the **same PHP 8.3/8.4 CLI that Plesk uses for this site**:
+Production is known to differ from the delivered rc.5 (extra API routes, `roles.super_admin`, the migration page visible, an empty login
+response). The command `php artisan ops:check` does **not exist yet** on the running site; it arrives with this update. So use the standalone,
+read-only script `preflight.php` from this package. It needs no Laravel, writes nothing, runs no migration and prints no secret
+(no keys, passwords, tokens, hosts or user names).
 
 ```text
-<php> artisan ops:check
+"<full path>\php.exe" preflight.php "<application folder that contains artisan>"
 ```
 
-Read-only, prints no secrets. Send King the output (not the `.env`). It reports: `APP_ENV`, `APP_DEBUG`, whether the config is cached,
-the database it is connected to, required tables, role values, whether the migration page is registered, scheduler heartbeat, pending/stuck
-jobs and whether the files equal a release. **Stop and report** if it says a required table is missing or you are on the old V1 database
-(`arabic_providers` table, no `provider_translations`): never run `migrate` or an import on an unknown database.
+Use the **same PHP 8.3/8.4 CLI that Plesk uses for the site** (not `php-cgi.exe`). It reports: PHP version/extensions, `APP_ENV`/`APP_DEBUG`/`APP_URL`,
+a `DB_URL` override, cache files, folder write access, the **database name** and whether it is the V2 database, required tables, user role values,
+provider counts, pending/stuck jobs and exports, and **which code files differ from the delivered rc.5** (modified / missing / extra, by name).
+
+Send the whole output to King before going on. **Stop (do not apply the update) if** it says: *OLD V1 database*, *required tables MISSING*, or it cannot
+connect. A stale configuration cache can point the site at a different database than `.env`: run `php artisan config:clear` first if the output looks wrong
+(that only deletes a cache file) and run the preflight again. Files listed as **modified/extra** are production-only changes made outside rc.5:
+the update overwrites the files it contains (all are backed up by `apply-update.ps1`); any leftover unknown file is inert. Send the list so King can decide
+whether any of it must be kept.
 
 ## 1. Backup (mandatory)
 
@@ -50,7 +56,7 @@ jobs and whether the files equal a release. **Stop and report** if it says a req
    The script refuses a folder without `artisan`, copies a backup of every file it will overwrite or delete to `..\update-backup-<timestamp>`,
    copies the new files, deletes the files listed in `removed-files.txt`, replaces `public\build` and **never** touches `.env`, `storage`, `vendor` or the database.
    Doing it by hand is equivalent: copy `files\*` over the application folder and delete the paths in `removed-files.txt`.
-3. Confirm the files match the release: `<php> artisan ops:check` → section CODE must say *files identical to the release*.
+3. Confirm the files match the release: `<php> artisan ops:check` (available now) → section CODE must say *files identical to the release*.
 
 ## 3. Environment (check, do not rewrite secrets)
 
