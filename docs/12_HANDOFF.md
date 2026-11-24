@@ -54,7 +54,7 @@ Pint, PHPStan, PHPUnit on PHP 8.3 and 8.4, `phpunit.mysql.xml` on MariaDB (docs0
 
 ## Release candidate 2.0.0-rc.3 (2026-11-23)
 
-* Dataset: `euro_assist_v2_release_rc3`, rebuilt with `..\.work\migration-review-20261123uild-rc3.ps1` (pipeline → import-users → `legacy:apply-review-manifest` → `legacy:import-media` → reconcile), then `cleanup-rc3.sql`. The private runner `run.ps1` allows only the rc3 databases.
+* Dataset: `euro_assist_v2_release_rc3`, rebuilt with `..\.work\migration-review-20261123\build-rc3.ps1` (pipeline → import-users → `legacy:apply-review-manifest` → `legacy:import-media` → reconcile), then `cleanup-rc3.sql`. The private runner `run.ps1` allows only the rc3 databases.
 * Build: `python scripts/release/build_release.py --version 2.0.0-rc.3 --out ..\.work
 elease-20261123-rc3\out --data-sql <rc3 SQL> --media-dir <rc3 media folder> --php ..\.tools\php-8.3.37\php.exe --composer ..\.tools\composer.phar`.
 * Built package: `..\.workelease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb`; verified and install-rehearsed locally (work log 2026-11-24). Send IT the ZIP and, separately, its SHA-256.
