@@ -1,5 +1,7 @@
 # Handoff: open this document in every new chat
 
+**2026-11-25 update (rc.6 incremental):** branch `fix/production-feedback-update`. Next: (1) King tests `docs/postman/` against the local UAT server (`start-uat.ps1 -NoWait`, http://127.0.0.1:8000); (2) on approval give IT `.work/update-rc6/EuroAssist_Providers_V2_UPDATE_2.0.0-rc.6.zip` + `.sha256` (guide inside: backup, `apply-update.ps1`, `migrate --force`, caches, scheduler, verification, rollback); (3) IT runs `php artisan ops:check` FIRST and returns the output; (4) rebuild with `python scripts/release/build_update_package.py --version <v> --baseline ab96a23 --php <php> --out <dir outside repo>`; (5) regenerate Postman with `python scripts/postman/build_postman.py`. Risks: production code differs from rc.5 (unknown origin); mobile apps unverified; hosted CI blocked.
+
 **Date:** 2026-11-23. Read AGENTS, README, `docs/01_CURRENT_STATUS.md`, ADRs (`docs/10_DECISIONS.md`, esp. 011–014) and the work log first; verify Git/PRs yourself.
 
 ## Current true state

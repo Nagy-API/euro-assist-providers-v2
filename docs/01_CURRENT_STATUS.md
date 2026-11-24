@@ -1,5 +1,14 @@
 # Current project status — update after EVERY task
 
+## 2026-11-25 — production feedback update (rc.6 incremental, NOT deployed, NOT merged)
+
+**Branch:** `fix/production-feedback-update` (from `feature/release-candidate`, baseline = delivered rc.5 code `ab96a23`; verified identical to the delivered package except build-time files). **Issues:** #46 legacy API, #47 queue, #48 deployment consistency, #49 users, #50 verification/package, #51 UI. **Last verified commit:** see PR head (`9e61005` when written).
+**Verified locally:** PHPUnit 612 tests / 3,803 assertions on PHP 8.3.37 (SQLite); Larastan `[OK]`; Pint clean; hygiene check passes; independent security review: 0 high, 3 low findings fixed (API tokens revoked on self password change, capped public filters + 60 s server cache, proxy warning in `ops:check`). Update package applied to a pristine copy of the delivered rc.5: 258 files identical to the release manifest, 0 SQL files, removed files gone.
+**Not verified / blockers:** hosted GitHub Actions (billing blocker, never executed); MariaDB PHPUnit run for this change (the API was exercised by hand on MariaDB 11.4 through the UAT environment only); the public website and mobile apps against the real production host; production is untouched. **Production finding:** the code serving `providers.euro-assist.com` is NOT the delivered rc.5 (it has legacy routes rc.5 does not contain; `/login` returned an empty body, favicon 0 bytes) — see `docs/20_LEGACY_API_COMPAT.md`; IT must run `php artisan ops:check` first.
+**Package:** `.work/update-rc6/EuroAssist_Providers_V2_UPDATE_2.0.0-rc.6.zip` (incremental, no database dump).
+
+---
+
 **Date:** 2026-11-23. **Stage:** release candidate `2.0.0-rc.3` (verified migration merges, legacy media, RTL and login fixes) — see the work log for the build and rehearsal evidence. Nothing merged, nothing deployed.
 **Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — PRIVATE (verified 2026-11-22).
 **Branches (stacked PRs):** `feature/release-candidate` → `feature/uat-environment` (PR #41) → `feature/p1-foundation-hardening` (PR #40) → PR #38 → `main`. Latest SHA: see the PR head.
