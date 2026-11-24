@@ -112,6 +112,9 @@ return [
         // A provider created in V2 has no legacy id; its public id is this offset + the V2 id, so it can
         // never collide with an id the old system issued (legacy ids are below this value).
         'unmapped_id_offset' => 1000000,
+        // Provider e-mail addresses are NOT published by default (owner decision 2026-11-25); the `email` key
+        // stays in every row, always null, so the response schema is unchanged. Set true only with approval.
+        'expose_email' => (bool) env('LEGACY_API_EXPOSE_EMAIL', false),
         'cache_seconds' => (int) env('LEGACY_API_CACHE_SECONDS', 60),
         // Server-side cache of the whole-table reads (list, all-latlng, dropdown projections).
         'server_cache_seconds' => (int) env('LEGACY_API_SERVER_CACHE_SECONDS', 60),

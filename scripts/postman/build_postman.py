@@ -77,6 +77,7 @@ pm.test('Raw array (V1 shape: no envelope unless paginated)', () => pm.expect(ro
 pm.test('Rows are never empty for the full list', () => pm.expect(rows.length).to.be.above(0));
 pm.test('Every row has exactly the V1 field set and order', () => rows.slice(0, 50).forEach(r => pm.expect(sameKeys(r, {json.dumps(row_keys)})).to.be.true));
 pm.test('id is a positive integer, name is a non-empty string', () => rows.slice(0, 50).forEach(r => {{ pm.expect(Number.isInteger(r.id) && r.id > 0).to.be.true; pm.expect(r.name).to.be.a('string').and.not.empty; }}));
+pm.test('Provider e-mail is never published (key present, value null)', () => rows.forEach(r => pm.expect(r.email).to.eql(null)));
 pm.test('Coordinates are numbers or null', () => rows.forEach(r => {{ pm.expect(r.latitude === null || typeof r.latitude === 'number').to.be.true; pm.expect(r.longitude === null || typeof r.longitude === 'number').to.be.true; }}));
 pm.test('Website/map links are http(s) or null', () => rows.forEach(r => ['website', 'map_url'].forEach(k => pm.expect(r[k] === null || /^https?:\\/\\//i.test(r[k]) || /^[^:\\s\\/]+\\.[^:\\s\\/]+/.test(r[k])).to.be.true)));
 """ + (f"""pm.test('Arabic rows contain Arabic text', () => pm.expect(rows.some(r => /[\\u0600-\\u06FF]/.test(r.name))).to.be.true);

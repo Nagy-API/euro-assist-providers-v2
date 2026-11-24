@@ -37,7 +37,7 @@ class LegacyProviderReader
     /** Columns searched by the V1 `search` endpoint (`query`). */
     private const FULL_SEARCH = [
         't.name', 'tt.name', 't.specialization', 't.city', 't.district', 't.address', 't.discount_text',
-        't.hours', 'providers.phone', 'providers.email', 'providers.website', 't.package_text',
+        't.hours', 'providers.phone', 'providers.website', 't.package_text',
     ];
 
     /** @var list<string> */
@@ -139,7 +139,9 @@ class LegacyProviderReader
      */
     public function applyFullSearch(Builder $q, string $term): void
     {
-        Like::anyOf($q, self::FULL_SEARCH, $term);
+        // An e-mail that is not published must not be discoverable through search either.
+        $columns = config('providers.legacy_api.expose_email') ? [...self::FULL_SEARCH, 'providers.email'] : self::FULL_SEARCH;
+        Like::anyOf($q, $columns, $term);
     }
 
     /**
@@ -191,7 +193,8 @@ class LegacyProviderReader
             'discount_pct' => $p->getAttribute('t_discount'),
             'hours' => $p->getAttribute('t_hours'),
             'phone' => $p->phone,
-            'email' => $p->email,
+            // Not public unless explicitly approved (LEGACY_API_EXPOSE_EMAIL): the key stays so the V1 schema is unchanged.
+            'email' => config('providers.legacy_api.expose_email') ? $p->email : null,
             'website' => SafeHttpUrl::passes($p->website, allowBare: true) ? $p->website : null,
             'map_url' => SafeHttpUrl::passes($p->map_url, allowBare: true) ? $p->map_url : null,
             'logo_path' => $this->logoUrl($p),

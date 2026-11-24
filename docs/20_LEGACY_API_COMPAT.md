@@ -35,6 +35,7 @@ Row fields (English adds `is_translated` after `package`): `id, name, type, addr
 * `id`: legacy id when mapped; `1 000 000 + V2 id` for providers created in V2 (never collides with an old id).
 * The `governorate` parameter is **ignored**. V1 queried a column that never existed (it would have failed). No governorate is derived from city/district: that would be a speculative geographic classification.
 * Not restored: `POST /api/login`, `/api/logout` (the V1 JWT integration was inconsistent/broken) and the declared-but-unimplemented store/update/destroy routes. No write verb is registered; `/api/v2` remains token-protected.
+* `email` is **not published** (owner decision 2026-11-25): the key stays in every row so the schema is unchanged, but its value is always `null`, and e-mail is excluded from the search columns. `LEGACY_API_EXPOSE_EMAIL=true` re-enables it, only with written approval.
 * Unsafe `website`/`map_url` values (`javascript:`, `data:`) are never returned. No user id, revision, batch id, storage path or inactive record is exposed. `per_page` is capped at 1000 (V1 unbounded). Errors use the JSON envelope without internals.
 * Rate limit 120 requests/minute per IP (`LEGACY_API_RATE_LIMIT`); kill switch `LEGACY_API_ENABLED=false` (404 everywhere); responses `Cache-Control: public, max-age=60`; CORS `*` for `/api/*` (the website calls it cross-origin).
 

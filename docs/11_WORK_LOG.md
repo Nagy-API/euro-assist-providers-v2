@@ -196,4 +196,3 @@ elease-20261123-rc3\install\`; SQL restored into the new empty `euro_assist_v2_r
 - **P3:** brand favicon (official globe mark cropped from the authentic logo, ICO + PNG), Advanced administration page, migration review out of the menu (route gating unchanged).
 - **Tests run (actual):** full PHPUnit 612 tests OK (SQLite, PHP 8.3.37); Larastan OK; Pint clean; manual UAT on MariaDB: API endpoints answered with real rc.5 data.
 - **Remaining:** King's approval; IT runs `ops:check`, backup, update; hosted CI blocked by billing; Postman run by King; confirm `providers.email` public exposure with owner (V1 exposed it).
-

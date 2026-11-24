@@ -239,4 +239,21 @@ class LegacyApiCompatTest extends ApiTestCase
 
         $this->pub('/api/arabic-providers?search='.str_repeat('a', 5000))->assertOk();
     }
+
+    public function test_provider_email_is_not_public_by_default_but_the_key_stays(): void
+    {
+        \DB::table('providers')->where('id', 1)->update(['email' => 'private.contact@example.test']);
+
+        foreach (['/api/providers', '/api/providers/1000001', '/api/providers/search?query=Cardiology', '/api/arabic-providers'] as $uri) {
+            $body = $this->pub($uri)->assertOk()->getContent();
+            $this->assertStringNotContainsString('private.contact', $body);
+            $this->assertStringContainsString('"email"', $body, 'schema unchanged: key present');
+        }
+        $this->assertNull($this->pub('/api/providers/1000001')->json('email'));
+        $this->assertSame(0, $this->pub('/api/providers/search?query=private.contact')->json('meta.total'), 'not discoverable by search');
+        $this->assertCount(0, $this->pub('/api/providers?search=private.contact')->json());
+
+        config(['providers.legacy_api.expose_email' => true]);
+        $this->assertSame('private.contact@example.test', $this->pub('/api/providers/1000001')->json('email'));
+    }
 }
