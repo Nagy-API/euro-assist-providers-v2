@@ -90,6 +90,7 @@ return [
         'migration_review' => 'Migration review',
         'users' => 'Users',
         'audit' => 'Audit log',
+        'advanced' => 'Advanced tools',
         'system_status' => 'System status',
     ],
 
@@ -404,6 +405,21 @@ return [
             'denied' => 'Denied',
             'failure' => 'Failure',
         ],
+    ],
+
+    'advanced' => [
+        'title' => 'Advanced administration',
+        'subtitle' => 'Rarely used administrator tools. Nothing here is needed for daily work.',
+        'migration_title' => 'Migration review',
+        'migration_text' => 'Review suggested English/Arabic pairs from the legacy migration. Every decision is kept as evidence and can be reversed. Only available where the migration workspace is enabled.',
+        'migration_open' => 'Open migration review',
+        'migration_unavailable' => 'Not available in this environment: the migration review runs only in the local migration workspace.',
+        'status_title' => 'System status',
+        'status_text' => 'Read-only operational facts: environment, drivers, limits. No secrets are shown.',
+        'status_open' => 'Open system status',
+        'audit_title' => 'Audit log',
+        'audit_text' => 'The record of important actions, including account and password changes.',
+        'audit_open' => 'Open audit log',
     ],
 
     'settings' => [
