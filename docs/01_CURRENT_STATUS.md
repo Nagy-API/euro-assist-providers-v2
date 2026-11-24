@@ -26,7 +26,7 @@
 | Hosted CI | BLOCKED (billing) | local manual CI documented in `docs/15_QUALITY_GATES.md` |
 | Owner cutover authorization | NOT GIVEN | written approval from King |
 
-**Verdict:** `2.0.0-rc.3` supersedes rc.2 (rc.2 must not be used for cutover; it lacks media and the verified merges). Independent reviews R6 (code, security) + re-review: findings fixed (see work log). Package path and SHA-256: work log 2026-11-23 rc.3 entry.
+**Verdict:** `2.0.0-rc.3` supersedes rc.2 (rc.2 must not be used for cutover; it lacks media and the verified merges). Independent reviews R6 (code, security) + re-review: findings fixed (see work log). Package: `..\.workelease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb` (data SQL SHA-256 `dd464df4…abde`, 16 media files). Independent verifier: PASS.
 Production: **NO-GO** until the BLOCKED/UNVERIFIED/NOT DONE/UNKNOWN rows above are closed.
 
 ## Local databases (isolated MariaDB 127.0.0.1:33316)
