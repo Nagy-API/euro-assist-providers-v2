@@ -97,11 +97,8 @@ def main() -> int:
         for n in zin.namelist():
             rel = n.split('/providers/', 1)[1] if '/providers/' in n else ''
             if rel and not n.endswith('/') and rel.startswith(code):
-                base[rel] = hashlib.sha256(zin.read(n).replace(b'
-', b'
-')).hexdigest()
-    (stage / 'rc5-baseline-fingerprint.json').write_text(json.dumps({'version': '2.0.0-rc.5', 'files': dict(sorted(base.items()))}, indent=0) + '
-', encoding='utf8')
+                base[rel] = hashlib.sha256(zin.read(n).replace(b'\r\n', b'\n')).hexdigest()
+    (stage / 'rc5-baseline-fingerprint.json').write_text(json.dumps({'version': '2.0.0-rc.5', 'files': dict(sorted(base.items()))}, indent=0) + '\n', encoding='utf8')
 
     for f in ('UPDATE_GUIDE.md', 'apply-update.ps1', 'preflight.php'):
         shutil.copy(REPO / 'deploy' / 'it-update' / f, stage / f)
