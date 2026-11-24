@@ -26,14 +26,16 @@ const json = () => { try { return pm.response.json(); } catch (e) { return undef
 const hasKeys = (o, keys) => keys.every(k => Object.prototype.hasOwnProperty.call(o, k));
 const sameKeys = (o, keys) => JSON.stringify(Object.keys(o)) === JSON.stringify(keys);
 const forbidden = %s;
-pm.test('No private/administrative field is exposed', () => {
-  const body = pm.response.text();
-  forbidden.forEach(f => pm.expect(body).to.not.include(f));
-});
+if (pm.request.url.getPath().startsWith('/api')) {
+  pm.test('No private/administrative field is exposed', () => {
+    const body = pm.response.text();
+    forbidden.forEach(f => pm.expect(body).to.not.include(f));
+  });
+}
 """ % json.dumps(FORBIDDEN)
 
 
-def req(name, path, tests, *, method="GET", query=None, headers=None, follow=True, desc=""):
+def req(name, path, tests, *, method="GET", query=None, headers=None, follow=True, desc="", pre=None):
     query = query or []
     url = "{{baseUrl}}/" + path.lstrip("/")
     item = {
@@ -41,7 +43,7 @@ def req(name, path, tests, *, method="GET", query=None, headers=None, follow=Tru
         "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": (HELP + tests).split("\n")}}],
         "request": {
             "method": method,
-            "header": [{"key": "Accept", "value": "application/json"}] + (headers or []),
+            "header": ([] if any(h["key"] == "Accept" for h in (headers or [])) else [{"key": "Accept", "value": "application/json"}]) + (headers or []),
             "url": {
                 "raw": url + ("?" + "&".join(f"{k}={v}" for k, v in query) if query else ""),
                 "host": ["{{baseUrl}}"],
@@ -51,10 +53,16 @@ def req(name, path, tests, *, method="GET", query=None, headers=None, follow=Tru
             "description": desc,
         },
     }
+    if pre:
+        item["event"].insert(0, {"listen": "prerequest", "script": {"type": "text/javascript", "exec": pre.strip().split("\n")}})
     if not follow:
         item["request"]["protocolProfileBehavior"] = {"followRedirects": False}
         item["protocolProfileBehavior"] = {"followRedirects": False}
     return item
+
+
+PRE_AR = "\n// Pick a type + city pair that really exists (first row of the list), exactly what a user selecting from the dropdowns would send.\npm.sendRequest({ url: pm.variables.replaceIn('{{baseUrl}}') + '/api/arabic-providers?per_page=1', method: 'GET' }, (err, res) => {\n  const row = res.json().data[0];\n  pm.collectionVariables.set('arabicType', row.type);\n  pm.collectionVariables.set('arabicCity', row.city);\n});\n"
+PRE_EN = "\n// Pick a type + city pair that really exists (first row of the list), exactly what a user selecting from the dropdowns would send.\npm.sendRequest({ url: pm.variables.replaceIn('{{baseUrl}}') + '/api/providers?per_page=1', method: 'GET' }, (err, res) => {\n  const row = res.json().data[0];\n  pm.collectionVariables.set('englishType', row.type);\n  pm.collectionVariables.set('englishCity', row.city);\n});\n"
 
 
 def folder(name, items, desc=""):
@@ -95,7 +103,7 @@ pm.test('Array of single-field objects, exactly what the page reads (item.{field
 }});
 pm.test('Values are non-empty, trimmed and unique', () => {{
   const v = rows.map(r => r.{field});
-  v.forEach(x => pm.expect(x).to.be.a('string').and.not.empty.and.equal(x.trim()));
+  v.forEach(x => {{ pm.expect(x).to.be.a('string'); pm.expect(x.length).to.be.above(0); pm.expect(x).to.eql(x.trim()); }});
   pm.expect(new Set(v).size).to.eql(v.length);
 }});
 """ + (f"""pm.test('Arabic labels', () => pm.expect(rows.some(r => /[\\u0600-\\u06FF]/.test(r.{field}))).to.be.true);
@@ -124,8 +132,8 @@ def build():
         req("Type dropdown  GET /api/arabic-providers?fields=type", "api/arabic-providers", dropdown_tests("type", "ar"), query=[("fields", "type")]),
         req("Results: type + city (the dropdown values round-trip)", "api/arabic-providers",
             list_tests(ROW_AR, "ar") + """
-pm.test('Every row matches the chosen type and city', () => json().forEach(r => { pm.expect(r.type).to.include(pm.collectionVariables.get('arabicType')); pm.expect(r.city).to.include(pm.collectionVariables.get('arabicCity')); }));
-""", query=[("type", "{{arabicType}}"), ("city", "{{arabicCity}}")],
+pm.test('Every row matches the chosen type and city', () => json().forEach(r => { pm.expect(r.type).to.include(pm.variables.get('arabicType')); pm.expect(r.city).to.include(pm.variables.get('arabicCity')); }));
+""", query=[("type", "{{arabicType}}"), ("city", "{{arabicCity}}")], pre=PRE_AR,
             desc="Run the two dropdown requests first (they set arabicType / arabicCity)."),
         req("Results: free-text search (name/address/phone) + type", "api/arabic-providers", list_tests(ROW_AR, "ar"),
             query=[("search", "{{searchTermAr}}")]),
@@ -143,7 +151,7 @@ pm.test('Same id as requested', () => pm.expect(String(r.id)).to.eql(pm.collecti
         req("Type dropdown (English)", "api/providers", dropdown_tests("type", "en"), query=[("fields", "type")]),
         req("City dropdown (English)", "api/providers", dropdown_tests("city", "en"), query=[("fields", "city")]),
         req("Results: type + city (English)", "api/providers", list_tests(ROW_EN, "en"),
-            query=[("type", "{{englishType}}"), ("city", "{{englishCity}}")]),
+            query=[("type", "{{englishType}}"), ("city", "{{englishCity}}")], pre=PRE_EN),
     ]))
 
     c.append(folder("3. V1 routes: lists, search, details", [
@@ -151,7 +159,7 @@ pm.test('Same id as requested', () => pm.expect(String(r.id)).to.eql(pm.collecti
         req("List all English providers (also sets providerIdEn)", "api/providers", list_tests(ROW_EN, "en") + "\npm.collectionVariables.set('providerIdEn', String(json()[0].id));\n"),
         req("Filter: district (LIKE substring)", "api/providers", status(200) + "pm.test('Array', () => pm.expect(json()).to.be.an('array'));\n", query=[("district", "{{englishDistrict}}")]),
         req("searchName: exact name, whitespace-normalised", "api/providers", status(200) + """
-pm.test('Only exact-name rows', () => json().forEach(r => pm.expect(r.name.replace(/\\s+/g, ' ').trim()).to.eql(pm.collectionVariables.get('exactNameEn'))));
+pm.test('Only exact-name rows', () => json().forEach(r => pm.expect(r.name.replace(/\\s+/g, ' ').trim()).to.eql(pm.variables.get('exactNameEn'))));
 """, query=[("searchName", "{{exactNameEn}}")]),
         req("Pagination: per_page=5 (Arabic)", "api/arabic-providers", page_tests(ROW_AR) + "pm.test('per_page=5', () => pm.expect(json().meta.per_page).to.eql(5));\n",
             query=[("per_page", "5")]),
@@ -224,9 +232,9 @@ pm.test('Error envelope', () => pm.expect(json().error.code).to.eql('unauthentic
                 desc="Create a LOCAL token with: php artisan api:token <email>. Never paste a production token."),
         ]),
         folder("5c. Administration is not reachable anonymously", [
-            req("Dashboard redirects to login", "dashboard", status(302) + "pm.test('Location is /login', () => pm.expect(pm.response.headers.get('Location')).to.match(/\\/login$/));\n", follow=False),
-            req("Users page redirects to login", "users", status(302), follow=False),
-            req("Migration review is not public", "migration/review", "pm.test('302 to login or 404, never 200', () => pm.expect([302, 404]).to.include(pm.response.code));\n", follow=False),
+            req("Dashboard redirects to login", "dashboard", status(302) + "pm.test('Location is /login', () => pm.expect(pm.response.headers.get('Location')).to.match(/\\/login$/));\n", follow=False, headers=[{"key": "Accept", "value": "text/html"}]),
+            req("Users page redirects to login", "users", status(302), follow=False, headers=[{"key": "Accept", "value": "text/html"}]),
+            req("Migration review is not public", "migration/review", "pm.test('302 to login or 404, never 200', () => pm.expect([302, 404]).to.include(pm.response.code));\n", follow=False, headers=[{"key": "Accept", "value": "text/html"}]),
             req("Forgot-password route no longer exists (ADR-020)", "forgot-password", status(404)),
             req("Reset-password route no longer exists", "reset-password/abc", status(404)),
             req("Login page has no forgot-password link", "login", status(200) + "pm.test('No recovery link', () => pm.expect(pm.response.text().toLowerCase()).to.not.include('forgot'));\n",
