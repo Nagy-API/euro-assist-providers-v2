@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+# There is no .env in CI. Without an explicit environment Laravel defaults to `production`, whose boot
+# guard (https URL, secure cookies, Debug off) correctly aborts `composer install`'s package discovery.
+env:
+  APP_ENV: testing
+  APP_DEBUG: 'false'
+
 concurrency:
   group: application-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,7 +34,7 @@ jobs:
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo_sqlite, pdo_mysql, intl, zip, fileinfo, xml
+          extensions: mbstring, pdo_sqlite, pdo_mysql, intl, zip, fileinfo, xml, gd
           coverage: none
           tools: composer:v2
       - run: composer install --no-interaction --prefer-dist --no-progress
@@ -66,7 +72,7 @@ jobs:
       - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.4'
-          extensions: mbstring, pdo_sqlite, pdo_mysql, intl, zip, fileinfo, xml
+          extensions: mbstring, pdo_sqlite, pdo_mysql, intl, zip, fileinfo, xml, gd
           coverage: none
           tools: composer:v2
       - run: composer install --no-interaction --prefer-dist --no-progress
