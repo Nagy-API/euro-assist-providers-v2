@@ -83,7 +83,8 @@ def main() -> int:
     (stage / 'removed-files.txt').write_text('# runtime files that no longer exist (relative to the application folder)\n' + '\n'.join(removed) + '\n', encoding='utf8')
 
     if not a.skip_build:
-        sh(['npm', 'run', 'build'], cwd=REPO) if shutil.which('npm') else sys.exit('npm not found')
+        npm = shutil.which('npm') or sys.exit('npm not found')
+        sh([npm, 'run', 'build'], cwd=REPO)
         shutil.copytree(REPO / 'public' / 'build', files / 'public' / 'build')
 
     sh([a.php, 'artisan', 'ops:manifest', a.version, f'--path={files / "release-manifest.json"}'])
