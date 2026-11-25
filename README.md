@@ -1,6 +1,8 @@
 # Euro Assist Providers System V2
 
-> **Status: planning / documentation baseline — application source has NOT been implemented.**
+> **Current product status — 2026-11-25: COMPLETED / LIVE / OWNER-ACCEPTED.** Final release `2.0.0-rc.6_FINAL` was deployed and tested by the owner on company infrastructure. Providers: https://providers.euro-assist.com/ · Medical Card directory: https://medicalcard.euro-assist.com/providers.php (read-only API integration). The owner provided evidence of a completed production export. Final archive manifest source: `111399000d96ebaa6d9097297f7e3c093be2a6fc`; all 6,743 manifest-listed files verified. Source application is still on stacked PRs, including [PR #52](https://github.com/Nagy-API/euro-assist-providers-v2/pull/52); the default branch is a historical documentation scaffold, not the deployed tree. GitHub repository hygiene remains a separate outstanding check. Earlier planning/no-deploy notes below are historical, not current product status. No private archive, database or production credentials are published.
+
+> **Historical baseline (November 8):** planning/documentation scaffold, before implementation.
 > **Owner:** King | **Repository:** `Nagy-API/euro-assist-providers-v2` (private intended)
 > **Last factual baseline:** 2026-11-08.
 
@@ -29,7 +31,7 @@ A clean, maintainable replacement for the existing Euro Assist medical-provider 
 
 Laravel 13 / PHP >= 8.3; Livewire + Alpine.js; Tailwind CSS; MySQL/MariaDB; database-backed queues; Plesk-compatible scheduled tasks / queue workers. This is a design target, **not a claim that it has been installed or deployed**.
 
-## Repository state
+## Historical repository state (initial scaffold)
 
 This initial package contains a **documentation-first Git scaffold**. Laravel application source, test suite and deployment artifacts are pending Phase 1; they should be added incrementally on branches and merged through PRs. Never copy the legacy project wholesale into this repository.
 
