@@ -1,0 +1,11 @@
+# Use this workspace to collaborate
+workspace:
+  id: b7abc499-9419-4cd7-894f-1c7a59087567
+
+localResources:
+  collections:
+    - ../docs/postman/EuroAssist_Legacy_API_Compat.postman_collection.json
+  environments:
+    - ../docs/postman/EuroAssist_Local.postman_environment.json
+  specs:
+    - ../docs/openapi/v2.yaml

@@ -3,7 +3,9 @@
 ## What must be backed up (V2)
 
 1. The V2 database (all tables).
-2. `providers-v2/storage/app/private/` (featured logos, private import/export files).
+2. `providers-v2/storage/app/private/` (**the migrated and uploaded pictures** in `provider-photos`, `type-icons` and
+   `featured-logos`, plus private import/export files). The database stores only the picture names: a database
+   backup without this folder restores providers with missing pictures.
 3. `providers-v2/.env` (contains `APP_KEY` and passwords) — store it in the company's password vault, not in a
    shared folder. Losing `APP_KEY` invalidates encrypted sessions only; it does not lose business data.
 
@@ -13,6 +15,7 @@
 mysqldump --single-transaction --routines --default-character-set=utf8mb4 -h <db host> -u <v2 user> -p <v2 database> > v2-backup-YYYYMMDD-HHMM.sql
 ```
 Plesk → Backup Manager can schedule the database and files backup instead; include `storage/app/private`.
+Files backup example: `tar -czf v2-private-YYYYMMDD.tar.gz storage/app/private` (Linux) or a ZIP of that folder (Windows).
 Keep at least one copy off the server. Record the SHA-256 of each backup file.
 
 ## Prove the backup works (do this on staging)
@@ -26,8 +29,8 @@ Keep at least one copy off the server. Record the SHA-256 of each backup file.
 ## Restore V2 after a bad change
 
 1. Put the site in maintenance: `php artisan down`.
-2. Restore the last verified backup into a **new** database; point `DB_DATABASE` in `.env` to it;
-   `php artisan config:cache`.
+2. Restore the last verified backup into a **new** database and the matching `storage/app/private` files; point
+   `DB_DATABASE` in `.env` to it; `php artisan config:cache`.
 3. `php artisan up`; run checks 8–14 of VERIFY_AND_SMOKE_TEST.md.
 Keep the damaged database for investigation until King agrees to delete it.
 
@@ -50,3 +53,8 @@ verified backup file names and SHA-256 values, and the time V2 went live.
 New release folder next to the current one → copy `.env` → `php artisan down` on the current one → back up →
 switch the document root to the new folder's `public` → `php artisan migrate --force` → caches → `php artisan up`.
 Rollback = point the document root back and restore the pre-upgrade backup if a migration ran.
+
+## Replacing the existing installation (rc.6 FINAL)
+
+Before the switch: (1) export the current database and copy the current application folder with `storage/app/private`; (2) run `tools/preflight.php` on the current installation and keep its output;
+(3) install the new version in a **new folder with a new empty database** (`START_HERE_PLESK_INSTALL.md`). Rollback = point the document root and the scheduled task back to the old folder; the old files and database were not changed.

@@ -35,6 +35,7 @@ class AccessControlTest extends UiTestCase
             'users.index' => ['/users', $adminOnly],
             'audit.index' => ['/audit', $adminOnly],
             'settings.status' => ['/settings/status', $adminOnly],
+            'settings.advanced' => ['/settings/advanced', $adminOnly],
         ];
     }
 

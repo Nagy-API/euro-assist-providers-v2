@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Route;
 
 /**
  * Sidebar structure. Visibility here is cosmetic: every route and every Livewire action
- * enforces the same permission server-side. Items owned by other areas (import/export/history,
- * migration review) appear only when their route exists.
+ * enforces the same permission server-side. Items owned by other areas appear only when their route exists. Rarely used
+ * tools (legacy migration review) live on the Advanced administration page, not in this menu.
  */
 class NavigationMenu
 {
@@ -27,9 +27,9 @@ class NavigationMenu
         ['section' => 'data', 'route' => 'imports.index', 'label' => 'import', 'icon' => 'upload', 'permission' => ['imports.run'], 'active' => 'imports.*'],
         ['section' => 'data', 'route' => 'exports.index', 'label' => 'export', 'icon' => 'download', 'permission' => ['exports.run'], 'active' => 'exports.*'],
         ['section' => 'data', 'route' => 'jobs.index', 'label' => 'history', 'icon' => 'clock', 'permission' => ['jobs.view.own', 'jobs.view.any'], 'active' => 'jobs.*'],
-        ['section' => 'data', 'route' => 'migration.review.index', 'label' => 'migration_review', 'icon' => 'arrows', 'permission' => ['migration.review'], 'active' => 'migration.*'],
         ['section' => 'admin', 'route' => 'users.index', 'label' => 'users', 'icon' => 'users', 'permission' => ['users.manage'], 'active' => 'users.*'],
         ['section' => 'admin', 'route' => 'audit.index', 'label' => 'audit', 'icon' => 'clipboard', 'permission' => ['audit.view'], 'active' => 'audit.*'],
+        ['section' => 'admin', 'route' => 'settings.advanced', 'label' => 'advanced', 'icon' => 'arrows', 'permission' => ['settings.manage'], 'active' => 'settings.advanced|migration.*'],
         ['section' => 'admin', 'route' => 'settings.status', 'label' => 'system_status', 'icon' => 'server', 'permission' => ['settings.manage'], 'active' => 'settings.*'],
     ];
 

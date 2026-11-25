@@ -1,5 +1,14 @@
 # Current project status — update after EVERY task
 
+## 2026-11-25 — production feedback update (rc.6 incremental, NOT deployed, NOT merged)
+
+**Branch:** `fix/production-feedback-update` (from `feature/release-candidate`, baseline = delivered rc.5 code `ab96a23`; verified identical to the delivered package except build-time files). **Issues:** #46 legacy API, #47 queue, #48 deployment consistency, #49 users, #50 verification/package, #51 UI. **Last verified commit:** see PR head (`9e61005` when written).
+**Verified locally:** PHPUnit 612 tests / 3,803 assertions on PHP 8.3.37 (SQLite); Larastan `[OK]`; Pint clean; hygiene check passes; independent security review: 0 high, 3 low findings fixed (API tokens revoked on self password change, capped public filters + 60 s server cache, proxy warning in `ops:check`). Update package applied to a pristine copy of the delivered rc.5: 258 files identical to the release manifest, 0 SQL files, removed files gone.
+**Not verified / blockers:** hosted GitHub Actions (billing blocker, never executed); MariaDB PHPUnit run for this change (the API was exercised by hand on MariaDB 11.4 through the UAT environment only); the public website and mobile apps against the real production host; production is untouched. **Production finding:** the code serving `providers.euro-assist.com` is NOT the delivered rc.5 (it has legacy routes rc.5 does not contain; `/login` returned an empty body, favicon 0 bytes) — see `docs/20_LEGACY_API_COMPAT.md`; IT must run `php artisan ops:check` first.
+**Package:** `.work/update-rc6/EuroAssist_Providers_V2_UPDATE_2.0.0-rc.6.zip` (incremental, no database dump).
+
+---
+
 **Date:** 2026-11-23. **Stage:** release candidate `2.0.0-rc.3` (verified migration merges, legacy media, RTL and login fixes) — see the work log for the build and rehearsal evidence. Nothing merged, nothing deployed.
 **Remote:** https://github.com/Nagy-API/euro-assist-providers-v2 — PRIVATE (verified 2026-11-22).
 **Branches (stacked PRs):** `feature/release-candidate` → `feature/uat-environment` (PR #41) → `feature/p1-foundation-hardening` (PR #40) → PR #38 → `main`. Latest SHA: see the PR head.
@@ -26,7 +35,8 @@
 | Hosted CI | BLOCKED (billing) | local manual CI documented in `docs/15_QUALITY_GATES.md` |
 | Owner cutover authorization | NOT GIVEN | written approval from King |
 
-**Verdict:** `2.0.0-rc.3` supersedes rc.2 (rc.2 must not be used for cutover; it lacks media and the verified merges). Independent reviews R6 (code, security) + re-review: findings fixed (see work log). Package: `..\.workelease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb` (data SQL SHA-256 `dd464df4…abde`, 16 media files). Independent verifier: PASS.
+**Newest candidate: `2.0.0-rc.5`** (ready-to-use Admin login with a temporary password that must be changed at first sign-in, ADR-019; package `../.work/release-20261124-rc5/out/EuroAssist_Providers_V2_2.0.0-rc.5.zip`, built from `ab96a23`, 17,282,108 bytes, 6,765 files, SHA-256 `87ed23070d738f9d7837824c300651d7a6f7fd4fbdd25bfff149c2a866dd2c19`). Earlier: the delivery candidate was **`2.0.0-rc.4`** (`../.work/release-20261124-rc4/out/EuroAssist_Providers_V2_2.0.0-rc.4.zip`, built from `2a8b482`, 17,271,211 bytes, 6,761 files, SHA-256 `05650fa73591eb69895ad68f2f5196ede46f91ff322935c8d677128e3a61eee1`): rc.3 application and data, byte-identical SQL, corrected IT documentation. `2.0.0-rc.3` supersedes rc.2 (rc.2 must not be used for cutover; it lacks media and the verified merges). Independent reviews R6 (code, security) + re-review: findings fixed (see work log). Package: `..\.work
+elease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb` (data SQL SHA-256 `dd464df4…abde`, 16 media files). Independent verifier: PASS.
 Production: **NO-GO** until the BLOCKED/UNVERIFIED/NOT DONE/UNKNOWN rows above are closed.
 
 ## Local databases (isolated MariaDB 127.0.0.1:33316)

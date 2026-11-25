@@ -9,6 +9,10 @@
         <div role="status" class="rounded-xl border border-s-4 border-green-200 border-s-green-600 bg-green-50 px-4 py-3 text-sm text-green-900">{{ session('status') }}</div>
     @endif
 
+    @if ($stuckQueued > 0)
+        <x-ui.alert tone="warning">{{ __('transfers.exports.stuck_queue') }}</x-ui.alert>
+    @endif
+
     @if ($canExport)
         <form method="POST" action="{{ route('exports.store') }}" class="space-y-5 ea-card p-5 sm:p-6">
             @csrf

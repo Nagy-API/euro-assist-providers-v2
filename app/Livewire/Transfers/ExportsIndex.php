@@ -39,6 +39,8 @@ class ExportsIndex extends Component
         return view('livewire.transfers.exports-index', [
             'jobs' => $jobs,
             'canExport' => $user->can('create', ExportJob::class),
+            // A job queued for minutes means no worker is draining the queue: say so instead of showing "queued" forever.
+            'stuckQueued' => ExportJob::query()->where('user_id', $user->getKey())->where('status', ExportJob::STATUS_QUEUED)->where('created_at', '<', now()->subMinutes(5))->count(),
             'types' => $types,
             'isAdmin' => $user->isAdmin(),
             'selectedMax' => (int) config('providers.exports.selected_max'),

@@ -23,7 +23,7 @@ def read(path: Path) -> str:
 class ReleasePackageTest(unittest.TestCase):
     def test_required_it_documents_exist(self):
         for name in ("00_READ_ME_FIRST.md", "INSTALL_GUIDE.md", "DATABASE_IMPORT.md", "VERIFY_AND_SMOKE_TEST.md",
-                     "BACKUP_AND_ROLLBACK.md", "FRESH_DATA_SYNC.md", "KNOWN_LIMITATIONS_AND_OPEN_DECISIONS.md",
+                     "BACKUP_AND_ROLLBACK.md", "START_HERE_PLESK_INSTALL.md", "KNOWN_LIMITATIONS_AND_OPEN_DECISIONS.md",
                      "production.env.example"):
             self.assertTrue((PKG / name).is_file(), name)
 
@@ -160,6 +160,73 @@ class ReleasePackageTest(unittest.TestCase):
                 f.write_text(good + bad + "\n", encoding="utf-8")
                 with self.assertRaises(SystemExit, msg=bad):
                     builder.check_data_sql(f)
+
+    def test_it_documents_are_clean_and_match_the_verified_release_data(self):
+        """The IT-facing documents shipped inside the ZIP: no control characters (a backslash-a once became a BEL in a path),
+        no counts or statements left over from an earlier candidate, and the verified rc.3 data figures present."""
+        docs = sorted(PKG.glob("*.md"))
+        self.assertGreaterEqual(len(docs), 7)
+        for doc in docs:
+            text = read(doc)
+            self.assertEqual([c for c in text if ord(c) < 32 and c not in (chr(9), chr(10), chr(13))], [], f"control character in {doc.name}")
+            for stale in ("2,185", "334 ", "2,188", "RELEASE_VALIDATION", "D8 pending", "billing", "not migrated", "rc.2", "Activation pending", "no usable password"):
+                self.assertNotIn(stale, text, f"stale text {stale!r} in {doc.name}")
+        for doc in sorted((ROOT / "docs").glob("*.md")) + [ROOT / "README.md", ROOT / "AGENTS.md"]:
+            bad = [c for c in read(doc) if ord(c) < 32 and c not in (chr(9), chr(10), chr(13))]
+            self.assertEqual(bad, [], f"control character in {doc.name}")
+        imp = read(PKG / "DATABASE_IMPORT.md")
+        for fact in ("1,402", "790", "2,192", "2,999", "-- 195", "-- 2192", "-- 1402", "-- 5"):
+            self.assertIn(fact, imp)
+        self.assertIn("must_change_password", imp)
+        self.assertIn("ADR-019", read(PKG / "INSTALL_GUIDE.md"))
+        self.assertIn("1,402", read(PKG / "VERIFY_AND_SMOKE_TEST.md"))
+        start = read(PKG / "START_HERE_PLESK_INSTALL.md")
+        for needed in ("tools/preflight.php", "schedule:run", "NEW empty database", "temporary password", "ops:check", "Rollback"):
+            self.assertIn(needed, start)
+        self.assertTrue((PKG / "tools" / "preflight.php").is_file())
+        self.assertIn("storage/app/private", read(PKG / "BACKUP_AND_ROLLBACK.md"))
+
+    def test_temporary_admin_hash_is_allowed_only_by_explicit_opt_in_and_only_once(self):
+        """ADR-019: exactly one bcrypt hash, for the named account, flagged must_change_password."""
+        spec = importlib.util.spec_from_file_location("builder", BUILDER)
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        table = ("CREATE TABLE `users` (\n  `id` bigint NOT NULL,\n  `email` varchar(255),\n  `password` varchar(255),\n"
+                 "  `must_change_password` tinyint(1) NOT NULL DEFAULT 0,\n  `remember_token` varchar(100),\n  PRIMARY KEY (`id`)\n) ENGINE=InnoDB;\n"
+                 "CREATE TABLE `providers` (`id` int, `name` text) ENGINE=InnoDB;\n")
+        h1 = "$2y$12$" + "A" * 53
+        h2 = "$2y$12$" + "B" * 53
+        mail = "admin@example.test"
+
+        def sql(*rows, extra=""):
+            return table + "INSERT INTO `users` VALUES " + ",".join(rows) + ";\n" + extra
+
+        good = sql(f"(1,'{mail}','{h1}',1,NULL)")
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "t.sql"
+
+            def run(text, opt=mail):
+                f.write_text(text, encoding="utf-8")
+                builder.check_data_sql(f, opt)
+
+            run(good)
+            run(sql(f"(1,'{mail}','{h1}',1,NULL)", f"(2,'x@example.test','{builder.ACTIVATION_PLACEHOLDER}',0,NULL)"))
+            refused = {
+                "no opt-in": (good, None),
+                "flag 0": (sql(f"(1,'{mail}','{h1}',0,NULL)"), mail),
+                "other account": (sql(f"(1,'other@example.test','{h1}',1,NULL)"), mail),
+                "two hashes": (sql(f"(1,'{mail}','{h1}',1,NULL)", f"(2,'{mail}','{h2}',1,NULL)"), mail),
+                "hash in another table": (good + f"INSERT INTO `providers` VALUES (1,'{h1}');\n", mail),
+                "hash repeated in a comment": (good + f"-- {h1}\n", mail),
+                "remember token": (sql(f"(1,'{mail}','{h1}',1,'tok')"), mail),
+                "cost 04": (sql(f"(1,'{mail}','$2y$04$" + "A" * 53 + "',1,NULL)"), mail),
+                "2a prefix": (sql(f"(1,'{mail}','$2a$12$" + "A" * 53 + "',1,NULL)"), mail),
+                "opt-in without any hash": (sql(f"(1,'{mail}','{builder.ACTIVATION_PLACEHOLDER}',0,NULL)"), mail),
+                "plain text password": (sql(f"(1,'{mail}','plain',1,NULL)"), mail),
+            }
+            for label, (text, opt) in refused.items():
+                with self.assertRaises(SystemExit, msg=label):
+                    run(text, opt)
 
     def test_media_folder_guard(self):
         spec = importlib.util.spec_from_file_location("builder", BUILDER)

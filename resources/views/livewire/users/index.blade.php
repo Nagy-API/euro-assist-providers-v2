@@ -1,7 +1,7 @@
 <div>
     <x-ui.page-header :title="__('ui.nav.users')" :subtitle="__('ui.users.subtitle')">
         <x-slot:actions>
-            <x-ui.button icon="plus" wire:click="openInvite">{{ __('ui.users.invite') }}</x-ui.button>
+            <x-ui.button icon="plus" wire:click="openCreate">{{ __('ui.users.create') }}</x-ui.button>
         </x-slot:actions>
     </x-ui.page-header>
 
@@ -34,9 +34,12 @@
                             <span class="block text-xs text-slate-600 sm:hidden"><bdi dir="ltr">{{ $user->email }}</bdi></span>
                         </td>
                         <td class="hidden px-3 py-3 sm:table-cell"><span class="ltr-text break-all">{{ $user->email }}</span></td>
-                        <td class="px-3 py-3"><x-ui.role-badge :role="$user->role" /></td>
+                        <td class="px-3 py-3">@if ($user->role)<x-ui.role-badge :role="$user->role" />@else<x-ui.badge tone="amber">{{ __('ui.users.role_unknown') }}</x-ui.badge>@endif</td>
                         <td class="px-3 py-3">
                             <x-ui.status-badge :active="$user->is_active" />
+                            @if ($user->must_change_password)
+                                <x-ui.badge tone="amber" class="mt-1" :title="__('ui.users.password_change_hint')">{{ __('ui.users.password_change_required') }}</x-ui.badge>
+                            @endif
                             @if ($user->requiresActivation())
                                 <x-ui.badge tone="amber" class="mt-1" :title="__('ui.users.activation_pending_hint')">{{ __('ui.users.activation_pending') }}</x-ui.badge>
                             @endif
@@ -52,18 +55,35 @@
         <div class="mt-4">{{ $users->links() }}</div>
     @endif
 
-    @if ($dialog === 'invite')
-        <x-ui.modal :title="__('ui.users.invite')" close="closeDialog" :description="__('ui.users.invite_hint')">
-            <form id="invite-form" wire:submit="invite" novalidate class="space-y-4">
+    @if ($dialog === 'create')
+        <x-ui.modal :title="__('ui.users.create')" close="closeDialog" :description="__('ui.users.create_hint')">
+            <form id="create-form" wire:submit="create" novalidate class="space-y-4">
                 <x-ui.field name="name" :label="__('ui.common.name')" wire:model="name" required maxlength="255" data-autofocus autocomplete="off" />
-                <x-ui.field name="email" type="email" :label="__('ui.users.email')" wire:model="email" required dir="ltr" maxlength="255" autocomplete="off" />
+                <x-ui.field name="email" type="email" :label="__('ui.users.email')" wire:model="email" required dir="ltr" maxlength="255" autocomplete="off" :hint="__('ui.users.email_hint')" />
                 <x-ui.field name="role" type="select" :label="__('ui.users.role')" wire:model="role" required>
                     @foreach ($roles as $r)<option value="{{ $r->value }}">{{ $r->label() }}</option>@endforeach
                 </x-ui.field>
+                <x-ui.field name="password" type="password" :label="__('ui.users.password')" wire:model="password" required dir="ltr" maxlength="1024" autocomplete="new-password" :hint="__('auth.password_rules_new')" />
+                <x-ui.field name="password_confirmation" type="password" :label="__('auth.confirm_password')" wire:model="password_confirmation" required dir="ltr" maxlength="1024" autocomplete="new-password" />
+                <x-ui.checkbox name="mustChange" :label="__('ui.users.must_change')" :hint="__('ui.users.must_change_hint')" wire:model="mustChange" />
             </form>
             <x-slot:footer>
                 <x-ui.button variant="secondary" wire:click="closeDialog">{{ __('ui.common.cancel') }}</x-ui.button>
-                <x-ui.button type="submit" form="invite-form" wire:loading.attr="disabled" wire:target="invite">{{ __('ui.users.send_invite') }}</x-ui.button>
+                <x-ui.button type="submit" form="create-form" wire:loading.attr="disabled" wire:target="create">{{ __('ui.users.create_submit') }}</x-ui.button>
+            </x-slot:footer>
+        </x-ui.modal>
+    @endif
+
+    @if ($dialog === 'reset' && $target)
+        <x-ui.modal :title="__('ui.users.reset_title', ['name' => $target->name])" close="closeDialog" :description="__('ui.users.reset_hint')">
+            <form id="reset-form" wire:submit="resetPassword" novalidate class="space-y-4">
+                <x-ui.field name="password" type="password" :label="__('auth.new_password')" wire:model="password" required dir="ltr" maxlength="1024" autocomplete="new-password" data-autofocus :hint="__('auth.password_rules_new')" />
+                <x-ui.field name="password_confirmation" type="password" :label="__('auth.confirm_password')" wire:model="password_confirmation" required dir="ltr" maxlength="1024" autocomplete="new-password" />
+                <x-ui.checkbox name="mustChange" :label="__('ui.users.must_change')" :hint="__('ui.users.must_change_hint')" wire:model="mustChange" />
+            </form>
+            <x-slot:footer>
+                <x-ui.button variant="secondary" wire:click="closeDialog">{{ __('ui.common.cancel') }}</x-ui.button>
+                <x-ui.button type="submit" form="reset-form" wire:loading.attr="disabled" wire:target="resetPassword">{{ __('ui.users.reset_submit') }}</x-ui.button>
             </x-slot:footer>
         </x-ui.modal>
     @endif
@@ -78,6 +98,13 @@
                     @foreach ($roles as $r)<option value="{{ $r->value }}">{{ $r->label() }}</option>@endforeach
                 </x-ui.field>
                 <x-ui.checkbox name="manageActive" :label="__('ui.users.account_active')" :hint="__('ui.users.deactivate_hint')" wire:model="manageActive" />
+                @if ($target->id !== $me)
+                    <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                        <p class="text-sm font-semibold text-slate-900">{{ __('ui.users.reset_section') }}</p>
+                        <p class="mt-1 text-xs text-slate-600">{{ __('ui.users.reset_section_hint') }}</p>
+                        <x-ui.button class="mt-2" size="sm" variant="secondary" type="button" wire:click="openReset({{ $target->id }})">{{ __('ui.users.reset_open') }}</x-ui.button>
+                    </div>
+                @endif
             </form>
             <x-slot:footer>
                 <x-ui.button variant="secondary" wire:click="closeDialog">{{ __('ui.common.cancel') }}</x-ui.button>

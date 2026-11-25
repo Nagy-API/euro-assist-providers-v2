@@ -1,8 +1,6 @@
 # Installation guide — Euro Assist Providers V2
 
-Audience: the hosting/IT team. Install on an **isolated staging** subdomain first. Production installation and
-the switch of the real domain require King's **written** approval. The old site and its database are never
-modified by any step below.
+Audience: the hosting/IT team. **The short procedure is `START_HERE_PLESK_INSTALL.md`; this guide is the detailed reference.** Install next to the existing installation (new folder, new empty database) on a test host name first; the switch of the production host name needs King's approval. The old installation and its database are never modified by any step below.
 
 Commands are shown for both platforms. In Plesk, use the **PHP 8.3 (or 8.4) CLI** that Plesk shows for the
 subscription — never an older system PHP. Below, `php` means that executable (on Windows Plesk typically
@@ -73,7 +71,7 @@ check from Git Bash/WSL.
     in Plesk) **Modify** rights on `providers-v2\storage` and `providers-v2\bootstrap\cache`.
   * Linux: owner = subscription system user; `chmod -R ug+rwX storage bootstrap/cache`.
 * Do **not** create the `public/storage` link (`storage:link`); all files are private by design.
-* The package already contains the migrated pictures in `providers-v2\storagepp\private\` (`provider-photos`, `type-icons`, `featured-logos`; listed in `MANIFEST.json`). Keep that folder when copying; the application serves them only to signed-in staff.
+* The package already contains the 16 migrated pictures (5 provider photos, 3 featured logos, 8 default type pictures) in `providers-v2/storage/app/private/` (sub-folders `provider-photos`, `type-icons`, `featured-logos`; every file is listed in `MANIFEST.json` and `SHA256SUMS.txt`). Keep that folder when copying: the database refers to these files by name, and the application serves them only to signed-in staff (there is no public URL).
 * IIS: keep `public/web.config`, which uses the URL Rewrite module. If IIS reports a duplicate rule, a parent
   configuration already defines one — remove the parent rule, not ours. Apache/nginx: keep `public/.htaccess`.
 
@@ -82,38 +80,46 @@ check from Git Bash/WSL.
 ```bash
 cd <path>/providers-v2
 # copy production.env.example from the extracted ZIP to <path>/providers-v2/.env, then
-# edit .env: APP_URL (https://…), DB_* values, TRUSTED_PROXIES, MAIL_* when SMTP is available
+# edit .env: APP_URL (https://…), DB_* values, TRUSTED_PROXIES
 php artisan key:generate --force          # once; keep a private copy of APP_KEY with the server records
 ```
 
 ## 7. Import the data and finish the schema
 
 Follow `DATABASE_IMPORT.md` to load `database/EuroAssist_Providers_V2_DATA_<version>.sql` into the **empty**
-database. Then:
+database and compare the counts it lists. Then:
 
 ```bash
 php artisan migrate --force               # expected: "Nothing to migrate."
 ```
 Do **not** run `db:seed` on an imported database: the 30 provider types are already in the SQL file.
 
-## 8. Activate the existing administrator `admin@euro-assist.com`
+## 8. First sign-in of the existing administrator `admin@euro-assist.com`
 
-The SQL file carries the legacy administrator's identity (`admin@euro-assist.com`, role Admin) **without any usable
-password** (ADR-016, activation policy). Nobody can sign in with it until it is activated. Do not create a second
-administrator with a different e-mail. With King's authorization, the account holder (or IT in their presence) runs,
-in an **interactive** console (RDP/SSH, not a piped or scheduled command):
+The SQL file carries the legacy administrator's identity (`admin@euro-assist.com`, role Admin) **with a temporary password**
+(ADR-019). Only the password's bcrypt hash is stored in the database; the temporary password itself is **not** in the ZIP and was
+never committed anywhere: King sends it to you in a separate message. The account is flagged "must change password".
+
+1. Open `https://<host>/login` and sign in with `admin@euro-assist.com` and the temporary password.
+2. The application opens the page **"Replace your temporary password"** and allows nothing else (every other page and every
+   action redirects or is refused) until you enter the temporary password once more and choose a new one
+   (12+ characters, letters and numbers, different from the temporary one; typed twice). Sign-out stays available.
+3. The new password is known only to its holder. The temporary password stops working at that moment; every other session
+   of the account is ended. Do not write the new password into tickets or chat.
+4. Then create the other staff accounts from **Users** (Admin / Editor / Viewer); the administrator chooses each password (typed twice) and hands it over; no e-mail is sent. Users shows a "Temporary password" badge on the account until the change is done.
+
+Do this **right after the import and before the site is reachable by anyone else**: until the password is replaced, whoever has
+the temporary password can sign in. If the temporary password is lost or the change page cannot be used, an authorized person
+runs, in an **interactive** console (RDP/SSH, not a piped or scheduled command), with King's authorization:
 
 ```bash
 php artisan users:set-password admin@euro-assist.com
 ```
-In production it first asks *"This is PRODUCTION. Set a new password for this account (owner-authorized)?"* — answer
-`yes`. The new password is then typed **twice, hidden** (min. 12 characters, letters and numbers). It is never shown,
-stored in a file or logged; the action is recorded in the Audit log. Then sign in and create the other staff accounts
-from **Users** (Admin / Editor / Viewer); they receive a password-set e-mail once SMTP is configured.
+(In production it first asks for an explicit confirmation; the new password is typed twice, hidden, never shown, stored in a file
+or logged; the action is recorded in the Audit log and the "must change" flag is cleared.)
 
-The old system's password is **not** transferred and the live site's account is not changed. Users → the account shows
-"Activation pending" until this step is done. `php artisan users:provision` remains available only for an additional,
-separate account if King asks for one.
+Do not create a second administrator with a different e-mail. The old system's password is **not** transferred and the live
+site's account is not changed. `php artisan users:provision` remains available only for an additional, separate account if King asks.
 
 ## 9. Production caches, queue and scheduler
 
@@ -138,12 +144,11 @@ is preferred; keep the scheduled task in either case (it also runs the daily cle
 
 Run every check in `VERIFY_AND_SMOKE_TEST.md` and send King the filled-in result table.
 
-## Production (only after written approval)
+## Production switch (only after King's approval)
 
-1. Fresh data: follow `FRESH_DATA_SYNC.md` (the SQL in this ZIP is a frozen snapshot).
-2. Back up the old site's files and database (`BACKUP_AND_ROLLBACK.md`), verify the backup.
-3. Install exactly as above on the production host name; import the **fresh** SQL.
-4. Smoke test, then switch DNS / the document root of the production host name.
-5. Keep the old site and database intact and stopped from writing; it is the rollback path.
+1. The business data is unchanged (King's confirmation): use the SQL in this ZIP, into a new empty database, as above.
+2. Back up the existing installation's files and database first (`BACKUP_AND_ROLLBACK.md`) and run `tools/preflight.php` on it.
+3. Switch the production host name's document root to the new folder, set `APP_URL`, rebuild the caches, move the scheduled task, re-run the verification.
+4. Keep the old folder and database untouched as the rollback.
 
-Named roles to agree **before** cutover: who approves (King), who executes (IT), who decides rollback (King).
+Named roles to agree **before** the switch: who approves (King), who executes (IT), who decides rollback (King).

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Enums\Permission;
+use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -36,8 +37,9 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiters();
 
         // Livewire update requests bypass route middleware unless it is persistent: make sure a
-        // deactivated account loses access to Livewire actions too.
-        Livewire::addPersistentMiddleware([EnsureUserIsActive::class]);
+        // deactivated account, or one that must still replace a temporary password, loses access to
+        // Livewire actions too.
+        Livewire::addPersistentMiddleware([EnsureUserIsActive::class, EnsurePasswordIsChanged::class]);
     }
 
     /**
@@ -109,6 +111,9 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perHour(30)->by('account:'.$email),
             ];
         });
+
+        // Public legacy-compatible API: anonymous, so keyed by client IP only.
+        RateLimiter::for('legacy-api', fn (Request $request) => Limit::perMinute(max(1, (int) config('providers.legacy_api.rate_limit_per_minute', 120)))->by('legacy:'.$request->ip()));
 
         RateLimiter::for('api-v2', function (Request $request) {
             return Limit::perMinute((int) config('providers.api.rate_limit_per_minute', 60))

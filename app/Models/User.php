@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\UserRole;
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Http\Controllers\Api\Support\ApiPrincipal;
@@ -17,6 +18,7 @@ use Laravel\Sanctum\PersonalAccessToken;
 /**
  * @property Role|null $role
  * @property bool $is_active
+ * @property bool $must_change_password
  * @property Carbon|null $last_login_at
  */
 class User extends Authenticatable
@@ -57,8 +59,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
             'password' => 'hashed',
-            'role' => Role::class,
+            'role' => UserRole::class,
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 

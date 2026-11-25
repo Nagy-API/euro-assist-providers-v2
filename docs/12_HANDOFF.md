@@ -1,5 +1,7 @@
 # Handoff: open this document in every new chat
 
+**2026-11-25 update (rc.6 incremental):** branch `fix/production-feedback-update`. Next: (1) King tests `docs/postman/` against the local UAT server (`start-uat.ps1 -NoWait`, http://127.0.0.1:8000); (2) on approval give IT `.work/update-rc6/EuroAssist_Providers_V2_UPDATE_2.0.0-rc.6.zip` + `.sha256` (guide inside: backup, `apply-update.ps1`, `migrate --force`, caches, scheduler, verification, rollback); (3) IT runs `php artisan ops:check` FIRST and returns the output; (4) rebuild with `python scripts/release/build_update_package.py --version <v> --baseline ab96a23 --php <php> --out <dir outside repo>`; (5) regenerate Postman with `python scripts/postman/build_postman.py`. Risks: production code differs from rc.5 (unknown origin); mobile apps unverified; hosted CI blocked.
+
 **Date:** 2026-11-23. Read AGENTS, README, `docs/01_CURRENT_STATUS.md`, ADRs (`docs/10_DECISIONS.md`, esp. 011–014) and the work log first; verify Git/PRs yourself.
 
 ## Current true state
@@ -54,10 +56,13 @@ Pint, PHPStan, PHPUnit on PHP 8.3 and 8.4, `phpunit.mysql.xml` on MariaDB (docs0
 
 ## Release candidate 2.0.0-rc.3 (2026-11-23)
 
-* Dataset: `euro_assist_v2_release_rc3`, rebuilt with `..\.work\migration-review-20261123uild-rc3.ps1` (pipeline → import-users → `legacy:apply-review-manifest` → `legacy:import-media` → reconcile), then `cleanup-rc3.sql`. The private runner `run.ps1` allows only the rc3 databases.
+* Dataset: `euro_assist_v2_release_rc3`, rebuilt with `..\.work\migration-review-20261123\build-rc3.ps1` (pipeline → import-users → `legacy:apply-review-manifest` → `legacy:import-media` → reconcile), then `cleanup-rc3.sql`. The private runner `run.ps1` allows only the rc3 databases.
 * Build: `python scripts/release/build_release.py --version 2.0.0-rc.3 --out ..\.work
 elease-20261123-rc3\out --data-sql <rc3 SQL> --media-dir <rc3 media folder> --php ..\.tools\php-8.3.37\php.exe --composer ..\.tools\composer.phar`.
-* Built package: `..\.workelease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb`; verified and install-rehearsed locally (work log 2026-11-24). Send IT the ZIP and, separately, its SHA-256.
+* **Newest candidate: 2.0.0-rc.5**, SHA-256 `87ed23070d738f9d7837824c300651d7a6f7fd4fbdd25bfff149c2a866dd2c19` (pre-activated Admin with a temporary password, ADR-019; package details in the work log 2026-11-24). Superseded: rc.4. The credentials are kept outside the repository and the package and are sent separately.
+* Previous delivery package: 2.0.0-rc.4 (`../.work/release-20261124-rc4/out/`, handoff folder `../.work/IT-handoff-rc4/`, SHA-256 `05650fa73591eb69895ad68f2f5196ede46f91ff322935c8d677128e3a61eee1`; documentation-only change over rc.3). The text below about rc.3 describes the same application and data.
+* Built package (rc.3, superseded): `..\.work
+elease-20261123-rc3\out\EuroAssist_Providers_V2_2.0.0-rc.3.zip`, built from `ff9f76f`, 6,763 files, SHA-256 `c3eaf2995a434b99fa3d4f7aa025c8d6b93e58a15a9b4daa7395f67cafc7efeb`; verified and install-rehearsed locally (work log 2026-11-24). Send IT the ZIP and, separately, its SHA-256.
 * Open human-review items (non-blocking, visible on the Admin migration strip): 2 Eye Center rows, 104 held pairs, 195 open suggestions (incl. the manifest's 110 holds and rows outside unique links).
 * A batch staged BEFORE the time-zone fix fails every manifest fingerprint (`source_row_changed`): re-stage instead of reusing it.
 * Follow-ups accepted in review R6: rollback leaves media files; stale picker file name; `gd` with WebP required in production.
