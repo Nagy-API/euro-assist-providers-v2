@@ -41,7 +41,9 @@ DEV_ONLY = [
     'phpunit.xml', 'phpunit.mysql.xml', 'phpstan.neon', '.editorconfig',
     'database/seeders/SyntheticProvidersSeeder.php', 'node_modules', '.claude',
     # Engineering records and tooling are not part of the production delivery (the IT guides ship at the package root).
-    'docs', 'AGENTS.md', 'scripts',
+    'docs', 'AGENTS.md', 'scripts', 'README.md', '.postman', 'postman',
+    # Build-only frontend files (Node.js is not used on the server; the compiled assets are in public/build).
+    'package.json', 'package-lock.json', 'vite.config.js', '.npmrc',
 ]
 FORBIDDEN_SUFFIXES = ('.sql', '.sqlite', '.db', '.bak', '.dump', '.env', '.pem', '.key', '.log', '.xlsx', '.csv')
 
