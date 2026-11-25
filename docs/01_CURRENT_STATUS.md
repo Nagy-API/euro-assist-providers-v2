@@ -1,5 +1,7 @@
 # Current project status — update after EVERY task
 
+> **Current product status — 2026-11-25: COMPLETED / LIVE / OWNER-ACCEPTED.** Final release `2.0.0-rc.6_FINAL` was deployed and tested by the owner on company infrastructure. Providers: https://providers.euro-assist.com/ · Medical Card directory: https://medicalcard.euro-assist.com/providers.php (read-only API integration). The owner provided evidence of a completed production export. Final archive manifest source: `111399000d96ebaa6d9097297f7e3c093be2a6fc`; all 6,743 manifest-listed files verified. Source application is still on stacked PRs, including [PR #52](https://github.com/Nagy-API/euro-assist-providers-v2/pull/52); the default branch is a historical documentation scaffold, not the deployed tree. GitHub repository hygiene remains a separate outstanding check. Earlier planning/no-deploy notes below are historical, not current product status. No private archive, database or production credentials are published.
+
 **Status date:** 2026-11-08  
 **Current phase:** P0 — repository and documentation governance.  
 **Current state:** Documentation-first local Git scaffold prepared; Laravel V2 application has **NOT** been bootstrapped.  
