@@ -23,7 +23,7 @@ def read(path: Path) -> str:
 class ReleasePackageTest(unittest.TestCase):
     def test_required_it_documents_exist(self):
         for name in ("00_READ_ME_FIRST.md", "INSTALL_GUIDE.md", "DATABASE_IMPORT.md", "VERIFY_AND_SMOKE_TEST.md",
-                     "BACKUP_AND_ROLLBACK.md", "FRESH_DATA_SYNC.md", "KNOWN_LIMITATIONS_AND_OPEN_DECISIONS.md",
+                     "BACKUP_AND_ROLLBACK.md", "START_HERE_PLESK_INSTALL.md", "KNOWN_LIMITATIONS_AND_OPEN_DECISIONS.md",
                      "production.env.example"):
             self.assertTrue((PKG / name).is_file(), name)
 
@@ -179,11 +179,11 @@ class ReleasePackageTest(unittest.TestCase):
             self.assertIn(fact, imp)
         self.assertIn("must_change_password", imp)
         self.assertIn("ADR-019", read(PKG / "INSTALL_GUIDE.md"))
-        self.assertIn("--temp-admin-email", read(PKG / "FRESH_DATA_SYNC.md"))
         self.assertIn("1,402", read(PKG / "VERIFY_AND_SMOKE_TEST.md"))
-        fresh = read(PKG / "FRESH_DATA_SYNC.md")
-        for needed in ("legacy:apply-review-manifest", "legacy:import-media", "--media-dir", "uploads/logos"):
-            self.assertIn(needed, fresh)
+        start = read(PKG / "START_HERE_PLESK_INSTALL.md")
+        for needed in ("tools/preflight.php", "schedule:run", "NEW empty database", "temporary password", "ops:check", "Rollback"):
+            self.assertIn(needed, start)
+        self.assertTrue((PKG / "tools" / "preflight.php").is_file())
         self.assertIn("storage/app/private", read(PKG / "BACKUP_AND_ROLLBACK.md"))
 
     def test_temporary_admin_hash_is_allowed_only_by_explicit_opt_in_and_only_once(self):
